@@ -1,3 +1,4 @@
+from encodings.cp862 import encoding_map
 from ipaddress import collapse_addresses
 import emojis.db
 from PySide6 import QtCore
@@ -74,10 +75,17 @@ class QEmojiButton(QPushButton):
     def emoji(self) -> Emoji:
         return self.__emoji
 
+    def has_in_aliases(self, emoji_alias: str) -> bool:
+        for emoji_alias_2 in self.__emoji.aliases:
+            if emoji_alias in emoji_alias_2:
+                return True
+        return False
+
 
 class QEmojiGrid(QWidget):
     def __init__(self):
         super().__init__()
+        self.__hidden_emojis = []
         self.__grid_layout = QGridLayout()
         self.__grid_layout.setSpacing(0)
         self.setLayout(self.__grid_layout)
@@ -86,13 +94,38 @@ class QEmojiGrid(QWidget):
         button = QEmojiButton(emoji)
         button.enterEvent = lambda event: enter_callback(emoji)
         button.leaveEvent = lambda event: leave_callback()
-        children_count = self.layout().count()
-        row = children_count // 9
-        column = children_count % 9
-        self.__grid_layout.addWidget(button, row, column)
+        self.__grid_layout.addWidget(button, *self.__next_position(self.layout().count()))
 
     def emojis(self) -> list[QEmojiButton]:
         return list(filter(lambda emoji_button: isinstance(emoji_button, QEmojiButton), self.children()))
+
+    def all_hidden(self) -> bool:
+        return len(self.__hidden_emojis) == len(self.emojis())
+
+    def filter(self, emoji_alias: str):
+        removed = 0
+        all_emojis = self.emojis()
+        for index, emoji_button in enumerate(all_emojis):
+            if emoji_button.has_in_aliases(emoji_alias):
+                if emoji_button in self.__hidden_emojis:
+                    self.__hidden_emojis.remove(emoji_button)
+                    emoji_button.show()
+                else:
+                    self.__grid_layout.removeWidget(emoji_button)
+                position = self.__next_position(index - removed)
+                self.__grid_layout.addWidget(emoji_button, *position)
+            else:
+                if emoji_button not in self.__hidden_emojis:
+                    self.__grid_layout.removeWidget(emoji_button)
+                    emoji_button.hide()
+                    self.__hidden_emojis.append(emoji_button)
+                removed += 1
+        self.__grid_layout.update()
+        self.update()
+
+    @staticmethod
+    def __next_position(index: int) -> tuple[int, int]:
+        return index // 9, index % 9
 
 
 class QEmojiPicker(QWidget):
@@ -107,6 +140,7 @@ class QEmojiPicker(QWidget):
         self.__line_edit = QLineEdit()
         self.__line_edit.setFont(self.line_edit_font)
         self.__line_edit.setPlaceholderText("Enter your favorite emoji")
+        self.__line_edit.textEdited.connect(self.__line_edited)
         self.__categories = {}
         self.__current_emoji_label = QLabel()
         self.__current_emoji_label.setFont(self.bottom_font)
@@ -177,6 +211,13 @@ class QEmojiPicker(QWidget):
     def __mouse_enter_emoji(self, emoji: Emoji):
         aliases = " ".join(map(lambda alias: f":{alias}:", emoji.aliases))
         self.__current_emoji_label.setText(f"{emoji.emoji} {aliases}")
+
+    def __line_edited(self):
+        for category in self.__categories.keys():
+            emoji_grid = self.emoji_grid(category)
+            emoji_grid.filter(self.__line_edit.text())
+            collapse_group = self.collapse_group(category)
+            collapse_group.set_collapse(emoji_grid.all_hidden())
 
     def __mouse_leave_emoji(self):
         self.__current_emoji_label.clear()
