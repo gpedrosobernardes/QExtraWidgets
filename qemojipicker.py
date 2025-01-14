@@ -65,6 +65,7 @@ class QEmojiGrid(QWidget):
     def __init__(self):
         super().__init__()
         self.__grid_layout = QGridLayout()
+        self.__grid_layout.setSpacing(0)
         self.setLayout(self.__grid_layout)
 
     def add_emoji(self, emoji: Emoji):
