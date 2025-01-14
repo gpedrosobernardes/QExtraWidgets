@@ -86,17 +86,20 @@ class QEmojiGrid(QWidget):
         self.__grid_layout.addWidget(button, row, column)
 
 class QEmojiPicker(QWidget):
-    font = QFont()
-    font.setBold(True)
-    font.setPointSize(16)
+    bottom_font = QFont()
+    bottom_font.setBold(True)
+    bottom_font.setPointSize(16)
+    line_edit_font = QFont()
+    line_edit_font.setPointSize(12)
 
     def __init__(self):
         super().__init__()
         self.__line_edit = QLineEdit()
+        self.__line_edit.setFont(self.line_edit_font)
         self.__line_edit.setPlaceholderText("Enter your favorite emoji")
         self.__categories = {}
         self.__current_emoji_label = QLabel()
-        self.__current_emoji_label.setFont(self.font)
+        self.__current_emoji_label.setFont(self.bottom_font)
         self.__menu_horizontal_layout = QHBoxLayout()
         self.__scroll_area = QScrollArea()
         self.__scroll_area.setWidgetResizable(True)
