@@ -90,14 +90,18 @@ class QEmojiPicker(QWidget):
         content_widget = QWidget()
         self.__collapse_groups_layout = QVBoxLayout(content_widget)
         scroll_area.setWidget(content_widget)
+
         self.__vertical_layout = QVBoxLayout()
         self.__vertical_layout.addLayout(self.__menu_horizontal_layout)
         self.__vertical_layout.addWidget(self.__line_edit)
-        self.__vertical_layout.addWidget(content_widget)
+        self.__vertical_layout.addWidget(scroll_area)
         self.__vertical_layout.addWidget(self.__current_emoji_label)
         self.setLayout(self.__vertical_layout)
         self.add_category("Smileys & Emotion", QIcon("assets/icons/face-smile-solid.svg"))
         self.__insert_emojis("Smileys & Emotion")
+        self.add_category("Animals & Nature", QIcon("assets/icons/leaf-solid.svg"))
+        self.__insert_emojis("Animals & Nature")
+
 
     def add_category(self, category: str, icon: QIcon):
         button = QPushButton()
