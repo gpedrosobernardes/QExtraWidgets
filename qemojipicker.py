@@ -1,3 +1,5 @@
+import typing
+
 from encodings.cp862 import encoding_map
 from ipaddress import collapse_addresses
 import emojis.db
@@ -158,6 +160,7 @@ class QEmojiPicker(QWidget):
         self.setLayout(self.__vertical_layout)
         self.add_category("Smileys & Emotion", QIcon("assets/icons/face-smile-solid.svg"))
         self.__insert_emojis("Smileys & Emotion")
+        self.__insert_emojis("People & Body", "Smileys & Emotion")
         self.add_category("Animals & Nature", QIcon("assets/icons/leaf-solid.svg"))
         self.__insert_emojis("Animals & Nature")
         self.add_category("Food & Drink", QIcon("assets/icons/bowl-food-solid.svg"))
@@ -203,8 +206,10 @@ class QEmojiPicker(QWidget):
     def shortcut(self, category: str) -> QColorResponsiveButton:
         return self.__categories[category]["shortcut"]
 
-    def __insert_emojis(self, category: str):
-        emoji_grid = self.emoji_grid(category)
+    def __insert_emojis(self, category: str, to: typing.Optional[str] = None):
+        if to is None:
+            to = category
+        emoji_grid = self.emoji_grid(to)
         for emoji in emojis.db.get_emojis_by_category(category):
             emoji_grid.add_emoji(emoji, self.__mouse_enter_emoji, self.__mouse_leave_emoji)
 
