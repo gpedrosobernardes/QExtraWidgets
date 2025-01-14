@@ -70,6 +70,7 @@ class QEmojiGrid(QWidget):
 
     def add_emoji(self, emoji: Emoji):
         button = QPushButton(emoji.emoji)
+        button.setStyleSheet("padding: 0; background-color: transparent;")
         button.setFlat(True)
         button.setFont(self.font)
         children_count = self.layout().count()
