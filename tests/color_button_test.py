@@ -9,7 +9,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Collapse Group Test")
+        self.setWindowTitle("Color Button Test")
 
         widget = QWidget()
 
