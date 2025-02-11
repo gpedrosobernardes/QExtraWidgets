@@ -3,7 +3,7 @@ import sys
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
 from widgets.color_responsive_button import QColorResponsiveButton
-from widgets.utils import get_icon, colorize_icon
+from widgets.utils import get_icon, colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Color Responsive Button Test")
-        self.setWindowIcon(colorize_icon(get_icon("python-brands-solid.svg"), "#FFFFFF"))
+        self.setWindowIcon(colorize_icon_by_theme(get_icon("python-brands-solid.svg")))
 
         widget = QWidget()
 

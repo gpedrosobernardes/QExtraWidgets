@@ -3,7 +3,7 @@ import sys
 from PySide6.QtWidgets import QMainWindow, QApplication, QLabel, QCheckBox, QWidget, QVBoxLayout
 
 from widgets.collapse_group import QCollapseGroup
-from widgets.utils import colorize_icon, get_icon
+from widgets.utils import colorize_icon, get_icon, colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Collapse Group Test")
-        self.setWindowIcon(colorize_icon(get_icon("python-brands-solid.svg"), "#FFFFFF"))
+        self.setWindowIcon(colorize_icon_by_theme(get_icon("python-brands-solid.svg")))
 
         widget = QWidget()
 

@@ -3,7 +3,7 @@ import sys
 from PySide6.QtWidgets import QMainWindow, QApplication
 
 from widgets.password import QPassword
-from widgets.utils import colorize_icon, get_icon
+from widgets.utils import get_icon, colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Password Test")
-        self.setWindowIcon(colorize_icon(get_icon("python-brands-solid.svg"), "#FFFFFF"))
+        self.setWindowIcon(colorize_icon_by_theme(get_icon("python-brands-solid.svg")))
 
         widget = QPassword()
 

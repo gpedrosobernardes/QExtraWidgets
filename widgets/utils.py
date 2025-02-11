@@ -70,3 +70,8 @@ def colorize_icon(icon: QIcon, color: str, default_size=(64, 64)) -> QIcon:
 
     # Convert the colored QPixmap back to QIcon
     return QIcon(colored_pixmap)
+
+
+def colorize_icon_by_theme(icon: QIcon, default_size=(64, 64)) -> QIcon:
+    color = "#FFFFFF" if is_dark_mode() else "#000000"
+    return colorize_icon(icon, color, default_size)
