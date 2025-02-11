@@ -3,6 +3,7 @@ import sys
 from PySide6.QtWidgets import QMainWindow, QApplication, QLabel, QCheckBox
 
 from widgets.checkbox_group import QCheckBoxGroup
+from widgets.utils import get_icon, colorize_icon
 
 
 class MainWindow(QMainWindow):
@@ -10,6 +11,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Checkbox Group Test")
+        self.setWindowIcon(colorize_icon(get_icon("python-brands-solid.svg"), "#FFFFFF"))
 
         widget = QCheckBoxGroup(QLabel("Select a color:"))
         widget.add_checkbox("red", QCheckBox("Red"))
