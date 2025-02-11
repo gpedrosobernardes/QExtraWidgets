@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
 
         color_button_1 = QColorButton("Color Button 1", "#0077B6")
         color_button_2 = QColorButton("Color Button 2", "#CC2936")
-        color_button_3 = QColorButton("Color Button 3", "#C5D86D")
+        color_button_3 = QColorButton("Color Button 3", "#C5D86D", "#000000")
         layout.addWidget(color_button_1)
         layout.addWidget(color_button_2)
         layout.addWidget(color_button_3)
