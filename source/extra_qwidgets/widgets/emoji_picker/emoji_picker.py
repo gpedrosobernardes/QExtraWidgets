@@ -35,7 +35,6 @@ class QEmojiPicker(QWidget):
         self.__line_edit.setPlaceholderText(
             translate("QEmojiPicker", "Enter your favorite emoji")
         )
-        self.__line_edit.textEdited.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
         self.__categories = {}
         self.__emoji_label = QLabel()
         self.__emoji_label.setFixedSize(QSize(32, 32))
@@ -60,15 +59,20 @@ class QEmojiPicker(QWidget):
         self.setLayout(self.__vertical_layout)
         self.__add_categories()
         self.__load_emojis()
-        self.__filter_emojis()
+        self.__hide_empty_categories()
         self.__bind_signals()
 
     def __bind_signals(self):
+        self.__line_edit.textEdited.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
+        self.__line_edit.textEdited.connect(lambda: QTimer.singleShot(5, self.__hide_empty_categories))
+
         if self.__favorite_category:
             self.favorite.connect(lambda emoji: self.add_favorite(emoji))
-            self.favorite.connect(lambda: self.__filter_emojis())
+            self.favorite.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
+            self.favorite.connect(lambda: QTimer.singleShot(5, self.__hide_empty_categories))
             self.removed_favorite.connect(lambda emoji: self.remove_favorite(emoji))
-            self.removed_favorite.connect(lambda: QTimer.singleShot(5, self.__filter_emojis))
+            self.removed_favorite.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
+            self.removed_favorite.connect(lambda: QTimer.singleShot(5, self.__hide_empty_categories))
 
     def __add_categories(self):
         if self.__recent_category:
@@ -198,7 +202,8 @@ class QEmojiPicker(QWidget):
         emoji_button.clicked.connect(lambda: self.picked.emit(emoji))
         if self.__recent_category:
             emoji_button.clicked.connect(lambda: self.__add_recent(emoji))
-            emoji_button.clicked.connect(lambda: self.__filter_emojis())
+            emoji_button.clicked.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
+            emoji_button.clicked.connect(lambda: QTimer.singleShot(5, self.__hide_empty_categories))
 
     def add_recent(self, emoji: Emoji):
         if not self.__recent_category:
@@ -262,16 +267,19 @@ class QEmojiPicker(QWidget):
         self.__emoji_label.setPixmap(QPixmap(get_emoji_path(emoji)))
         self.__aliases_emoji_label.setText(aliases)
 
+    def __hide_empty_categories(self):
+        for category in self.__categories.keys():
+            emoji_grid = self.emoji_grid(category)
+            is_empty = emoji_grid.is_empty()
+            collapse_group = self.collapse_group(category)
+            collapse_group.setHidden(is_empty or emoji_grid.all_hidden())
+            shortcut = self.shortcut(category)
+            shortcut.setHidden(is_empty)
+
     def __filter_emojis(self, emoji_alias: str = ""):
         for category in self.__categories.keys():
             emoji_grid = self.emoji_grid(category)
             emoji_grid.filter(emoji_alias)
-            collapse_group = self.collapse_group(category)
-            all_hidden = emoji_grid.all_hidden()
-            collapse_group.set_collapse(all_hidden)
-            collapse_group.setHidden(all_hidden)
-            shortcut = self.shortcut(category)
-            shortcut.setHidden(all_hidden)
 
     def __mouse_leave_emoji(self):
         self.__emoji_label.clear()

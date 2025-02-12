@@ -28,6 +28,9 @@ class QEmojiGrid(QWidget):
     def all_hidden(self) -> bool:
         return len(self.__hidden_emojis) == len(self.emojis())
 
+    def is_empty(self) -> bool:
+        return len(self.emojis()) == 0
+
     def filter(self, emoji_alias: str):
         removed = 0
         all_emojis = self.emojis()
