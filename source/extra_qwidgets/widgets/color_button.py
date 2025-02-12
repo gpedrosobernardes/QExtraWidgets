@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QPushButton
 
-from widgets.utils import adjust_brightness
+from source.extra_qwidgets.utils import adjust_brightness
 
 
 class QColorButton(QPushButton):

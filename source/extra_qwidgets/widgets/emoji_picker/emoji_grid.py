@@ -3,7 +3,7 @@ import typing
 from PySide6.QtWidgets import QGridLayout, QWidget
 from emojis.db import Emoji
 
-from widgets.emoji_picker.emoji_button import QEmojiButton
+from source.extra_qwidgets.widgets.emoji_picker.emoji_button import QEmojiButton
 
 
 class QEmojiGrid(QWidget):

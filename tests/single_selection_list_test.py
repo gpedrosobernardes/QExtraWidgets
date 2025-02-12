@@ -2,8 +2,8 @@ import sys
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 
-from widgets.single_selection_list import QSingleSelectionList
-from widgets.utils import get_icon, colorize_icon_by_theme
+from source.extra_qwidgets.widgets import QSingleSelectionList
+from source.extra_qwidgets.utils import get_icon, colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):

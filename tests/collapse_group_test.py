@@ -1,9 +1,9 @@
 import sys
 
-from PySide6.QtWidgets import QMainWindow, QApplication, QLabel, QCheckBox, QWidget, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QApplication, QLabel, QWidget, QVBoxLayout
 
-from widgets.collapse_group import QCollapseGroup
-from widgets.utils import colorize_icon, get_icon, colorize_icon_by_theme
+from source.extra_qwidgets.widgets.collapse_group import QCollapseGroup
+from source.extra_qwidgets.utils import get_icon, colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):

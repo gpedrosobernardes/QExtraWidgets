@@ -3,8 +3,8 @@ from typing import Sequence
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QListWidget, QVBoxLayout, QHBoxLayout
 
-from widgets.color_responsive_button import QColorResponsiveButton
-from widgets.utils import get_icon
+from source.extra_qwidgets.widgets.color_responsive_button import QColorResponsiveButton
+from source.extra_qwidgets.utils import get_icon
 
 
 class QSingleSelectionList(QWidget):

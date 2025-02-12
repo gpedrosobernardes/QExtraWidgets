@@ -6,13 +6,12 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QHBoxLayout, QLabel, QVBoxLayo
     QScrollArea, QMenu
 from emojis.db import Emoji, get_emojis_by_category
 
-from widgets.collapse_group import QCollapseGroup
-from widgets.color_responsive_button import QColorResponsiveButton
-from widgets.emoji_picker.emoji_button import QEmojiButton
-from widgets.emoji_picker.emoji_grid import QEmojiGrid
-from widgets.emoji_picker.exceptions import FavoriteNotImplemented, RecentNotImplemented, EmojiAlreadyExists
-from widgets.emoji_picker.utils import get_emoji_path
-from widgets.utils import get_icon
+from source.extra_qwidgets.widgets.collapse_group import QCollapseGroup
+from source.extra_qwidgets.widgets.color_responsive_button import QColorResponsiveButton
+from source.extra_qwidgets.widgets.emoji_picker.emoji_button import QEmojiButton
+from source.extra_qwidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
+from source.extra_qwidgets.exceptions import FavoriteNotImplemented, RecentNotImplemented, EmojiAlreadyExists
+from source.extra_qwidgets.utils import get_icon, get_emoji_path
 
 translate = QCoreApplication.translate
 

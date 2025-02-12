@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
 
-from widgets.resposive_text_edit import QResponsiveTextEdit
-from widgets.utils import get_icon, colorize_icon_by_theme
+from source.extra_qwidgets.widgets import QResponsiveTextEdit
+from source.extra_qwidgets.utils import get_icon, colorize_icon_by_theme
 
 
 class MainWindow(QWidget):

@@ -2,8 +2,8 @@ import sys
 
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
-from widgets.color_button import QColorButton
-from widgets.utils import get_icon, colorize_icon_by_theme
+from source.extra_qwidgets.widgets import QColorButton
+from source.extra_qwidgets.utils import get_icon, colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
