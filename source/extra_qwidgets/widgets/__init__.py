@@ -2,7 +2,7 @@ from extra_qwidgets.widgets import emoji_picker
 from extra_qwidgets.widgets.checkbox_group import QCheckBoxGroup
 from extra_qwidgets.widgets.collapse_group import QCollapseGroup
 from extra_qwidgets.widgets.color_button import QColorButton
-from extra_qwidgets.widgets.color_responsive_button import QColorResponsiveButton
+from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 from extra_qwidgets.widgets.password import QPassword
 from extra_qwidgets.widgets.resposive_text_edit import QResponsiveTextEdit
 from extra_qwidgets.widgets.single_selection_list import QSingleSelectionList

@@ -1,12 +1,14 @@
 from PySide6.QtCore import QEvent
-from PySide6.QtWidgets import QPushButton
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QApplication
+
 from extra_qwidgets.utils import is_dark_mode, colorize_icon
 
 
-class QColorResponsiveButton(QPushButton):
-    def __init__(self, parent=None):
-        super(QColorResponsiveButton, self).__init__(parent)
-        self.installEventFilter(self)
+class QThemeResponsiveAction(QAction):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        QApplication.instance().installEventFilter(self)
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.Type.PaletteChange:

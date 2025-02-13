@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout
-from extra_qwidgets.widgets.color_responsive_button import QColorResponsiveButton
+from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 from extra_qwidgets.utils import get_awesome_icon
 
 
@@ -9,7 +9,7 @@ class QCollapseGroup(QWidget):
         self.__collapsed = False
         self.__widget = widget
         self.__widget.setContentsMargins(0, 0, 0, 0)
-        self.__collapse_button = QColorResponsiveButton()
+        self.__collapse_button = QThemeResponsiveButton()
         self.__collapse_button.setIcon(get_awesome_icon("angle-down"))
         self.__collapse_button.setFlat(True)
         self.__collapse_button.clicked.connect(

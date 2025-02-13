@@ -3,7 +3,7 @@ from typing import Sequence
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QListWidget, QVBoxLayout, QHBoxLayout
 
-from extra_qwidgets.widgets.color_responsive_button import QColorResponsiveButton
+from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 from extra_qwidgets.utils import get_awesome_icon
 
 
@@ -13,16 +13,16 @@ class QSingleSelectionList(QWidget):
         self.__to_select_list = QListWidget()
         self.__selected_list = QListWidget()
 
-        self.__select_button = QColorResponsiveButton()
+        self.__select_button = QThemeResponsiveButton()
         self.__select_button.setIcon(get_awesome_icon("angle-right"))
 
-        self.__select_all_button = QColorResponsiveButton()
+        self.__select_all_button = QThemeResponsiveButton()
         self.__select_all_button.setIcon(get_awesome_icon("angles-right"))
 
-        self.__deselect_button = QColorResponsiveButton()
+        self.__deselect_button = QThemeResponsiveButton()
         self.__deselect_button.setIcon(get_awesome_icon("angle-left"))
 
-        self.__deselect_all_button = QColorResponsiveButton()
+        self.__deselect_all_button = QThemeResponsiveButton()
         self.__deselect_all_button.setIcon(get_awesome_icon("angles-left"))
 
         buttons_layout = QVBoxLayout()

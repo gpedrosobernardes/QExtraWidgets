@@ -2,7 +2,7 @@ import sys
 
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
-from source.extra_qwidgets.widgets import QColorResponsiveButton
+from source.extra_qwidgets.widgets import QThemeResponsiveButton
 from source.extra_qwidgets.utils import colorize_icon_by_theme, get_awesome_icon
 
 
@@ -10,14 +10,15 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Color Responsive Button Test")
+        self.setWindowTitle("Theme Responsive Button Test")
         self.setWindowIcon(colorize_icon_by_theme(get_awesome_icon("python", "brands")))
+        self.setFixedSize(350, 100)
 
         widget = QWidget()
 
         layout = QVBoxLayout()
 
-        button = QColorResponsiveButton()
+        button = QThemeResponsiveButton()
         button.setIcon(get_awesome_icon("face-smile"))
 
         layout.addWidget(button)

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QWidget, QLineEdit, QHBoxLayout, QLabel, QVBoxLayo
 from emojis.db import Emoji, get_emojis_by_category
 
 from extra_qwidgets.widgets.collapse_group import QCollapseGroup
-from extra_qwidgets.widgets.color_responsive_button import QColorResponsiveButton
+from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 from extra_qwidgets.widgets.emoji_picker.emoji_button import QEmojiButton
 from extra_qwidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
 from extra_qwidgets.exceptions import FavoriteNotImplemented, RecentNotImplemented, EmojiAlreadyExists
@@ -135,7 +135,7 @@ class QEmojiPicker(QWidget):
         self.__add_emojis("Smileys & Emotion", get_emojis_by_category("People & Body"))
 
     def add_category(self, category: str, icon: QIcon, title: str):
-        shortcut_button = QColorResponsiveButton()
+        shortcut_button = QThemeResponsiveButton()
         shortcut_button.setFixedSize(QSize(30, 30))
         shortcut_button.setIconSize(QSize(22, 22))
         shortcut_button.setFlat(True)
@@ -168,7 +168,7 @@ class QEmojiPicker(QWidget):
     def emoji_grid(self, category: str) -> QEmojiGrid:
         return self.__categories[category]["group"].widget()
 
-    def shortcut(self, category: str) -> QColorResponsiveButton:
+    def shortcut(self, category: str) -> QThemeResponsiveButton:
         return self.__categories[category]["shortcut"]
 
     def __add_emojis(self, category: str, emojis_: typing.List[Emoji]):
