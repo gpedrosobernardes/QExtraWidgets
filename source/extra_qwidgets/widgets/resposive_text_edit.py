@@ -1,5 +1,6 @@
 import typing
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QTextEdit
 
 
@@ -36,4 +37,24 @@ class QResponsiveTextEdit(QTextEdit):
 
     def insertFromMimeData(self, source):
         super().insertFromMimeData(source)
-        self.__adjust_height()
+        QTimer.singleShot(5, self.__adjust_height)
+
+    def insertPlainText(self, text):
+        super().insertPlainText(text)
+        QTimer.singleShot(5, self.__adjust_height)
+
+    def insertHtml(self, text):
+        super().insertHtml(text)
+        QTimer.singleShot(5, self.__adjust_height)
+
+    def setText(self, text):
+        super().setText(text)
+        QTimer.singleShot(5, self.__adjust_height)
+
+    def setHtml(self, text):
+        super().setHtml(text)
+        QTimer.singleShot(5, self.__adjust_height)
+
+    def setPlainText(self, text):
+        super().setPlainText(text)
+        QTimer.singleShot(5, self.__adjust_height)
