@@ -10,20 +10,16 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-
-
         self.setWindowTitle("Theme Responsive Action Test")
         self.setWindowIcon(colorize_icon_by_theme(get_awesome_icon("python", "brands")))
         self.resize(250, 125)
 
         menu = QMenu("Social Media", self)
 
-        facebook_action = QThemeResponsiveAction(self)
+        facebook_action = QThemeResponsiveAction(self, text="Facebook")
         facebook_action.setIcon(get_awesome_icon("facebook", "brands"))
-        facebook_action.setText("Facebook")
-        github_action = QThemeResponsiveAction(self)
+        github_action = QThemeResponsiveAction(self, text="Github")
         github_action.setIcon(get_awesome_icon("github", "brands"))
-        github_action.setText("Github")
 
         menu.addAction(facebook_action)
         menu.addAction(github_action)
