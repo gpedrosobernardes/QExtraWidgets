@@ -1,3 +1,5 @@
+import typing
+
 from PySide6.QtWidgets import QGridLayout, QWidget, QLabel, QCheckBox, QButtonGroup, QAbstractButton
 
 
@@ -15,6 +17,10 @@ class QCheckBoxGroup(QWidget):
         checkboxes = len(self.checkboxes())
         self.__layout.addWidget(checkbox, checkboxes, 1)
         self.__button_group.addButton(checkbox)
+
+    def add_checkboxes(self, checkboxes: typing.Iterable[QCheckBox]):
+        for c in checkboxes:
+            self.add_checkbox(c)
 
     def get_checked(self) -> QAbstractButton:
         return self.__button_group.checkedButton()
