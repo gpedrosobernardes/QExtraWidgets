@@ -2,6 +2,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QSettings
 from PySide6.QtGui import QIcon, QPainter, QPixmap, QColor, Qt
+from PySide6.QtWidgets import QApplication
 from emojis.db import Emoji
 
 
@@ -43,11 +44,9 @@ def adjust_brightness(hex_color: str, percentage: float = 10) -> str:
 
 
 def is_dark_mode() -> bool:
-    settings = QSettings(
-        "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-        QSettings.Format.NativeFormat,
-    )
-    return settings.value("AppsUseLightTheme") == 0
+    style_hints = QApplication.styleHints()
+    color_scheme = style_hints.colorScheme()
+    return color_scheme.value == 2
 
 
 def colorize_icon(icon: QIcon, color: str, default_size=(64, 64)) -> QIcon:

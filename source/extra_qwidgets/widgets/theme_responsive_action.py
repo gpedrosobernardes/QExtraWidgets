@@ -1,4 +1,3 @@
-from PySide6.QtCore import QEvent
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication
 
@@ -13,12 +12,10 @@ class QThemeResponsiveAction(QAction):
         :param kwargs: QAction's keyword arguments
         """
         super().__init__(*args, **kwargs)
-        QApplication.instance().installEventFilter(self)
+        QApplication.styleHints().colorSchemeChanged.connect(self._on_theme_change)
 
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.PaletteChange:
-            self.setIcon(self.icon())
-        return super().eventFilter(obj, event)
+    def _on_theme_change(self):
+        self.setIcon(self.icon())
 
     def setIcon(self, icon):
         if is_dark_mode():
