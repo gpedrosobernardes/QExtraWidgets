@@ -1,4 +1,3 @@
-from PySide6.QtCore import QEvent
 from PySide6.QtWidgets import QPushButton, QApplication
 from extra_qwidgets.utils import is_dark_mode, colorize_icon
 
