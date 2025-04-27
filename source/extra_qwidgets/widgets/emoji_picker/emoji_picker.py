@@ -1,5 +1,7 @@
 import contextlib
 import typing
+
+import qtawesome
 from PySide6.QtCore import QCoreApplication, Signal, QSize, QTimer, QPoint, Qt
 from PySide6.QtGui import QIcon, QFont, QPixmap, QAction
 from PySide6.QtWidgets import QWidget, QLineEdit, QHBoxLayout, QLabel, QVBoxLayout, \
@@ -11,7 +13,7 @@ from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButto
 from extra_qwidgets.widgets.emoji_picker.emoji_button import QEmojiButton
 from extra_qwidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
 from extra_qwidgets.exceptions import FavoriteNotImplemented, RecentNotImplemented, EmojiAlreadyExists
-from extra_qwidgets.utils import get_awesome_icon, get_emoji_path
+from extra_qwidgets.utils import get_emoji_path
 
 translate = QCoreApplication.translate
 
@@ -78,53 +80,53 @@ class QEmojiPicker(QWidget):
         if self.__recent_category:
             self.add_category(
                 "Recent",
-                get_awesome_icon("clock-rotate-left"),
+                qtawesome.icon("fa6s.clock-rotate-left"),
                 translate("QEmojiPicker", "Recent"),
             )
         if self.__favorite_category:
             self.add_category(
                 "Favorite",
-                get_awesome_icon("star"),
+                qtawesome.icon("fa6s.star"),
                 translate("QEmojiPicker", "Favorite"),
             )
         self.add_category(
             "Smileys & Emotion",
-            get_awesome_icon("face-smile"),
+            qtawesome.icon("fa6s.face-smile"),
             translate("QEmojiPicker", "Smileys & Emotion"),
         )
         self.add_category(
             "Animals & Nature",
-            get_awesome_icon("leaf"),
+            qtawesome.icon("fa6s.leaf"),
             translate("QEmojiPicker", "Animals & Nature"),
         )
         self.add_category(
             "Food & Drink",
-            get_awesome_icon("bowl-food"),
+            qtawesome.icon("fa6s.bowl-food"),
             translate("QEmojiPicker", "Food & Drink"),
         )
         self.add_category(
             "Activities",
-            get_awesome_icon("gamepad"),
+            qtawesome.icon("fa6s.gamepad"),
             translate("QEmojiPicker", "Activities"),
         )
         self.add_category(
             "Travel & Places",
-            get_awesome_icon("bicycle"),
+            qtawesome.icon("fa6s.bicycle"),
             translate("QEmojiPicker", "Travel & Places"),
         )
         self.add_category(
             "Objects",
-            get_awesome_icon("lightbulb"),
+            qtawesome.icon("fa6s.lightbulb"),
             translate("QEmojiPicker", "Objects"),
         )
         self.add_category(
             "Symbols",
-            get_awesome_icon("heart"),
+            qtawesome.icon("fa6s.heart"),
             translate("QEmojiPicker", "Symbols"),
         )
         self.add_category(
             "Flags",
-            get_awesome_icon("flag"),
+            qtawesome.icon("fa6s.flag"),
             translate("QEmojiPicker", "Flags"),
         )
 

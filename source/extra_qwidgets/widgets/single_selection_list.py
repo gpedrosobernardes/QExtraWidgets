@@ -1,10 +1,10 @@
 from typing import Sequence
 
+import qtawesome
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QListWidget, QVBoxLayout, QHBoxLayout
 
 from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
-from extra_qwidgets.utils import get_awesome_icon
 
 
 class QSingleSelectionList(QWidget):
@@ -14,16 +14,16 @@ class QSingleSelectionList(QWidget):
         self.__selected_list = QListWidget()
 
         self.__select_button = QThemeResponsiveButton()
-        self.__select_button.setIcon(get_awesome_icon("angle-right"))
+        self.__select_button.setIcon(qtawesome.icon("fa6s.angle-right"))
 
         self.__select_all_button = QThemeResponsiveButton()
-        self.__select_all_button.setIcon(get_awesome_icon("angles-right"))
+        self.__select_all_button.setIcon(qtawesome.icon("fa6s.angles-right"))
 
         self.__deselect_button = QThemeResponsiveButton()
-        self.__deselect_button.setIcon(get_awesome_icon("angle-left"))
+        self.__deselect_button.setIcon(qtawesome.icon("fa6s.angle-left"))
 
         self.__deselect_all_button = QThemeResponsiveButton()
-        self.__deselect_all_button.setIcon(get_awesome_icon("angles-left"))
+        self.__deselect_all_button.setIcon(qtawesome.icon("fa6s.angles-left"))
 
         buttons_layout = QVBoxLayout()
         main_layout = QHBoxLayout()

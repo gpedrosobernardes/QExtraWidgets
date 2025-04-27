@@ -1,10 +1,11 @@
 import sys
 
+import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication
 
 from extra_qwidgets.widgets.action_group_menu import QActionMenuGroup
 from extra_qwidgets.widgets.theme_responsive_action import QThemeResponsiveAction
-from source.extra_qwidgets.utils import colorize_icon_by_theme, get_awesome_icon
+from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -12,7 +13,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Action Menu Group Test")
-        self.setWindowIcon(colorize_icon_by_theme(get_awesome_icon("python", "brands")))
+        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
         self.resize(250, 125)
 
         menu = QActionMenuGroup("Social Media", self)

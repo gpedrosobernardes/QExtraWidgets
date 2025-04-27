@@ -1,17 +1,7 @@
 from pathlib import Path
-
-from PySide6.QtCore import QSettings
 from PySide6.QtGui import QIcon, QPainter, QPixmap, QColor, Qt
 from PySide6.QtWidgets import QApplication
 from emojis.db import Emoji
-
-
-def get_awesome_icon(icon_name: str, category: str = "solid") -> QIcon:
-    if not icon_name.endswith(".svg"):
-        icon_name += ".svg"
-    icons_folder = Path(__file__).parent.absolute() / "assets/icons/fontawesome"
-    fullpath = icons_folder / category / icon_name
-    return QIcon(str(fullpath))
 
 
 def adjust_brightness(hex_color: str, percentage: float = 10) -> str:

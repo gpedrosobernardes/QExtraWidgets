@@ -1,7 +1,8 @@
+import qtawesome
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
 
 from source.extra_qwidgets.widgets import QResponsiveTextEdit
-from source.extra_qwidgets.utils import get_awesome_icon, colorize_icon_by_theme
+from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class MainWindow(QWidget):
@@ -9,7 +10,7 @@ class MainWindow(QWidget):
         super().__init__()
 
         self.setWindowTitle("QTextEdit Test")
-        self.setWindowIcon(colorize_icon_by_theme(get_awesome_icon("python", "brands")))
+        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
 
         self.text_edit = QResponsiveTextEdit()
         self.text_edit.setPlaceholderText("Digite algo...")

@@ -1,9 +1,10 @@
 import sys
 
+import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
 from extra_qwidgets.widgets.theme_responsive_checkbutton import QThemeResponsiveCheckButton
-from source.extra_qwidgets.utils import colorize_icon_by_theme, get_awesome_icon
+from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -11,7 +12,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Theme Responsive Button Test")
-        self.setWindowIcon(colorize_icon_by_theme(get_awesome_icon("python", "brands")))
+        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
         self.setFixedSize(350, 100)
 
         widget = QWidget()
@@ -19,7 +20,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
 
         button = QThemeResponsiveCheckButton()
-        button.setIcon(get_awesome_icon("face-smile"))
+        button.setIcon(qtawesome.icon("fa6s.face-smile"))
         button.setChecked(True)
 
         layout.addWidget(button)

@@ -1,7 +1,7 @@
+import qtawesome
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLineEdit
 
 from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
-from extra_qwidgets.utils import get_awesome_icon
 
 
 class QPassword(QFrame):
@@ -36,7 +36,7 @@ class QPassword(QFrame):
         """
         if hide:
             self.line_edit.setEchoMode(QLineEdit.EchoMode.Password)
-            self.hide_button.setIcon(get_awesome_icon("eye"))
+            self.hide_button.setIcon(qtawesome.icon("fa6s.eye"))
         else:
             self.line_edit.setEchoMode(QLineEdit.EchoMode.Normal)
-            self.hide_button.setIcon(get_awesome_icon("eye-slash"))
+            self.hide_button.setIcon(qtawesome.icon("fa6s.eye-slash"))

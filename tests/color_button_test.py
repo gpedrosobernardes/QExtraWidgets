@@ -1,9 +1,10 @@
 import sys
 
+import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
 from source.extra_qwidgets.widgets import QColorButton
-from source.extra_qwidgets.utils import get_awesome_icon, colorize_icon_by_theme
+from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -11,7 +12,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Color Button Test")
-        self.setWindowIcon(colorize_icon_by_theme(get_awesome_icon("python", "brands")))
+        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
 
         widget = QWidget()
 

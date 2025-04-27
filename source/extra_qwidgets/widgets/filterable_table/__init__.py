@@ -1,0 +1,1 @@
+from extra_qwidgets.widgets.filterable_table.filterable_table import QFilterableTable

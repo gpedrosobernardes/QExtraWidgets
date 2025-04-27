@@ -1,9 +1,10 @@
 import sys
 
 import qtawesome
+from PySide6.QtGui import QStandardItem
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
-from source.extra_qwidgets.widgets import QThemeResponsiveButton
+from extra_qwidgets.widgets.filterable_table.filterable_table import QFilterableTable
 from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
@@ -11,18 +12,22 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Theme Responsive Button Test")
+        self.setWindowTitle("Filterable Table Test")
         self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
-        self.setFixedSize(350, 100)
+        self.setFixedSize(800, 600)
 
         widget = QWidget()
 
         layout = QVBoxLayout()
 
-        button = QThemeResponsiveButton()
-        button.setIcon(qtawesome.icon("fa6s.face-smile"))
+        table = QFilterableTable()
+        model = table.model()
+        model.setColumnCount(1)
+        for i in range(0, 1000):
+            model.insertRow(i)
+            model.setItem(i, 0, QStandardItem(f"Item {i}"))
 
-        layout.addWidget(button)
+        layout.addWidget(table)
 
         widget.setLayout(layout)
 
