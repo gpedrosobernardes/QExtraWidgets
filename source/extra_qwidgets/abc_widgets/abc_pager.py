@@ -122,6 +122,8 @@ class ABCPager(QWidget, metaclass=QtABCMeta):
 
     def setPageCount(self, page_count: int):
         self._page_count = page_count
+        if self._current_page > page_count:
+            self._current_page = page_count
         self._update_visible_buttons()
         self._update_buttons_text()
 
