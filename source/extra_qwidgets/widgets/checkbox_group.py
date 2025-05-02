@@ -14,7 +14,7 @@ class QCheckBoxGroup:
         self.__checkboxes: typing.List[QCheckBox] = []
         self.__current: typing.Optional[QCheckBox] = None
 
-    def add_checkbox(self, checkbox: QCheckBox):
+    def addCheckbox(self, checkbox: QCheckBox):
         """
         Adds a checkbox to the group.
         :param checkbox: QCheckBox
@@ -24,16 +24,16 @@ class QCheckBoxGroup:
         checkbox.checkStateChanged.connect(on_check)
         self.__checkboxes.append(checkbox)
 
-    def add_checkboxes(self, *checkboxes: QCheckBox):
+    def addCheckboxes(self, *checkboxes: QCheckBox):
         """
         Adds multiple checkboxes to the group.
         :param checkboxes: typing.Tuple[QCheckBox]
         :return: None
         """
         for c in checkboxes:
-            self.add_checkbox(c)
+            self.addCheckbox(c)
 
-    def remove_checkbox(self, checkbox: QCheckBox):
+    def removeCheckbox(self, checkbox: QCheckBox):
         """
         Removes a checkbox from the group.
         :param checkbox: QCheckBox
@@ -42,14 +42,14 @@ class QCheckBoxGroup:
         if checkbox in self.__checkboxes:
             self.__checkboxes.remove(checkbox)
 
-    def remove_checkboxes(self, *checkboxes: QCheckBox):
+    def removeCheckboxes(self, *checkboxes: QCheckBox):
         """
         Removes multiple checkboxes from the group.
         :param checkboxes: typing.Tuple[QCheckBox]
         :return: None
         """
         for c in checkboxes:
-            self.remove_checkbox(c)
+            self.removeCheckbox(c)
 
     def __on_check(self, checkbox: QCheckBox, check_state: int):
         """
@@ -65,14 +65,14 @@ class QCheckBoxGroup:
         elif checkbox == self.__current:
             self.__current = None
 
-    def get_checked(self) -> typing.Optional[QCheckBox]:
+    def getChecked(self) -> typing.Optional[QCheckBox]:
         """
         Returns the currently checked checkbox.
         :return: typing.Optional[QCheckBox]
         """
         return self.__current
 
-    def get_checked_name(self) -> typing.Optional[str]:
+    def getCheckedName(self) -> typing.Optional[str]:
         """
         Returns the object name of the currently checked checkbox.
         :return: typing.Optional[str]
@@ -94,7 +94,7 @@ class QCheckBoxGroup:
         for c in self.__checkboxes:
             c.setChecked(False)
 
-    def check_by_name(self, name: str) -> typing.Optional[QCheckBox]:
+    def checkByName(self, name: str) -> typing.Optional[QCheckBox]:
         """
         Checks the checkbox with the given name. Returns the object of the checkbox if found.
         :param name: str

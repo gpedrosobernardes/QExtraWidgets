@@ -5,7 +5,7 @@ from PySide6.QtGui import QStandardItem
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
 from extra_qwidgets.widgets.filterable_table.filterable_table import QFilterableTable
-from source.extra_qwidgets.utils import colorize_icon_by_theme
+from source.extra_qwidgets.proxys import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):

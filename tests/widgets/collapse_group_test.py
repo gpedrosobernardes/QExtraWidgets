@@ -3,8 +3,8 @@ import sys
 import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication, QLabel, QWidget, QVBoxLayout
 
+from extra_qwidgets.utils import colorize_icon_by_theme
 from source.extra_qwidgets.widgets.collapse_group import QCollapseGroup
-from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -18,10 +18,10 @@ class MainWindow(QMainWindow):
 
         layout = QVBoxLayout()
 
-        collapse_group = QCollapseGroup("Test", QLabel("Hello World!"))
+        collapse_group = QCollapseGroup()
+        collapse_group.addCollapse("Test 1", QLabel("Hello World!"))
+        collapse_group.addCollapse("Test 2", QLabel("Hello World 2!"))
         layout.addWidget(collapse_group)
-        collapse_group_2 = QCollapseGroup("Test 2", QLabel("Hello World 2!"))
-        layout.addWidget(collapse_group_2)
 
         widget.setLayout(layout)
 

@@ -8,7 +8,7 @@ class QMultiFilterProxy(QSortFilterProxyModel):
         super().__init__()
         self._filters = {}
 
-    def set_filter(self, col: int, text_list: typing.Iterable[str]):
+    def setFilter(self, col: int, text_list: typing.Iterable[str]):
         """Define a lista de filtros para uma coluna específica."""
         if text_list:
             self._filters[col] = text_list

@@ -1,7 +1,7 @@
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication
 
-from extra_qwidgets.utils import is_dark_mode, colorize_icon
+from extra_qwidgets.proxys import is_dark_mode, colorize_icon
 
 
 class QThemeResponsiveAction(QAction):

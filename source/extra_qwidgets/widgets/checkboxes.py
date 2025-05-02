@@ -18,20 +18,20 @@ class QCheckBoxes(QWidget, QCheckBoxGroup):
         self.__layout.addWidget(self.__label, 0, 0)
         self.setLayout(self.__layout)
 
-    def add_checkbox(self, checkbox: QCheckBox):
+    def addCheckbox(self, checkbox: QCheckBox):
         """
         Adds a checkbox to the widget.
         :param checkbox: QCheckBox
         :return: None
         """
         self.__layout.addWidget(checkbox, len(self.checkboxes()), 1)
-        super().add_checkbox(checkbox)
+        super().addCheckbox(checkbox)
 
-    def remove_checkbox(self, checkbox: QCheckBox):
+    def removeCheckbox(self, checkbox: QCheckBox):
         """
         Removes a checkbox from the widget.
         :param checkbox: QCheckBox
         :return: None
         """
         self.__layout.removeWidget(checkbox)
-        super().remove_checkbox(checkbox)
+        super().removeCheckbox(checkbox)

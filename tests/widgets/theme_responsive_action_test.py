@@ -4,7 +4,7 @@ import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication, QMenu
 
 from extra_qwidgets.widgets.theme_responsive_action import QThemeResponsiveAction
-from source.extra_qwidgets.utils import colorize_icon_by_theme
+from source.extra_qwidgets.proxys import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):

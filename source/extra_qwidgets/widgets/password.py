@@ -17,18 +17,18 @@ class QPassword(QFrame):
         self.hide_button.setFlat(True)
         layout.addWidget(self.hide_button)
         self.hide_button.clicked.connect(
-            lambda: self.set_password_hide(not self.is_password_hide())
+            lambda: self.setPasswordHidden(not self.isPasswordHidden())
         )
-        self.set_password_hide(True)
+        self.setPasswordHidden(True)
 
-    def is_password_hide(self) -> bool:
+    def isPasswordHidden(self) -> bool:
         """
         Returns if the password is hidden.
         :return: bool
         """
         return self.line_edit.echoMode() == QLineEdit.EchoMode.Password
 
-    def set_password_hide(self, hide: bool):
+    def setPasswordHidden(self, hide: bool):
         """
         Sets if the password is hidden.
         :param hide: bool

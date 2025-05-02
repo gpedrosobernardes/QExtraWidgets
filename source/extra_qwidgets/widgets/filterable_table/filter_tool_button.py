@@ -1,7 +1,6 @@
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QToolButton, QSizePolicy, QApplication
-
 from extra_qwidgets.utils import is_dark_mode, colorize_icon
 
 

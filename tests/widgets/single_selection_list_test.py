@@ -3,18 +3,21 @@ import sys
 import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication
 
-from source.extra_qwidgets.widgets import QPassword
-from source.extra_qwidgets.utils import colorize_icon_by_theme
+from source.extra_qwidgets.widgets import QSingleSelectionList
+from source.extra_qwidgets.proxys import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Password Test")
+        self.setWindowTitle("Single Selection List Test")
         self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
 
-        widget = QPassword()
+        items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6", "Item 7", "Item 8", "Item 9", "Item 10"]
+
+        widget = QSingleSelectionList()
+        widget.addToSelectItems(items)
 
         self.setCentralWidget(widget)
 

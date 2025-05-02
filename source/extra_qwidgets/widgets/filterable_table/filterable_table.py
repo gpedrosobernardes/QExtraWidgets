@@ -8,7 +8,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from extra_qwidgets.utils import colorize_icon_by_theme
 from extra_qwidgets.widgets.filterable_table.custom_header import CustomHeader
 from extra_qwidgets.widgets.filterable_table.filter_popup import QFilterPopup
-from extra_qwidgets.widgets.filterable_table.multi_filter_proxy import QMultiFilterProxy
+from extra_qwidgets.proxys.multi_filter_proxy import QMultiFilterProxy
 
 
 # https://doc.qt.io/
@@ -53,7 +53,7 @@ class QFilterableTable(QTableView):
     def _update_popup_icon(self, column: int):
         popup = self._popups[column]
         item = self._model.horizontalHeaderItem(column)
-        if popup.is_filtering():
+        if popup.isFiltering():
             item.setIcon(colorize_icon_by_theme(qtawesome.icon("fa6s.filter")))
         else:
             item.setIcon(colorize_icon_by_theme(qtawesome.icon("fa6s.angle-down")))
@@ -68,8 +68,8 @@ class QFilterableTable(QTableView):
 
     def _filter_column(self, column: int):
         popup = self._popups[column]
-        filter_data = popup.get_selected_visible_data()
-        self._proxy.set_filter(column, filter_data)
+        filter_data = popup.getSelectedVisibleData()
+        self._proxy.setFilter(column, filter_data)
 
     def _on_theme_change(self):
         for column in range(self._model.columnCount()):
@@ -92,12 +92,12 @@ class QFilterableTable(QTableView):
 
     def _update_popup_items_by_item(self, item: QTableWidgetItem):
         popup = self._popups[item.column()]
-        popup_col_data = popup.get_data()
+        popup_col_data = popup.getData()
         table_col_data = self._get_column_data(item.column())
         for i in table_col_data - popup_col_data:
-            popup.add_data(i)
+            popup.addData(i)
         for i in popup_col_data - table_col_data:
-            popup.remove_data(i)
+            popup.removeData(i)
 
     def _get_column_data(self, col: int, limit: int = 1000) -> set[str]:
         return set(

@@ -1,57 +1,69 @@
 import typing
 
-from PySide6.QtWidgets import QGridLayout, QWidget
+from PySide6.QtCore import QSize, Qt
+from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtWidgets import QListView, QTreeView, QSizePolicy, QAbstractScrollArea
 from emojis.db import Emoji
 
-from extra_qwidgets.widgets.emoji_picker.emoji_button import QEmojiButton
+from extra_qwidgets.abc_widgets.emoji_picker.emoji_sort_filter_proxy_model import EmojiSortFilterProxyModel
 
 
-class QEmojiGrid(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.__hidden_emojis = []
-        self.__grid_layout = QGridLayout()
-        self.__grid_layout.setSpacing(0)
-        self.setLayout(self.__grid_layout)
+class QEmojiGrid(QListView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.model = QStandardItemModel()
+        # self.proxy = EmojiSortFilterProxyModel(self)
+        # self.proxy.setSourceModel(self.model)
+        self.setModel(self.model)
+        self.setViewMode(QListView.ViewMode.IconMode)
+        self.setResizeMode(QListView.ResizeMode.Adjust)
+        self.setUniformItemSizes(True)
+        self.setWrapping(True)
+        self.setIconSize(QSize(36, 36))
+        self.setGridSize(QSize(40, 40))
+        self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-    def add_emoji(self, emoji: QEmojiButton):
-        self.__grid_layout.addWidget(emoji, *self.__next_position(self.layout().count()))
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self._adjust_fixed_height()
 
-    def get_emoji(self, emoji: Emoji) -> typing.Optional[QEmojiButton]:
-        for emoji_2 in self.emojis():
-            if emoji_2.emoji() == emoji:
-                return emoji_2
+    def _adjust_fixed_height(self):
+        itens_total = self.model.rowCount()
+        if itens_total == 0:
+            return
+        item_size = self.gridSize()
+        width = self.size().width()
+        if item_size.width() == 0:
+            return
+        items_per_row = max(1, width // item_size.width())
+        rows = -(-itens_total // items_per_row)
+        total_height = rows * item_size.height()
+        self.setFixedHeight(total_height)
 
-    def emojis(self) -> list[QEmojiButton]:
-        return list(filter(lambda emoji_button: isinstance(emoji_button, QEmojiButton), self.children()))
+    def addItem(self, item: QStandardItem):
+        self.model.appendRow(item)
 
-    def all_hidden(self) -> bool:
-        return len(self.__hidden_emojis) == len(self.emojis())
+    def removeEmoji(self, emoji: Emoji):
+        item = self.getItem(emoji)
+        if item:
+            self.model.removeRow(item.row())
 
-    def is_empty(self) -> bool:
-        return len(self.emojis()) == 0
+    def getItem(self, emoji: Emoji) -> typing.Optional[QStandardItem]:
+        for i in range(self.model.rowCount()):
+            item = self.model.item(i)
+            if item.data() == emoji:
+                return item
+        return None
 
-    def filter(self, emoji_alias: str):
-        removed = 0
-        all_emojis = self.emojis()
-        for index, emoji_button in enumerate(all_emojis):
-            if emoji_button.has_in_aliases(emoji_alias):
-                if emoji_button in self.__hidden_emojis:
-                    self.__hidden_emojis.remove(emoji_button)
-                    emoji_button.show()
-                else:
-                    self.__grid_layout.removeWidget(emoji_button)
-                position = self.__next_position(index - removed)
-                self.__grid_layout.addWidget(emoji_button, *position)
-            else:
-                if emoji_button not in self.__hidden_emojis:
-                    self.__grid_layout.removeWidget(emoji_button)
-                    emoji_button.hide()
-                    self.__hidden_emojis.append(emoji_button)
-                removed += 1
-        self.__grid_layout.update()
-        self.update()
+    def allHidden(self) -> bool:
+        return self.proxy.rowCount() == 0
 
-    @staticmethod
-    def __next_position(index: int) -> tuple[int, int]:
-        return index // 9, index % 9
+    def isEmpty(self) -> bool:
+        return self.model.rowCount() == 0
+
+    def filter(self, text: str):
+        self.proxy.setFilterFixedString(text)
+        self.updateGeometry()

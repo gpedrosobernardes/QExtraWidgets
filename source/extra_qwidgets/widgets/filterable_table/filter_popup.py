@@ -51,7 +51,7 @@ class QFilterPopup(QDialog):
 
     def _on_clear_filter(self):
         self.search_field.setText("")
-        self.check_all()
+        self.checkAll()
 
     def _setup_layout(self):
         layout = QVBoxLayout(self)
@@ -66,41 +66,41 @@ class QFilterPopup(QDialog):
         buttons_layout.addWidget(self.cancel_button)
         layout.addLayout(buttons_layout)
 
-    def get_selected_visible_data(self) -> set[str]:
+    def getSelectedVisibleData(self) -> set[str]:
         return {item.data(Qt.ItemDataRole.DisplayRole) for row in range(self.proxy_model.rowCount())
                 if (item := self.model.itemFromIndex(self.proxy_model.mapToSource(self.proxy_model.index(row, 0))))
                 .checkState() == Qt.CheckState.Checked}
 
-    def get_data(self) -> set[str]:
-        return set(item.data(Qt.ItemDataRole.DisplayRole) for item in self.get_items())
+    def getData(self) -> set[str]:
+        return set(item.data(Qt.ItemDataRole.DisplayRole) for item in self.getItems())
 
     def _on_apply_button(self):
         if self.search_field.text():
             self._check_all_visible_items()
 
     def _check_all_visible_items(self):
-        for item in self.get_items():
+        for item in self.getItems():
             proxy_index = self.proxy_model.mapFromSource(item.index())
             item.setCheckState(Qt.CheckState.Checked if proxy_index.isValid() else Qt.CheckState.Unchecked)
 
-    def check_all(self):
-        for item in self.get_items():
+    def checkAll(self):
+        for item in self.getItems():
             item.setCheckState(Qt.CheckState.Checked)
 
-    def get_items(self) -> Generator[QStandardItem]:
+    def getItems(self) -> Generator[QStandardItem]:
         for row in range(self.model.rowCount()):
             yield self.model.item(row, 0)
 
-    def is_filtering(self):
-        return any(map(lambda i: i.checkState() == Qt.CheckState.Unchecked, self.get_items()))
+    def isFiltering(self):
+        return any(map(lambda i: i.checkState() == Qt.CheckState.Unchecked, self.getItems()))
 
-    def add_data(self, data: str):
+    def addData(self, data: str):
         item = QStandardItem(data)
         item.setCheckable(True)
         item.setCheckState(Qt.CheckState.Checked)
         self.model.appendRow(item)
 
-    def remove_data(self, data: str):
+    def removeData(self, data: str):
         items = self.model.findItems(data)
         for i in items:
             self.model.removeRow(i.row())

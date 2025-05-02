@@ -3,8 +3,8 @@ import sys
 import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication, QLineEdit, QWidget, QVBoxLayout
 
-from source.extra_qwidgets.widgets.emoji_picker import QEmojiPicker
-from source.extra_qwidgets.utils import colorize_icon_by_theme
+from extra_qwidgets.utils import colorize_icon_by_theme
+from extra_qwidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
 
 
 class MainWindow(QMainWindow):
