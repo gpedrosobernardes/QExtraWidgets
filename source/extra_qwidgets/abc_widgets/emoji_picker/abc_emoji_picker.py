@@ -10,6 +10,7 @@ from PySide6.QtGui import QIcon, QPixmap, QAction, QStandardItem
 from PySide6.QtWidgets import QWidget, QLineEdit, QHBoxLayout, QLabel, QVBoxLayout, \
     QScrollArea, QMenu, QAbstractButton
 from emojis.db import Emoji, get_emojis_by_category
+from scipy.special.cython_special import logit
 
 from extra_qwidgets.abc_widgets.abc_collapse_group import ABCCollapseGroup
 from extra_qwidgets.exceptions import FavoriteNotImplemented, RecentNotImplemented, EmojiAlreadyExists
@@ -123,10 +124,15 @@ class ABCEmojiPicker(QWidget):
         )
 
     def __load_emojis(self):
+        t0 = time.perf_counter()
+        total_bytes = 0
         for category in self.__categories.keys():
             if category not in ("Favorite", "Recent"):
-                self.__add_emojis(category, get_emojis_by_category(category))
-        self.__add_emojis("Smileys & Emotion", get_emojis_by_category("People & Body"))
+                total_bytes += self.__add_emojis(category, get_emojis_by_category(category))
+        total_bytes += self.__add_emojis("Smileys & Emotion", get_emojis_by_category("People & Body"))
+        t1 = time.perf_counter()
+        logging.debug(f"Loaded all emojis in: {t1 - t0:.4f} seconds")
+        logging.debug(f"Total megabytes: {total_bytes / 1024 / 1024:.2f}")
 
     def add_category(self, category: str, icon: QIcon, title: str):
         shortcut_button = self._new_shortcut_button()
@@ -160,12 +166,12 @@ class ABCEmojiPicker(QWidget):
     def shortcut(self, category: str) -> QAbstractButton:
         return self.__categories[category]["shortcut"]
 
-    def __add_emojis(self, category: str, emojis_: typing.List[Emoji]):
-        t0 = time.perf_counter()
+    def __add_emojis(self, category: str, emojis_: typing.List[Emoji]) -> int:
+        emoji_grid = self.emojiGrid(category)
+        total_bytes = 0
         for emoji in emojis_:
-            self.emojiGrid(category).add_emoji(emoji)
-        t1 = time.perf_counter()
-        logging.debug(f"Loaded all emojis in: {t1 - t0:.4f} seconds")
+            total_bytes += emoji_grid.add_emoji(emoji)
+        return total_bytes
 
     @abstractmethod
     def _new_emoji_label(self) -> QLabel:

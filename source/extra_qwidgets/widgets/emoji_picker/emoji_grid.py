@@ -35,7 +35,7 @@ class QEmojiGrid(QListView):
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._setup_binds()
 
-    def add_emoji(self, emoji: Emoji) -> QStandardItem:
+    def add_emoji(self, emoji: Emoji) -> int:
         t0 = time.perf_counter()
         reader = QImageReader(get_emoji_path(emoji))
         reader.setScaledSize(self.iconSize())
@@ -47,7 +47,7 @@ class QEmojiGrid(QListView):
         item.setData(emoji, Qt.ItemDataRole.UserRole)
         item.setIcon(pixmap)
         self.addItem(item)
-        return item
+        return image.sizeInBytes()
 
     def _setup_binds(self):
         self.setMouseTracking(True)
