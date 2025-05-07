@@ -96,12 +96,12 @@ class ABCEmojiPicker(QWidget):
         )
         self.add_category(
             "Activities",
-            qtawesome.icon("fa6s.gamepad"),
+            qtawesome.icon("fa6s.gamepad", options=[{"scale_factor": 0.9}]),
             translate("QEmojiPicker", "Activities"),
         )
         self.add_category(
             "Travel & Places",
-            qtawesome.icon("fa6s.bicycle"),
+            qtawesome.icon("fa6s.bicycle", options=[{"scale_factor": 0.9}]),
             translate("QEmojiPicker", "Travel & Places"),
         )
         self.add_category(
