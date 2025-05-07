@@ -132,7 +132,7 @@ class ABCEmojiPicker(QWidget):
         shortcut_button.clicked.connect(lambda: self.__on_shortcut_click(category))
         self.__menu_horizontal_layout.addWidget(shortcut_button)
         emoji_grid = QEmojiGrid()
-        self.__bind_emoji_grid(emoji_grid)
+        self.__bind_emoji_grid(emoji_grid, category)
         self._collapse_group.addCollapse(title, emoji_grid, name=category, stretch=True)
         self.__categories[category] = {
             "shortcut": shortcut_button,
@@ -166,7 +166,7 @@ class ABCEmojiPicker(QWidget):
         emoji_grid = self.emojiGrid(category)
         item = QStandardItem()
         item.setData(emoji, Qt.ItemDataRole.UserRole)
-        item.setIcon(QIcon(get_emoji_path(emoji)))
+        item.setData(False, Qt.ItemDataRole.UserRole + 1)
         emoji_grid.addItem(item)
         return item
 
@@ -194,11 +194,12 @@ class ABCEmojiPicker(QWidget):
         emoji_grid = self.emojiGrid(category)
         emoji_grid.removeEmoji(emoji)
 
-    def __bind_emoji_grid(self, emoji_grid: QEmojiGrid):
+    def __bind_emoji_grid(self, emoji_grid: QEmojiGrid, category: str):
         emoji_grid.mouseLeftEmoji.connect(self.__mouse_leave_emoji)
         emoji_grid.mouseEnteredEmoji.connect(self.__set_emoji_label)
         emoji_grid.emojiClicked.connect(self.picked.emit)
         emoji_grid.contextMenu.connect(self.__open_button_context_menu)
+        self.__scroll_area.verticalScrollBar().valueChanged.connect(lambda: emoji_grid.load_visible_icons(self.__scroll_area, category))
         if self.__recent_category:
             emoji_grid.emojiClicked.connect(self.__add_recent)
             emoji_grid.emojiClicked.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
@@ -260,6 +261,11 @@ class ABCEmojiPicker(QWidget):
                 emoji_item = emoji_grid.getItem(emoji)
                 return emoji_item
         return None
+
+    def _emoji_items(self, emoji: Emoji) -> typing.Generator[QStandardItem]:
+        for category in self.__categories.keys():
+            emoji_grid = self.emojiGrid(category)
+            yield emoji_grid.getItem(emoji)
 
     def __set_emoji_label(self, emoji: Emoji):
         aliases = " ".join(map(lambda alias: f":{alias}:", emoji.aliases))
