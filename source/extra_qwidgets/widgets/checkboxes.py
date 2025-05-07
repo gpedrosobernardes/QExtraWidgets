@@ -1,8 +1,6 @@
-import typing
-
 from PySide6.QtWidgets import QGridLayout, QWidget, QLabel, QCheckBox
 
-from extra_qwidgets.widgets import QCheckBoxGroup
+from extra_qwidgets.widgets.checkbox_group import QCheckBoxGroup
 
 
 class QCheckBoxes(QWidget, QCheckBoxGroup):

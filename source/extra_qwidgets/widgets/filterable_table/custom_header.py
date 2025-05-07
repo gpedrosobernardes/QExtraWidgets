@@ -3,6 +3,7 @@ from PySide6.QtGui import QPainter, QIcon
 from PySide6.QtWidgets import QHeaderView
 
 
+# noinspection PyPep8Naming
 class CustomHeader(QHeaderView):
     def __init__(self, orientation, parent=None):
         super().__init__(orientation, parent)

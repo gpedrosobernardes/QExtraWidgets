@@ -1,7 +1,7 @@
 import qtawesome
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QApplication
 
-from source.extra_qwidgets.widgets import QResponsiveTextEdit
+from extra_qwidgets.widgets.resposive_text_edit import QResponsiveTextEdit
 from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 

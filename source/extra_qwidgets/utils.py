@@ -1,4 +1,7 @@
+import typing
 from pathlib import Path
+
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon, QPainter, QPixmap, QColor, Qt
 from PySide6.QtWidgets import QApplication
 from emojis.db import Emoji
@@ -39,16 +42,7 @@ def is_dark_mode() -> bool:
     return color_scheme.value == 2
 
 
-def colorize_icon(icon: QIcon, color: str, default_size=(64, 64)) -> QIcon:
-    # Get available sizes or use default size if empty
-    sizes = icon.availableSizes()
-
-    # Convert QIcon to QPixmap
-    if sizes:
-        pixmap = icon.pixmap(sizes[0])
-    else:
-        pixmap = icon.pixmap(*default_size)
-
+def colorize_pixmap(pixmap: QPixmap, color: str) -> QPixmap:
     # Create a new QPixmap with the same size and fill it with transparent color
     colored_pixmap = QPixmap(pixmap.size())
     colored_pixmap.fill(Qt.GlobalColor.transparent)
@@ -61,12 +55,34 @@ def colorize_icon(icon: QIcon, color: str, default_size=(64, 64)) -> QIcon:
     painter.end()
 
     # Convert the colored QPixmap back to QIcon
-    return QIcon(colored_pixmap)
+    return colored_pixmap
 
 
-def colorize_icon_by_theme(icon: QIcon, default_size=(64, 64)) -> QIcon:
+def get_all_pixmap_from_icon(icon: QIcon, size: QSize = QSize(64, 64)) -> typing.Dict[typing.Tuple[QIcon.Mode, QIcon.State], QPixmap]:
+    modes = [QIcon.Mode.Normal, QIcon.Mode.Disabled, QIcon.Mode.Active, QIcon.Mode.Selected]
+    states = [QIcon.State.Off, QIcon.State.On]
+    all_pixmap = {}
+    for mode in modes:
+        for state in states:
+            pixmap = icon.pixmap(size, mode, state)
+            if not pixmap.isNull():
+                key = (mode, state)
+                all_pixmap[key] = pixmap
+    return all_pixmap
+
+
+def colorize_icon(icon: QIcon, color: str, size: QSize = QSize(64, 64)) -> QIcon:
+    new_icon = QIcon()
+    for key, value in get_all_pixmap_from_icon(icon, size).items():
+        mode, state = key
+        pixmap = icon.pixmap(size, mode, state)
+        new_icon.addPixmap(colorize_pixmap(pixmap, color), mode, state)
+    return new_icon
+
+
+def colorize_icon_by_theme(icon: QIcon, size: QSize = QSize(64, 64)) -> QIcon:
     color = "#FFFFFF" if is_dark_mode() else "#000000"
-    return colorize_icon(icon, color, default_size)
+    return colorize_icon(icon, color, size)
 
 
 def get_emoji_path(emoji: Emoji) -> str:

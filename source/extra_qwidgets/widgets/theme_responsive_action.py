@@ -1,7 +1,7 @@
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QApplication
 
-from extra_qwidgets.utils import is_dark_mode, colorize_icon
+from extra_qwidgets.utils import is_dark_mode, colorize_pixmap
 
 
 class QThemeResponsiveAction(QAction):
@@ -19,7 +19,7 @@ class QThemeResponsiveAction(QAction):
 
     def setIcon(self, icon):
         if is_dark_mode():
-            icon = colorize_icon(icon, "#FFFFFF")
+            icon = colorize_pixmap(icon, "#FFFFFF")
         else:
-            icon = colorize_icon(icon, "#000000")
+            icon = colorize_pixmap(icon, "#000000")
         super().setIcon(icon)

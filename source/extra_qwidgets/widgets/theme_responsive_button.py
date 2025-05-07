@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QPushButton, QApplication
 
-from extra_qwidgets.utils import is_dark_mode, colorize_icon
+from extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class QThemeResponsiveButton(QPushButton):
@@ -17,8 +17,4 @@ class QThemeResponsiveButton(QPushButton):
         self.setIcon(self.icon())
 
     def setIcon(self, icon):
-        if is_dark_mode():
-            icon = colorize_icon(icon, "#FFFFFF")
-        else:
-            icon = colorize_icon(icon, "#000000")
-        super().setIcon(icon)
+        super().setIcon(colorize_icon_by_theme(icon))

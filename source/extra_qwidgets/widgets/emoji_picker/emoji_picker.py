@@ -1,10 +1,11 @@
 from PySide6.QtCore import QSize
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QPushButton, QAbstractButton, QLineEdit, QLabel, QMenu
+from PySide6.QtWidgets import QAbstractButton, QLineEdit, QLabel, QMenu
 
 from extra_qwidgets.abc_widgets.abc_collapse_group import ABCCollapseGroup
 from extra_qwidgets.abc_widgets.emoji_picker.abc_emoji_picker import ABCEmojiPicker
-from extra_qwidgets.widgets import QCollapseGroup
+from extra_qwidgets.widgets.collapse_group import QCollapseGroup
+from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 
 
 class QEmojiPicker(ABCEmojiPicker):
@@ -24,7 +25,7 @@ class QEmojiPicker(ABCEmojiPicker):
         return line_edit
 
     def _new_shortcut_button(self) -> QAbstractButton:
-        shortcut_button = QPushButton()
+        shortcut_button = QThemeResponsiveButton()
         shortcut_button.setFixedSize(QSize(30, 30))
         shortcut_button.setIconSize(QSize(22, 22))
         shortcut_button.setFlat(True)

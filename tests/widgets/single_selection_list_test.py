@@ -3,7 +3,7 @@ import sys
 import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication
 
-from source.extra_qwidgets.widgets import QSingleSelectionList
+from extra_qwidgets.widgets.single_selection_list import QSingleSelectionList
 from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 

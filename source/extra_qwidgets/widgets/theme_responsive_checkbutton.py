@@ -1,4 +1,4 @@
-from extra_qwidgets.widgets import QThemeResponsiveButton
+from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 
 
 class QThemeResponsiveCheckButton(QThemeResponsiveButton):

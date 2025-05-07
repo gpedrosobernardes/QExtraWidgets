@@ -1,6 +1,5 @@
 from PySide6.QtGui import QValidator
-from emoji import is_emoji, purely_emoji
-from emojis import emojis
+from emoji import purely_emoji
 
 
 class QEmojiValidator(QValidator):

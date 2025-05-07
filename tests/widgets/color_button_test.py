@@ -3,7 +3,7 @@ import sys
 import qtawesome
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
-from source.extra_qwidgets.widgets import QColorButton
+from extra_qwidgets.widgets.color_button import QColorButton
 from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
