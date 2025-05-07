@@ -1,11 +1,14 @@
+import logging
+import time
 import typing
 
 from PySide6.QtCore import QSize, Qt, Signal, QModelIndex, QPoint
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QMouseEvent
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QMouseEvent, QImageReader, QPixmap
 from PySide6.QtWidgets import QListView, QSizePolicy, QAbstractScrollArea
 from emojis.db import Emoji
 
 from extra_qwidgets.abc_widgets.emoji_picker.emoji_sort_filter_proxy_model import EmojiSortFilterProxyModel
+from extra_qwidgets.utils import get_emoji_path
 
 
 class QEmojiGrid(QListView):
@@ -14,8 +17,8 @@ class QEmojiGrid(QListView):
     emojiClicked = Signal(Emoji)
     contextMenu = Signal(Emoji, QPoint)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, icon_size: QSize = QSize(36, 36), grid_size: QSize = QSize(40, 40)):
+        super().__init__()
         self.model = QStandardItemModel()
         self._proxy = EmojiSortFilterProxyModel(self)
         self._proxy.setSourceModel(self.model)
@@ -24,13 +27,27 @@ class QEmojiGrid(QListView):
         self.setResizeMode(QListView.ResizeMode.Adjust)
         self.setUniformItemSizes(True)
         self.setWrapping(True)
-        self.setIconSize(QSize(36, 36))
-        self.setGridSize(QSize(40, 40))
+        self.setIconSize(icon_size)
+        self.setGridSize(grid_size)
         self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         self._setup_binds()
+
+    def add_emoji(self, emoji: Emoji) -> QStandardItem:
+        t0 = time.perf_counter()
+        reader = QImageReader(get_emoji_path(emoji))
+        reader.setScaledSize(self.iconSize())
+        image = reader.read()
+        pixmap = QPixmap.fromImage(image)
+        t1 = time.perf_counter()
+        logging.debug(f"Time to load emoji {emoji.emoji} icon: {t1 - t0:.4f} seconds")
+        item = QStandardItem()
+        item.setData(emoji, Qt.ItemDataRole.UserRole)
+        item.setIcon(pixmap)
+        self.addItem(item)
+        return item
 
     def _setup_binds(self):
         self.setMouseTracking(True)

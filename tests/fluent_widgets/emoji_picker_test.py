@@ -1,3 +1,4 @@
+import logging
 import sys
 
 import qtawesome
@@ -6,6 +7,7 @@ from qfluentwidgets import Theme, setTheme
 
 from extra_qwidgets.fluent_widgets.emoji_picker.emoji_picker import EmojiPicker
 from extra_qwidgets.utils import colorize_icon_by_theme
+from extra_qwidgets.validators.emoji_validator import QEmojiValidator
 
 
 class MainWindow(QMainWindow):
@@ -19,6 +21,7 @@ class MainWindow(QMainWindow):
 
         line_edit = QLineEdit()
         line_edit.setPlaceholderText("Enter your favorite emoji")
+        line_edit.setValidator(QEmojiValidator())
 
         emoji_picker = EmojiPicker()
         emoji_picker.picked.connect(lambda emoji: line_edit.insert(emoji.emoji))
@@ -33,6 +36,7 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG)
     app = QApplication(sys.argv)
     setTheme(Theme.AUTO)
     window = MainWindow()

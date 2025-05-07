@@ -2,3 +2,4 @@
 .idea
 build
 source/extra_qwidgets.egg-info
+__pycache__

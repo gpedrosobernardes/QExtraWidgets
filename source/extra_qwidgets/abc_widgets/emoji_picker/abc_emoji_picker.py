@@ -1,4 +1,6 @@
 import contextlib
+import logging
+import time
 import typing
 from abc import abstractmethod
 
@@ -159,16 +161,11 @@ class ABCEmojiPicker(QWidget):
         return self.__categories[category]["shortcut"]
 
     def __add_emojis(self, category: str, emojis_: typing.List[Emoji]):
+        t0 = time.perf_counter()
         for emoji in emojis_:
-            self.__add_emoji(category, emoji)
-
-    def __add_emoji(self, category: str, emoji: Emoji) -> QStandardItem:
-        emoji_grid = self.emojiGrid(category)
-        item = QStandardItem()
-        item.setData(emoji, Qt.ItemDataRole.UserRole)
-        item.setIcon(QIcon(get_emoji_path(emoji)))
-        emoji_grid.addItem(item)
-        return item
+            self.emojiGrid(category).add_emoji(emoji)
+        t1 = time.perf_counter()
+        logging.debug(f"Loaded all emojis in: {t1 - t0:.4f} seconds")
 
     @abstractmethod
     def _new_emoji_label(self) -> QLabel:
@@ -211,8 +208,9 @@ class ABCEmojiPicker(QWidget):
         if self.isRecent(emoji):
             raise EmojiAlreadyExists(emoji.emoji)
 
-        self.__add_emoji("Recent", emoji)
-        self.emojiGrid("Recent").filter(self.__line_edit.text())
+        emoji_grid = self.emojiGrid("Recent")
+        emoji_grid.add_emoji(emoji)
+        emoji_grid.filter(self.__line_edit.text())
 
     def __add_recent(self, emoji: Emoji):
         with contextlib.suppress(EmojiAlreadyExists):
@@ -238,7 +236,7 @@ class ABCEmojiPicker(QWidget):
         if self.isFavorite(emoji):
             raise EmojiAlreadyExists(emoji.emoji)
 
-        self.__add_emoji("Favorite", emoji)
+        self.emojiGrid("Favorite").add_emoji(emoji)
 
     def isFavorite(self, emoji: Emoji) -> bool:
         if not self.__favorite_category:
