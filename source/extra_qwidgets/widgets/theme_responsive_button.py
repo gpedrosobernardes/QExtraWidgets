@@ -1,9 +1,9 @@
-from PySide6.QtWidgets import QPushButton, QApplication
+from PySide6.QtWidgets import QPushButton
 
-from extra_qwidgets.utils import colorize_icon_by_theme
+from extra_qwidgets.abc_widgets.abc_theme_responsive import ABCThemeResponsive
 
 
-class QThemeResponsiveButton(QPushButton):
+class QThemeResponsiveButton(QPushButton, ABCThemeResponsive):
     def __init__(self, *args, **kwargs):
         """
         A QPushButton that changes its icon color based on the current theme.
@@ -11,10 +11,4 @@ class QThemeResponsiveButton(QPushButton):
         :param kwargs: QPushButton's keyword arguments
         """
         super().__init__(*args, **kwargs)
-        QApplication.styleHints().colorSchemeChanged.connect(self._on_theme_change)
-
-    def _on_theme_change(self):
-        self.setIcon(self.icon())
-
-    def setIcon(self, icon):
-        super().setIcon(colorize_icon_by_theme(icon))
+        ABCThemeResponsive.__init__(self)
