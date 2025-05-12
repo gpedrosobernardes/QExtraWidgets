@@ -28,6 +28,6 @@ setup(
               "extra_qwidgets.fluent_widgets.emoji_picker",
               "extra_qwidgets.proxys",
               "extra_qwidgets.validators"],
-    install_requires=["emojis", "PySide6"],
+    install_requires=["emojis", "PySide6", "emoji"],
     python_requires=">=3.12"
 )
