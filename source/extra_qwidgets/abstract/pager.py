@@ -1,14 +1,14 @@
 import typing
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from PySide6.QtCore import Signal
-from PySide6.QtWidgets import QAbstractButton, QWidget, QHBoxLayout
+from PySide6.QtWidgets import QAbstractButton, QHBoxLayout, QWidget
+from PySide6 import Shiboken
 
-from extra_qwidgets.abc_widgets.abc_meta import QtABCMeta
+from extra_qwidgets.abstract.metaclass import QtABCMeta
 
 
-# noinspection PyPep8Naming
-class ABCPager(QWidget, metaclass=QtABCMeta):
+class AbstractPager(QWidget, ABC, metaclass=QtABCMeta):
     currentPageChanged = Signal(int)
     pagePressed = Signal(int)
     previousPagePressed = Signal()

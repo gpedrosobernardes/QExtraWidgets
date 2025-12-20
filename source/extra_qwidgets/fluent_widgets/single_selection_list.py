@@ -3,7 +3,7 @@ from PySide6.QtCore import QSize
 from PySide6.QtWidgets import QListWidget, QAbstractButton
 from qfluentwidgets import ListWidget
 
-from extra_qwidgets.abc_widgets.abc_single_selection_list import ABCSingleSelectionList
+from extra_qwidgets.abstract.abc_single_selection_list import ABCSingleSelectionList
 from extra_qwidgets.fluent_widgets.theme_responsive_transparent_tool_button import ThemeResponsiveTransparentToolButton
 
 

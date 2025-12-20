@@ -1,16 +1,16 @@
 import typing
-from abc import abstractmethod
+from abc import abstractmethod, ABCMeta, ABC
 
 import qtawesome as qta
 from PySide6.QtCore import QObject
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QAbstractButton
 
-from extra_qwidgets.abc_widgets.abc_meta import QtABCMeta
+from extra_qwidgets.abstract.metaclass import QtABCMeta
 
 
 # noinspection PyPep8Naming
-class ABCCollapseItem(QObject, metaclass=QtABCMeta):
+class AbstractCollapseItem(QObject, ABC, metaclass=QtABCMeta):
     def __init__(self, title: str, child: QWidget, collapsed: bool = False, name: typing.Optional[str] = None):
         """
         A collapsible group widget.

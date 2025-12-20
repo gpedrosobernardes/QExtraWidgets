@@ -1,9 +1,9 @@
 from qfluentwidgets import TransparentToolButton
 
-from extra_qwidgets.abc_widgets.abc_theme_responsive import ABCThemeResponsive
+from extra_qwidgets.abstract.theme_responsive import AbstractThemeResponsive
 
 
-class ThemeResponsiveTransparentToolButton(TransparentToolButton, ABCThemeResponsive):
+class ThemeResponsiveTransparentToolButton(TransparentToolButton, AbstractThemeResponsive):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        ABCThemeResponsive.__init__(self)
+        AbstractThemeResponsive.__init__(self)

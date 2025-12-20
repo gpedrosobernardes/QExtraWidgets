@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QAbstractButton
 
-from extra_qwidgets.abc_widgets.abc_collapse_item import ABCCollapseItem
+from extra_qwidgets.abstract.abc_collapse_item import ABCCollapseItem
 from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 
 

@@ -12,7 +12,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Password Test")
-        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
+        # self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
 
         widget = QPassword()
 

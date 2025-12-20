@@ -1,7 +1,7 @@
 import qtawesome
 from PySide6.QtWidgets import QListWidget, QAbstractButton
 
-from extra_qwidgets.abc_widgets.abc_single_selection_list import ABCSingleSelectionList
+from extra_qwidgets.abstract.abc_single_selection_list import ABCSingleSelectionList
 from extra_qwidgets.widgets.theme_responsive_button import QThemeResponsiveButton
 
 

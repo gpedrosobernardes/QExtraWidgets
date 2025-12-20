@@ -2,7 +2,7 @@ import qtawesome
 from PySide6.QtCore import QSize
 from qfluentwidgets import ToolButton, ToggleButton
 
-from extra_qwidgets.abc_widgets.abc_pager import ABCPager
+from extra_qwidgets.abstract.abc_pager import ABCPager
 from extra_qwidgets.fluent_widgets.theme_responsive_tool_button import ThemeResponsiveToolButton
 
 

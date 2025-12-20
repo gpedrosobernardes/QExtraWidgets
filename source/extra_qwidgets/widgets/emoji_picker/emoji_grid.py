@@ -5,18 +5,19 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QMouseEvent
 from PySide6.QtWidgets import QListView, QSizePolicy, QAbstractScrollArea
 from emojis.db import Emoji
 
-from extra_qwidgets.abc_widgets.emoji_picker.emoji_sort_filter_proxy_model import EmojiSortFilterProxyModel
+from extra_qwidgets.proxys.emoji_sort_filter import EmojiSortFilterProxyModel
 
 
 class QEmojiGrid(QListView):
-    mouseEnteredEmoji = Signal(Emoji)
-    mouseLeftEmoji = Signal()
-    emojiClicked = Signal(Emoji)
-    contextMenu = Signal(Emoji, QPoint)
+    mouseEnteredEmoji = Signal(Emoji, QStandardItem)
+    mouseLeftEmoji = Signal(Emoji, QStandardItem)
+    emojiClicked = Signal(Emoji, QStandardItem)
+    contextMenu = Signal(Emoji, QStandardItem, QPoint)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model = QStandardItemModel()
+        self._last_emoji = None
         self._proxy = EmojiSortFilterProxyModel(self)
         self._proxy.setSourceModel(self.model)
         self.setModel(self._proxy)
@@ -40,22 +41,32 @@ class QEmojiGrid(QListView):
         self.customContextMenuRequested.connect(self._on_context_menu)
 
     def __on_clicked(self, index: QModelIndex):
-        item_data = self.proxy().itemData(index)[Qt.ItemDataRole.UserRole]
-        self.emojiClicked.emit(item_data)
+        proxy = self.proxy()
+        item_data = proxy.itemData(index)[Qt.ItemDataRole.UserRole]
+        real_index = proxy.mapToSource(index)
+        item = self.model.itemFromIndex(real_index)
+        self.emojiClicked.emit(item_data, item)
 
     def _on_mouse_enter_emoji_grid(self, event: QMouseEvent):
         index = self.indexAt(event.pos())
+        proxy = self.proxy()
         if index.isValid():
-            item_data = self.proxy().itemData(index)[Qt.ItemDataRole.UserRole]
-            self.mouseEnteredEmoji.emit(item_data)
-        else:
-            self.mouseLeftEmoji.emit()
+            item_data = proxy.itemData(index)[Qt.ItemDataRole.UserRole]
+            real_index = proxy.mapToSource(index)
+            item = self.model.itemFromIndex(real_index)
+            args = (item_data, item)
+            self.mouseEnteredEmoji.emit(*args)
+            self._last_emoji = args
+        elif self._last_emoji is not None:
+            self.mouseLeftEmoji.emit(*self._last_emoji)
 
     def _on_context_menu(self, pos: QPoint):
         index = self.indexAt(pos)
         if index.isValid():
-            item_data = self.proxy().itemData(index)[Qt.ItemDataRole.UserRole]
-            self.contextMenu.emit(item_data, self.mapToGlobal(pos))
+            proxy = self.proxy()
+            item_data = proxy.itemData(index)[Qt.ItemDataRole.UserRole]
+            item = self.model.itemFromIndex(proxy.mapToSource(index))
+            self.contextMenu.emit(item_data, item, self.mapToGlobal(pos))
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
@@ -83,11 +94,8 @@ class QEmojiGrid(QListView):
             self.model.removeRow(item.row())
 
     def getItem(self, emoji: Emoji) -> typing.Optional[QStandardItem]:
-        for i in range(self.model.rowCount()):
-            item = self.model.item(i)
-            if item.data(Qt.ItemDataRole.UserRole) == emoji:
-                return item
-        return None
+        match = self.model.match(self.model.index(0, 0), Qt.ItemDataRole.UserRole, emoji, flags=Qt.MatchFlag.MatchExactly)
+        return self.model.itemFromIndex(match[0]) if match else None
 
     def allFiltered(self) -> bool:
         return self._proxy.rowCount() == 0

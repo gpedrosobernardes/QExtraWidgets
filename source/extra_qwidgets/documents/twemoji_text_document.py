@@ -1,10 +1,10 @@
-from PySide6.QtCore import QUrl, QSignalBlocker, QTextBoundaryFinder, QRegularExpression
+import typing
+
+from PySide6.QtCore import QUrl, QSignalBlocker, QRegularExpression
 from PySide6.QtGui import QTextDocument, QTextCursor, QTextImageFormat, QImage, QTextCharFormat, \
-    QFontMetrics
-from emojis.db import Emoji, get_emoji_by_alias
-from pydantic import ValidationError
+    QFontMetrics, QTextFragment
+from emojis.db import Emoji, get_emoji_by_alias, get_emoji_by_code
 from twemoji_api.api import get_all_emojis
-from twemoji_api.params import EmojiParams
 
 from extra_qwidgets.utils import scale_inside
 
@@ -16,8 +16,23 @@ class QTwemojiTextDocument(QTextDocument):
         self.setAliasReplacement(alias_replacement)
         self._load_emojis()
 
+    def lineLimit(self):
+        return self._line_limit
+
+    def setLineLimit(self, line_limit: int):
+        self._line_limit = line_limit
+
+        if line_limit > 0:
+            self.contentsChange.connect(self._limit_line)
+        else:
+            self.contentsChange.disconnect(self._limit_line)
+
+    def _limit_line(self, position, chars_removed, chars_added):
+        if self.blockCount() > self._line_limit:
+            self.undo()
+
     def _load_emojis(self):
-        for e in get_all_emojis():
+        for e in get_all_emojis("svg"):
             alias = e.emoji.aliases[0]
             url = QUrl(f"twemoji://{alias}")
             img = QImage(str(e.path))
@@ -52,34 +67,37 @@ class QTwemojiTextDocument(QTextDocument):
         else:
             self.contentsChanged.disconnect(self._replace_alias)
 
-    def _replace_alias(self):
+    def _localize_alias(self):
         text = self.toPlainText()
         re = QRegularExpression(R"(:\w+:)")
-        cursor = QTextCursor(self)
         global_match = re.globalMatch(text)
         matches = []
-        font_height = self._font_heigth(cursor)
-
         while global_match.hasNext():
-            matches.append(global_match.next())
-
-        for match in reversed(matches):
+            match = global_match.next()
             words = match.captured(0)[1:-1]
             start = match.capturedStart(0)
             end = match.capturedEnd(0)
-            cursor.setPosition(start, QTextCursor.MoveMode.MoveAnchor)
-            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
             emoji = get_emoji_by_alias(words)
             if emoji:
-                if self._twemoji:
-                    image = self.emoji_to_text_image(emoji, font_height)
-                    with QSignalBlocker(self):
-                        cursor.removeSelectedText()
-                        cursor.insertImage(image)
-                else:
-                    with QSignalBlocker(self):
-                        cursor.insertText(emoji.emoji)
+                matches.insert(0, (emoji, start, end))
+        return matches
 
+    def _replace_alias(self):
+        cursor = QTextCursor(self)
+        font_height = self._font_heigth(cursor)
+
+        for emoji, start, end in self._localize_alias():
+            cursor.setPosition(start, QTextCursor.MoveMode.MoveAnchor)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+
+            if self._twemoji:
+                image = self.emoji_to_text_image(emoji, font_height)
+                with QSignalBlocker(self):
+                    cursor.removeSelectedText()
+                    cursor.insertImage(image)
+            else:
+                with QSignalBlocker(self):
+                    cursor.insertText(emoji.emoji)
 
     @staticmethod
     def _font_heigth(cursor):
@@ -92,31 +110,33 @@ class QTwemojiTextDocument(QTextDocument):
 
         font_height = self._font_heigth(cursor)
 
-        text = self.toPlainText()
-        finder = QTextBoundaryFinder(QTextBoundaryFinder.BoundaryType.Grapheme, text)
-        finder.toEnd()
-        pos = finder.position()
-
-        while pos > 0:
-            previous_pos = pos
-            pos = finder.toPreviousBoundary()
-            cursor.setPosition(pos, QTextCursor.MoveMode.MoveAnchor)
-            cursor.setPosition(previous_pos, QTextCursor.MoveMode.KeepAnchor)
-            current_text = cursor.selectedText()
+        for emoji, start, end in self._localize_emojis():
+            cursor.setPosition(start, QTextCursor.MoveMode.MoveAnchor)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            emoji_without_color = self._remove_emoji_color(emoji)
+            emoji_obj = get_emoji_by_code(emoji_without_color)
+            image = self.emoji_to_text_image(emoji_obj, font_height)
             with QSignalBlocker(self):
-                try:
-                    emoji = EmojiParams(emoji=current_text).emoji
-                except ValidationError:
-                    pass
-                else:
-                    cursor.removeSelectedText()
-                    image = self.emoji_to_text_image(emoji, font_height)
-                    cursor.insertImage(image)
+                cursor.removeSelectedText()
+                cursor.insertImage(image)
 
-    def _detwemojize(self):
+    def _localize_emojis(self):
+        re_emoji = QRegularExpression(
+            R"(?:\x{1F3F4}(?:\x{E0067}\x{E0062}\x{E0065}\x{E006E}\x{E0067}|\x{E0067}\x{E0062}\x{E0073}\x{E0063}\x{E0074}|\x{E0067}\x{E0062}\x{E0077}\x{E006C}\x{E0073})\x{E007F})|(?:[\x{0030}-\x{0039}\x{0023}\x{002A}]\x{FE0F}?\x{20E3})|(?:[\x{1F1E6}-\x{1F1FF}]{2})|(?:\p{Extended_Pictographic}\x{FE0F}?(?:[\x{1F3FB}-\x{1F3FF}])?(?:\x{200D}\p{Extended_Pictographic}\x{FE0F}?(?:[\x{1F3FB}-\x{1F3FF}])?)*)",
+            QRegularExpression.PatternOption.UseUnicodePropertiesOption
+        )
+
+        iterator = re_emoji.globalMatch(self.toPlainText())
+        matches = []
+        while iterator.hasNext():
+            match = iterator.next()
+            matches.insert(0, (match.captured(0), match.capturedStart(0), match.capturedEnd(0)))
+        return matches
+
+    def _localize_emoji_images(self):
         block = self.begin()
 
-        fragments_to_replace = []
+        emojis_images = []
         while block.isValid():
             it = block.begin()
             while not it.atEnd():
@@ -124,16 +144,37 @@ class QTwemojiTextDocument(QTextDocument):
                 if frag.isValid() and frag.charFormat().isImageFormat():
                     img_fmt = frag.charFormat().toImageFormat()
                     if img_fmt.name().startswith("twemoji://"):
-                        fragments_to_replace.append((frag.position(), frag.length(), img_fmt))
+                        start = frag.position()
+                        emojis_images.insert(0, (img_fmt, start, start + frag.length()))
                 it += 1
             block = block.next()
+        return emojis_images
 
+    def _detwemojize(self):
         cursor = QTextCursor(self)
-        for pos, length, img_fmt in reversed(fragments_to_replace):
-            cursor.setPosition(pos)
-            cursor.setPosition(pos + length, QTextCursor.MoveMode.KeepAnchor)
+        for img_fmt, start, end in self._localize_emoji_images():
+            cursor.setPosition(start)
+            cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
             emoji = self.text_image_to_emoji(img_fmt)
             cursor.insertText(emoji.emoji)
+
+    @staticmethod
+    def _get_emoji_colors(emoji: str) -> typing.Set[str]:
+        re_color = QRegularExpression(R"[\x{1F3FB}-\x{1F3FF}]")
+
+        iterator = re_color.globalMatch(emoji)
+        matches = []
+
+        while iterator.hasNext():
+            match = iterator.next()
+            matches.append(match.captured(0))
+
+        return set(matches)
+
+    def _remove_emoji_color(self, emoji: str) -> str:
+        for color in self._get_emoji_colors(emoji):
+            emoji = emoji.replace(color, "")
+        return emoji
 
     @staticmethod
     def emoji_to_text_image(emoji: Emoji, height: int) -> QTextImageFormat:
@@ -148,3 +189,51 @@ class QTwemojiTextDocument(QTextDocument):
         alias = image.name()[10:]
         return get_emoji_by_alias(alias)
 
+    def toText(self, cursor: QTextCursor = None) -> str:
+        result = ""
+
+        block = self.firstBlock()
+
+        while block.isValid():
+            it = block.begin()
+            while not it.atEnd():
+                frag = it.fragment()
+
+                is_selected = True
+                if cursor:
+                    is_selected = self._is_fragment_selected(cursor, frag)
+
+                if frag.isValid() and is_selected:
+                    char_format = frag.charFormat()
+
+                    if char_format.isImageFormat():
+                        image_format = char_format.toImageFormat()
+                        image_name = image_format.name()
+
+                        if image_name.startswith("twemoji://"):
+                            emoji = self.text_image_to_emoji(image_format)
+                            result += emoji.emoji
+                    else:
+                        result += frag.text()
+
+                it.__iadd__(1)
+
+            if block != self.lastBlock():
+                result += '\n'
+
+            block = block.next()
+
+        return result
+
+    @staticmethod
+    def _is_fragment_selected(cursor: QTextCursor, fragment: QTextFragment) -> bool:
+        if not cursor.hasSelection():
+            return False
+
+        sel_start = cursor.selectionStart()
+        sel_end = cursor.selectionEnd()
+
+        frag_start = fragment.position()
+        frag_end = frag_start + fragment.length()
+
+        return sel_end > frag_start and sel_start < frag_end

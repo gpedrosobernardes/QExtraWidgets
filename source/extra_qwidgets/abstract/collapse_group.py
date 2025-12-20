@@ -1,13 +1,13 @@
 import typing
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from extra_qwidgets.abc_widgets.abc_collapse_item import ABCCollapseItem
-from extra_qwidgets.abc_widgets.abc_meta import QtABCMeta
+from extra_qwidgets.abstract.collapse_item import AbstractCollapseItem
+from extra_qwidgets.abstract.metaclass import QtABCMeta
 
 
-class ABCCollapseGroup(QWidget, metaclass=QtABCMeta):
+class AbstractCollapseGroup(QWidget, ABC, metaclass=QtABCMeta):
     def __init__(self):
         super().__init__()
         self.layout = QVBoxLayout(self)
@@ -15,15 +15,15 @@ class ABCCollapseGroup(QWidget, metaclass=QtABCMeta):
         self.setLayout(self.layout)
 
     @abstractmethod
-    def _new_collapse_item(self, title: str, widget: QWidget, collapsed: bool = False, name: typing.Optional[str] = None) -> ABCCollapseItem:
+    def _new_collapse_item(self, title: str, widget: QWidget, collapsed: bool = False, name: typing.Optional[str] = None) -> AbstractCollapseItem:
         pass
 
-    def addCollapse(self, title: str, widget: QWidget, collapsed: bool = False, name: typing.Optional[str] = None, stretch: bool = False) -> ABCCollapseItem:
+    def addCollapse(self, title: str, widget: QWidget, collapsed: bool = False, name: typing.Optional[str] = None, stretch: bool = False) -> AbstractCollapseItem:
         collapse_item = self._new_collapse_item(title, widget, collapsed, name)
         self.addCollapseItem(collapse_item, stretch)
         return collapse_item
 
-    def addCollapseItem(self, collapse_item: ABCCollapseItem, stretch: bool = False):
+    def addCollapseItem(self, collapse_item: AbstractCollapseItem, stretch: bool = False):
         self.layout.addLayout(collapse_item.headerLayout())
         self.layout.addWidget(collapse_item.widget(), stretch)
         self._collapse_items.append(collapse_item)
@@ -51,13 +51,13 @@ class ABCCollapseGroup(QWidget, metaclass=QtABCMeta):
         if item:
             item.setCollapse(collapse)
 
-    def getItemByTitle(self, title: str) -> typing.Optional[ABCCollapseItem]:
+    def getItemByTitle(self, title: str) -> typing.Optional[AbstractCollapseItem]:
         for item in self._collapse_items:
             if item.header().text() == title:
                 return item
         return None
 
-    def getItemByName(self, name: str) -> typing.Optional[ABCCollapseItem]:
+    def getItemByName(self, name: str) -> typing.Optional[AbstractCollapseItem]:
         for item in self._collapse_items:
             if item.objectName() == name:
                 return item
@@ -73,5 +73,5 @@ class ABCCollapseGroup(QWidget, metaclass=QtABCMeta):
     def isAllExpanded(self) -> bool:
         return all(item.isCollapsed() is False for item in self._collapse_items)
 
-    def items(self) -> list[ABCCollapseItem]:
+    def items(self) -> list[AbstractCollapseItem]:
         return self._collapse_items

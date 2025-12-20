@@ -1,13 +1,13 @@
 from PySide6.QtCore import QSize
-from PySide6.QtWidgets import QMenu
+from PySide6.QtWidgets import QMenu, QWidget
 from qfluentwidgets import SearchLineEdit, SubtitleLabel, RoundMenu
 
-from extra_qwidgets.abc_widgets.emoji_picker.abc_emoji_picker import ABCEmojiPicker
+from extra_qwidgets.abstract.emoji_picker import AbstractEmojiPicker
 from extra_qwidgets.fluent_widgets.collapse_group import CollapseGroup
 from extra_qwidgets.fluent_widgets.theme_responsive_transparent_tool_button import ThemeResponsiveTransparentToolButton
 
 
-class EmojiPicker(ABCEmojiPicker):
+class EmojiPicker(AbstractEmojiPicker):
     def _new_emoji_label(self) -> SubtitleLabel:
         return SubtitleLabel()
 

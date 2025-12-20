@@ -1,26 +1,26 @@
-import contextlib
 import typing
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 import qtawesome
 from PySide6.QtCore import QCoreApplication, Signal, QSize, QTimer, QPoint, Qt
-from PySide6.QtGui import QIcon, QPixmap, QAction, QStandardItem
-from PySide6.QtWidgets import QWidget, QLineEdit, QHBoxLayout, QLabel, QVBoxLayout, \
-    QScrollArea, QMenu, QAbstractButton
+from PySide6.QtGui import QIcon, QAction, QStandardItem
+from PySide6.QtWidgets import QLineEdit, QHBoxLayout, QLabel, QVBoxLayout, \
+    QScrollArea, QMenu, QAbstractButton, QWidget
 from emojis.db import Emoji, get_emojis_by_category
 from twemoji_api.api import get_emoji_path
 
-from extra_qwidgets.abc_widgets.abc_collapse_group import ABCCollapseGroup
+from extra_qwidgets.abstract.collapse_group import AbstractCollapseGroup
+from extra_qwidgets.abstract.metaclass import QtABCMeta
 from extra_qwidgets.exceptions import FavoriteNotImplemented, RecentNotImplemented, EmojiAlreadyExists
 from extra_qwidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
 
 translate = QCoreApplication.translate
 
 
-class ABCEmojiPicker(QWidget):
+class AbstractEmojiPicker(QWidget, ABC, metaclass=QtABCMeta):
     picked = Signal(Emoji)
-    favorite = Signal(Emoji)
-    removed_favorite = Signal(Emoji)
+    favorite = Signal(Emoji, QStandardItem)
+    removed_favorite = Signal(Emoji, QStandardItem)
 
     def __init__(self, favorite_category: bool = True, recent_category: bool = True):
         super().__init__()
@@ -59,10 +59,10 @@ class ABCEmojiPicker(QWidget):
         self.__line_edit.textEdited.connect(lambda: QTimer.singleShot(5, self.__hide_empty_categories))
 
         if self.__favorite_category:
-            self.favorite.connect(lambda emoji: self.addFavorite(emoji))
+            self.favorite.connect(self.__add_favorite)
             self.favorite.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
             self.favorite.connect(lambda: QTimer.singleShot(5, self.__hide_empty_categories))
-            self.removed_favorite.connect(lambda emoji: self.removeFavorite(emoji))
+            self.removed_favorite.connect(lambda emoji, _: self.removeFavorite(emoji))
             self.removed_favorite.connect(lambda: self.__filter_emojis(self.__line_edit.text()))
             self.removed_favorite.connect(lambda: QTimer.singleShot(5, self.__hide_empty_categories))
 
@@ -162,11 +162,14 @@ class ABCEmojiPicker(QWidget):
         for emoji in emojis_:
             self.__add_emoji(category, emoji)
 
-    def __add_emoji(self, category: str, emoji: Emoji) -> QStandardItem:
+    def __add_emoji(self, category: str, emoji: Emoji | QStandardItem) -> QStandardItem:
         emoji_grid = self.emojiGrid(category)
-        item = QStandardItem()
-        item.setData(emoji, Qt.ItemDataRole.UserRole)
-        item.setIcon(QIcon(str(get_emoji_path(emoji))))
+        if isinstance(emoji, QStandardItem):
+            item = emoji.clone()
+        else:
+            item = QStandardItem()
+            item.setData(emoji, Qt.ItemDataRole.UserRole)
+            item.setIcon(QIcon(str(get_emoji_path(emoji))))
         emoji_grid.addItem(item)
         return item
 
@@ -183,7 +186,7 @@ class ABCEmojiPicker(QWidget):
         pass
 
     @abstractmethod
-    def _new_collapse_group(self) -> ABCCollapseGroup:
+    def _new_collapse_group(self) -> AbstractCollapseGroup:
         pass
 
     @abstractmethod
@@ -197,7 +200,7 @@ class ABCEmojiPicker(QWidget):
     def __bind_emoji_grid(self, emoji_grid: QEmojiGrid):
         emoji_grid.mouseLeftEmoji.connect(self.__mouse_leave_emoji)
         emoji_grid.mouseEnteredEmoji.connect(self.__set_emoji_label)
-        emoji_grid.emojiClicked.connect(self.picked.emit)
+        emoji_grid.emojiClicked.connect(lambda emoji, _: self.picked.emit(emoji))
         emoji_grid.contextMenu.connect(self.__open_button_context_menu)
         if self.__recent_category:
             emoji_grid.emojiClicked.connect(self.__add_recent)
@@ -214,9 +217,9 @@ class ABCEmojiPicker(QWidget):
         self.__add_emoji("Recent", emoji)
         self.emojiGrid("Recent").filter(self.__line_edit.text())
 
-    def __add_recent(self, emoji: Emoji):
-        with contextlib.suppress(EmojiAlreadyExists):
-            self.addRecent(emoji)
+    def __add_recent(self, emoji: Emoji, item: QStandardItem):
+        if not self.isRecent(emoji):
+            self.__add_emoji("Recent", item)
 
     def isRecent(self, emoji: Emoji) -> bool:
         if not self.__recent_category:
@@ -240,6 +243,10 @@ class ABCEmojiPicker(QWidget):
 
         self.__add_emoji("Favorite", emoji)
 
+    def __add_favorite(self, emoji: Emoji, item: QStandardItem):
+        if not self.isFavorite(emoji):
+            self.__add_emoji("Favorite", item)
+
     def isFavorite(self, emoji: Emoji) -> bool:
         if not self.__favorite_category:
             raise FavoriteNotImplemented()
@@ -261,9 +268,9 @@ class ABCEmojiPicker(QWidget):
                 return emoji_item
         return None
 
-    def __set_emoji_label(self, emoji: Emoji):
-        aliases = " ".join(map(lambda alias: f":{alias}:", emoji.aliases))
-        self.__emoji_label.setPixmap(QPixmap(get_emoji_path(emoji)))
+    def __set_emoji_label(self, emoji: Emoji, item: QStandardItem):
+        aliases = " ".join(f":{alias}:" for alias in emoji[0])
+        self.__emoji_label.setPixmap(item.icon().pixmap(self.__emoji_label.size()))
         self.__aliases_emoji_label.setText(aliases)
 
     def __hide_empty_categories(self):
@@ -279,7 +286,7 @@ class ABCEmojiPicker(QWidget):
             emoji_grid = self.emojiGrid(category)
             emoji_grid.filter(emoji_alias)
 
-    def __mouse_leave_emoji(self):
+    def __mouse_leave_emoji(self, *_):
         self.__emoji_label.clear()
         self.__aliases_emoji_label.clear()
 
@@ -288,16 +295,16 @@ class ABCEmojiPicker(QWidget):
         self.__filter_emojis()
         self.__scroll_area.verticalScrollBar().setValue(0)
 
-    def __open_button_context_menu(self, emoji: Emoji, global_position: QPoint):
+    def __open_button_context_menu(self, emoji: Emoji, item: QStandardItem, global_position: QPoint):
         context_menu = self._new_menu()
         if self.isFavorite(emoji):
             remove_action = QAction(
                 translate("QEmojiPicker", "Remove from favorite")
             )
-            remove_action.triggered.connect(lambda: self.removed_favorite.emit(emoji))
+            remove_action.triggered.connect(lambda: self.removed_favorite.emit(emoji, item))
             context_menu.addAction(remove_action)
         else:
             add_action = QAction(translate("QEmojiPicker", "Add to favorite"))
-            add_action.triggered.connect(lambda: self.favorite.emit(emoji))
+            add_action.triggered.connect(lambda: self.favorite.emit(emoji, item))
             context_menu.addAction(add_action)
         context_menu.exec(global_position)

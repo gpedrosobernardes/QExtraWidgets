@@ -1,4 +1,5 @@
 from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, Qt
+from emojis.db import Emoji
 
 
 class EmojiSortFilterProxyModel(QSortFilterProxyModel):
@@ -7,7 +8,8 @@ class EmojiSortFilterProxyModel(QSortFilterProxyModel):
         obj = idx.data(Qt.ItemDataRole.UserRole)
         if obj is None:
             return False
+        aliases = obj[0]
         pattern = self.filterRegularExpression().pattern()
         if not pattern:
             return True
-        return any(pattern.lower() in alias for alias in obj.aliases)
+        return any(pattern.lower() in alias for alias in aliases)

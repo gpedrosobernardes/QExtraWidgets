@@ -1,13 +1,13 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from typing import Sequence
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QListWidget, QAbstractButton
+from PySide6.QtWidgets import QVBoxLayout, QHBoxLayout, QListWidget, QAbstractButton, QWidget
 
-from extra_qwidgets.abc_widgets.abc_meta import QtABCMeta
+from extra_qwidgets.abstract.metaclass import QtABCMeta
 
 
-class ABCSingleSelectionList(QWidget, metaclass=QtABCMeta):
+class AbstractSingleSelectionList(QWidget, ABC, metaclass=QtABCMeta):
     def __init__(self):
         super().__init__()
         self.__to_select_list = self._new_list_widget()

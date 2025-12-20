@@ -1,10 +1,13 @@
 import sys
 
 import qtawesome
-from PySide6.QtWidgets import QMainWindow, QApplication, QLineEdit, QWidget, QVBoxLayout
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
+from emojis.db import Emoji
 from qfluentwidgets import Theme, setTheme
 
+from extra_qwidgets.documents.twemoji_text_document import QTwemojiTextDocument
 from extra_qwidgets.fluent_widgets.emoji_picker.emoji_picker import EmojiPicker
+from extra_qwidgets.fluent_widgets.extra_text_edit import ExtraTextEdit
 from extra_qwidgets.utils import colorize_icon_by_theme
 
 
@@ -17,16 +20,17 @@ class MainWindow(QMainWindow):
 
         widget = QWidget()
 
-        line_edit = QLineEdit()
-        line_edit.setPlaceholderText("Enter your favorite emoji")
+        text_edit = ExtraTextEdit()
+        document: QTwemojiTextDocument = text_edit.document()
+        document.setLineLimit(1)
 
         emoji_picker = EmojiPicker()
-        emoji_picker.picked.connect(lambda emoji: line_edit.insert(emoji.emoji))
+        emoji_picker.picked.connect(lambda emoji: text_edit.insertPlainText(Emoji(*emoji).emoji))
 
         # center line_edit on widget
         layout = QVBoxLayout()
-        layout.addWidget(line_edit)
         layout.addWidget(emoji_picker)
+        layout.addWidget(text_edit)
         widget.setLayout(layout)
 
         self.setCentralWidget(widget)
