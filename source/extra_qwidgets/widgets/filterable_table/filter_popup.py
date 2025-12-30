@@ -19,7 +19,7 @@ class QFilterPopup(QDialog):
         self.order_button.setText(self.tr("Order by A to Z"))
         self.order_button.setIcon(qtawesome.icon("fa6s.arrow-down-a-z"))
         self.reverse_order_button = QFilterToolButton()
-        self.reverse_order_button.setText(self.tr("Order by Z to A "))
+        self.reverse_order_button.setText(self.tr("Order by Z to A"))
         self.reverse_order_button.setIcon(qtawesome.icon("fa6s.arrow-down-z-a"))
         self.line = QFrame()
         self.line.setFrameShape(QFrame.Shape.HLine)
