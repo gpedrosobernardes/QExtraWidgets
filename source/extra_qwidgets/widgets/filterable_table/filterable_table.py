@@ -1,12 +1,11 @@
-import qtawesome
+from PySide6.QtCore import Qt, QRect
+from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QTableWidgetItem, QTableView, QApplication
 )
-from PySide6.QtCore import Qt, QRect
-from PySide6.QtGui import QStandardItemModel, QStandardItem
 
+from extra_qwidgets.icons import QThemeResponsiveIcon
 from extra_qwidgets.proxys.multi_filter import QMultiFilterProxy
-from extra_qwidgets.utils import colorize_icon_by_theme
 from extra_qwidgets.widgets.filterable_table.custom_header import CustomHeader
 from extra_qwidgets.widgets.filterable_table.filter_popup import QFilterPopup
 
@@ -54,9 +53,9 @@ class QFilterableTable(QTableView):
         popup = self._popups[column]
         item = self._model.horizontalHeaderItem(column)
         if popup.isFiltering():
-            item.setIcon(colorize_icon_by_theme(qtawesome.icon("fa6s.filter")))
+            item.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.filter"))
         else:
-            item.setIcon(colorize_icon_by_theme(qtawesome.icon("fa6s.angle-down")))
+            item.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.angle-down"))
 
     def _show_filter_popup(self, index: int):
         popup = self._popups[index]

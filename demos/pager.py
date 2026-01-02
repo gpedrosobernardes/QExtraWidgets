@@ -1,6 +1,7 @@
 import sys
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QGroupBox, QFormLayout, QSpinBox, QLabel, \
     QFrame
 
@@ -42,7 +43,9 @@ class MainWindow(QMainWindow):
         self._content_label = QLabel("Conteúdo da Página 1")
         self._content_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._content_label.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Plain)
-        self._content_label.setStyleSheet("background-color: #f0f0f0; font-size: 20px;")
+        font = QFont()
+        font.setPixelSize(20)
+        self._content_label.setFont(font)
 
         # 3. O Pager
         self._pager = QPager()

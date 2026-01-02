@@ -1,10 +1,9 @@
 import sys
 
-import qtawesome
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QWidget
 
+from extra_qwidgets.icons import QThemeResponsiveIcon
 from extra_qwidgets.widgets.password import QPassword
-from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class MainWindow(QWidget):
@@ -12,7 +11,7 @@ class MainWindow(QWidget):
         super().__init__()
 
         self.setWindowTitle("Password Example")
-        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
+        self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
 
         widget = QPassword()
 

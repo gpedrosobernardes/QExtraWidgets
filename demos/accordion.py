@@ -1,5 +1,5 @@
 import sys
-import qtawesome
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QLabel, QWidget, QVBoxLayout,
@@ -7,7 +7,8 @@ from PySide6.QtWidgets import (
     QCheckBox, QLineEdit, QFormLayout, QTextEdit, QButtonGroup
 )
 
-from extra_qwidgets.utils import colorize_icon_by_theme
+from extra_qwidgets.icons import QThemeResponsiveIcon
+from extra_qwidgets.widgets.accordion_item import QAccordionHeader
 from source.extra_qwidgets.widgets.accordion import QAccordion
 
 
@@ -19,7 +20,7 @@ class MainWindow(QMainWindow):
         self.resize(900, 700)
 
         # Tenta carregar ícone, fallback se não tiver o utilitário configurado
-        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
+        self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
 
         # Widget Principal
         main_widget = QWidget()
@@ -66,10 +67,10 @@ class MainWindow(QMainWindow):
 
         rb_arrow = QRadioButton("Arrow (Seta)")
         rb_arrow.setChecked(True)
-        rb_arrow.toggled.connect(lambda: self.accordion.setIconStyle("arrow"))
+        rb_arrow.toggled.connect(lambda: self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.Arrow))
 
         rb_plus = QRadioButton("Plus / Minus (+/-)")
-        rb_plus.toggled.connect(lambda: self.accordion.setIconStyle("plus_minus"))
+        rb_plus.toggled.connect(lambda: self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.PlusMinus))
 
         bg_style.addButton(rb_arrow)
         bg_style.addButton(rb_plus)
@@ -85,10 +86,10 @@ class MainWindow(QMainWindow):
 
         rb_left = QRadioButton("Esquerda (Left)")
         rb_left.setChecked(True)
-        rb_left.toggled.connect(lambda: self.accordion.setIconPosition("left"))
+        rb_left.toggled.connect(lambda: self.accordion.setIconPosition(QAccordionHeader.IconPosition.LeadingPosition))
 
         rb_right = QRadioButton("Direita (Right)")
-        rb_right.toggled.connect(lambda: self.accordion.setIconPosition("right"))
+        rb_right.toggled.connect(lambda: self.accordion.setIconPosition(QAccordionHeader.IconPosition.TrailingPosition))
 
         bg_pos.addButton(rb_left)
         bg_pos.addButton(rb_right)

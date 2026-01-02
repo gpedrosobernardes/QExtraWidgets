@@ -4,6 +4,8 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QListWidget, QAbstractItemView, QPushButton, QLineEdit, QLabel, QGroupBox, \
     QVBoxLayout, QHBoxLayout
 
+from extra_qwidgets.icons import QThemeResponsiveIcon
+
 
 class QDualList(QWidget):
     """
@@ -38,10 +40,10 @@ class QDualList(QWidget):
         buttons_layout = QVBoxLayout()
         buttons_layout.addStretch()
 
-        self._btn_move_all_right = self._create_button(qtawesome.icon("fa6s.angles-right"))
-        self._btn_move_right = self._create_button(qtawesome.icon("fa6s.angle-right"))
-        self._btn_move_left = self._create_button(qtawesome.icon("fa6s.angle-left"))
-        self._btn_move_all_left = self._create_button(qtawesome.icon("fa6s.angles-left"))
+        self._btn_move_all_right = self._create_button(QThemeResponsiveIcon.fromAwesome("fa6s.angles-right"))
+        self._btn_move_right = self._create_button(QThemeResponsiveIcon.fromAwesome("fa6s.angle-right"))
+        self._btn_move_left = self._create_button(QThemeResponsiveIcon.fromAwesome("fa6s.angle-left"))
+        self._btn_move_all_left = self._create_button(QThemeResponsiveIcon.fromAwesome("fa6s.angles-left"))
 
         buttons_layout.addWidget(self._btn_move_all_right)
         buttons_layout.addWidget(self._btn_move_right)
