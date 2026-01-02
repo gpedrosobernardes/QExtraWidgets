@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
 # from extra_qwidgets.widgets.accordion import QAccordion
 from emojis.db import Emoji, get_emojis_by_category, get_categories
 
+from extra_qwidgets.icons import QThemeResponsiveIcon
 from extra_qwidgets.widgets.accordion import QAccordion
 from extra_qwidgets.widgets.accordion_item import QAccordionItem
 from extra_qwidgets.widgets.emoji_picker.emoji_category import EmojiCategory
@@ -40,17 +41,17 @@ class QEmojiPicker(QWidget):
         super().__init__()
 
         self._icons = {
-            "Activities": qtawesome.icon("fa6s.gamepad", options=[{"scale_factor": 0.9}]),
-            "Food & Drink": qtawesome.icon("fa6s.bowl-food"),
-            "Animals & Nature": qtawesome.icon("fa6s.leaf"),
-            "People & Body": qtawesome.icon("fa6s.user"),
-            "Symbols": qtawesome.icon("fa6s.heart"),
-            "Flags": qtawesome.icon("fa6s.flag"),
-            "Travel & Places": qtawesome.icon("fa6s.bicycle", options=[{"scale_factor": 0.9}]),
-            "Objects": qtawesome.icon("fa6s.lightbulb"),
-            "Smileys & Emotion": qtawesome.icon("fa6s.face-smile"),
-            "Favorites": qtawesome.icon("fa6s.star"),
-            "Recent": qtawesome.icon("fa6s.clock-rotate-left")
+            "Activities": QThemeResponsiveIcon.fromAwesome("fa6s.gamepad", options=[{"scale_factor": 0.9}]),
+            "Food & Drink": QThemeResponsiveIcon.fromAwesome("fa6s.bowl-food"),
+            "Animals & Nature": QThemeResponsiveIcon.fromAwesome("fa6s.leaf"),
+            "People & Body": QThemeResponsiveIcon.fromAwesome("fa6s.user"),
+            "Symbols": QThemeResponsiveIcon.fromAwesome("fa6s.heart"),
+            "Flags": QThemeResponsiveIcon.fromAwesome("fa6s.flag"),
+            "Travel & Places": QThemeResponsiveIcon.fromAwesome("fa6s.bicycle", options=[{"scale_factor": 0.9}]),
+            "Objects": QThemeResponsiveIcon.fromAwesome("fa6s.lightbulb"),
+            "Smileys & Emotion": QThemeResponsiveIcon.fromAwesome("fa6s.face-smile"),
+            "Favorites": QThemeResponsiveIcon.fromAwesome("fa6s.star"),
+            "Recent": QThemeResponsiveIcon.fromAwesome("fa6s.clock-rotate-left")
         }
 
         # Variáveis privadas
@@ -232,7 +233,7 @@ class QEmojiPicker(QWidget):
         )
         line_edit.setClearButtonEnabled(True)
         # Ícone de busca usando qtawesome
-        line_edit.addAction(qtawesome.icon("fa6s.magnifying-glass"), QLineEdit.ActionPosition.LeadingPosition)
+        line_edit.addAction(QThemeResponsiveIcon.fromAwesome("fa6s.magnifying-glass"), QLineEdit.ActionPosition.LeadingPosition)
         return line_edit
 
     # --- API Pública (camelCase) ---

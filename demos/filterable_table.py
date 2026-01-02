@@ -1,11 +1,10 @@
 import sys
 
-import qtawesome
 from PySide6.QtGui import QStandardItem
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 
+from extra_qwidgets.icons import QThemeResponsiveIcon
 from extra_qwidgets.widgets.filterable_table.filterable_table import QFilterableTable
-from source.extra_qwidgets.utils import colorize_icon_by_theme
 
 
 class MainWindow(QMainWindow):
@@ -13,7 +12,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Filterable Table Example")
-        self.setWindowIcon(colorize_icon_by_theme(qtawesome.icon("fa6b.python")))
+        self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
         self.setFixedSize(800, 600)
 
         widget = QWidget()

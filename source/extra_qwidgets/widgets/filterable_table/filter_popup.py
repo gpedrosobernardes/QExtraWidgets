@@ -7,6 +7,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 import qtawesome
 
+from extra_qwidgets.icons import QThemeResponsiveIcon
 from extra_qwidgets.widgets.filterable_table.filter_tool_button import QFilterToolButton
 
 
@@ -17,16 +18,16 @@ class QFilterPopup(QDialog):
         self.setSizeGripEnabled(True)
         self.order_button = QFilterToolButton()
         self.order_button.setText(self.tr("Order by A to Z"))
-        self.order_button.setIcon(qtawesome.icon("fa6s.arrow-down-a-z"))
+        self.order_button.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.arrow-down-a-z"))
         self.reverse_order_button = QFilterToolButton()
         self.reverse_order_button.setText(self.tr("Order by Z to A"))
-        self.reverse_order_button.setIcon(qtawesome.icon("fa6s.arrow-down-z-a"))
+        self.reverse_order_button.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.arrow-down-z-a"))
         self.line = QFrame()
         self.line.setFrameShape(QFrame.Shape.HLine)
         self.line.setFrameShadow(QFrame.Shadow.Sunken)
         self.clear_filter_button = QFilterToolButton()
         self.clear_filter_button.setText(self.tr("Clear filter"))
-        self.clear_filter_button.setIcon(qtawesome.icon("fa6s.filter-circle-xmark"))
+        self.clear_filter_button.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.filter-circle-xmark"))
         self.search_field = QLineEdit()
         self.search_field.setPlaceholderText(self.tr("Search"))
         self.model = QStandardItemModel()

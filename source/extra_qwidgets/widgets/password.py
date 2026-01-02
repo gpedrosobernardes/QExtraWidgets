@@ -1,6 +1,7 @@
-import qtawesome
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QLineEdit
+
+from extra_qwidgets.icons import QThemeResponsiveIcon
 
 
 class QPassword(QLineEdit):
@@ -27,7 +28,7 @@ class QPassword(QLineEdit):
         """
         if hide:
             self.setEchoMode(QLineEdit.EchoMode.Password)
-            self._action.setIcon(qtawesome.icon("fa6s.eye"))
+            self._action.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.eye"))
         else:
             self.setEchoMode(QLineEdit.EchoMode.Normal)
-            self._action.setIcon(qtawesome.icon("fa6s.eye-slash"))
+            self._action.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.eye-slash"))

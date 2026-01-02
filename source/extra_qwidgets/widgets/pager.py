@@ -1,10 +1,11 @@
 from functools import partial
 
-import qtawesome
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QWidget, QHBoxLayout, QPushButton,
                                QButtonGroup, QSpinBox)
+
+from extra_qwidgets.icons import QThemeResponsiveIcon
 
 
 class QPager(QWidget):
@@ -39,10 +40,10 @@ class QPager(QWidget):
         self._page_widgets = []
 
         # 1. Botões de Navegação
-        self._btn_first = self._create_nav_button(qtawesome.icon("fa6s.backward-step"))
-        self._btn_prev = self._create_nav_button(qtawesome.icon("fa6s.angle-left"))
-        self._btn_next = self._create_nav_button(qtawesome.icon("fa6s.angle-right"))
-        self._btn_last = self._create_nav_button(qtawesome.icon("fa6s.forward-step"))
+        self._btn_first = self._create_nav_button(QThemeResponsiveIcon.fromAwesome("fa6s.backward-step"))
+        self._btn_prev = self._create_nav_button(QThemeResponsiveIcon.fromAwesome("fa6s.angle-left"))
+        self._btn_next = self._create_nav_button(QThemeResponsiveIcon.fromAwesome("fa6s.angle-right"))
+        self._btn_last = self._create_nav_button(QThemeResponsiveIcon.fromAwesome("fa6s.forward-step"))
 
         # 2. Layout para os números (onde a mágica acontece)
         self._numbers_layout = QHBoxLayout()
