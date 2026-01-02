@@ -61,6 +61,9 @@ class QAccordionHeader(QFrame):
         self._is_expanded = expanded
         self.updateIcon()
 
+    def isExpanded(self) -> bool:
+        return self._is_expanded
+
     def setIconStyle(self, style: str):
         """Define o estilo do ícone: 'arrow' ou 'plus_minus'."""
         if style in ["arrow", "plus_minus"]:
@@ -137,6 +140,9 @@ class QAccordionItem(QWidget):
     def setExpanded(self, expanded):
         self._header.setExpanded(expanded)
         self._content.setVisible(expanded)
+
+    def isExpanded(self):
+        return self._header.isExpanded() and self._content.isVisible()
 
     def setIconPosition(self, position):
         self._header.setIconPosition(position)

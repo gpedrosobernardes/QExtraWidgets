@@ -1,111 +1,221 @@
 import typing
+from enum import Enum
 
-from PySide6.QtCore import QSize, Qt, Signal, QModelIndex, QPoint
+from PySide6.QtCore import QSize, Qt, Signal, QPoint, QEvent, QAbstractProxyModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QMouseEvent
-from PySide6.QtWidgets import QListView, QSizePolicy, QAbstractScrollArea
+from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy
 from emojis.db import Emoji
 
 from extra_qwidgets.proxys.emoji_sort_filter import EmojiSortFilterProxyModel
+from extra_qwidgets.widgets.emoji_picker.emoji_delegate import EmojiDelegate
 
 
 class QEmojiGrid(QListView):
-    mouseEnteredEmoji = Signal(Emoji, QStandardItem)
+    # Sinais
+    mouseEnteredEmoji = Signal(Emoji, QStandardItem)  # object = Emoji
     mouseLeftEmoji = Signal(Emoji, QStandardItem)
     emojiClicked = Signal(Emoji, QStandardItem)
     contextMenu = Signal(Emoji, QStandardItem, QPoint)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.model = QStandardItemModel()
-        self._last_emoji = None
-        self._proxy = EmojiSortFilterProxyModel(self)
-        self._proxy.setSourceModel(self.model)
-        self.setModel(self._proxy)
+    class LimitTreatment(int, Enum):
+        RemoveFirstOne = 1
+        RemoveLastOne = 2
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.__model = QStandardItemModel(self)
+
+        # Assumindo que você tem o Proxy importado ou definido
+        self.__last_index = None
+        self.__limit = float("inf")
+        self.__limit_treatment = None
+        self.__proxy = EmojiSortFilterProxyModel(self)
+        self.__proxy.setSourceModel(self.__model)
+        self.setModel(self.__proxy)
+
+        self.setMouseTracking(True)  # Essencial para o hover funcionar
+        self.setIconSize(QSize(36, 36))
+        self.setGridSize(QSize(40, 40))
+
+        # Configuração de performance
+        self.setItemDelegate(EmojiDelegate(self))
+
+        # Configurações padrão
         self.setViewMode(QListView.ViewMode.IconMode)
         self.setResizeMode(QListView.ResizeMode.Adjust)
         self.setUniformItemSizes(True)
         self.setWrapping(True)
-        self.setIconSize(QSize(36, 36))
-        self.setGridSize(QSize(40, 40))
-        self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
+        self.setDragEnabled(False)
+
+        # Desliga as barras de rolagem (o pai deve rolar)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self._setup_binds()
 
-    def _setup_binds(self):
-        self.setMouseTracking(True)
-        self.mouseMoveEvent = lambda event: self._on_mouse_enter_emoji_grid(event)
-        self.clicked.connect(self.__on_clicked)
-        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self.customContextMenuRequested.connect(self._on_context_menu)
+        # Política de tamanho: Expande horizontalmente, Fixo verticalmente (baseado no sizeHint)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Minimum)
 
-    def __on_clicked(self, index: QModelIndex):
-        proxy = self.proxy()
-        item_data = proxy.itemData(index)[Qt.ItemDataRole.UserRole]
-        real_index = proxy.mapToSource(index)
-        item = self.model.itemFromIndex(real_index)
-        self.emojiClicked.emit(item_data, item)
+        # Ajuste nativo (ajuda, mas o sizeHint faz o trabalho pesado)
+        self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
-    def _on_mouse_enter_emoji_grid(self, event: QMouseEvent):
-        index = self.indexAt(event.pos())
-        proxy = self.proxy()
+    def sizeHint(self) -> QSize:
+        """
+        Diz ao Layout pai qual o tamanho ideal deste widget.
+        O Qt chama isso automaticamente quando o layout é invalidado.
+        """
+        if self.model() is None or self.model().rowCount() == 0:
+            return QSize(0, 0)
+
+        # Largura disponível (se o widget ainda não foi mostrado, usa um valor padrão)
+        width = self.width() if self.width() > 0 else 400
+
+        # Dimensões do grid
+        grid_sz = self.gridSize()
+        if grid_sz.isEmpty():
+            grid_sz = QSize(40, 40)  # Fallback
+
+        # Cálculo matemático
+        item_width = grid_sz.width()
+        item_height = grid_sz.height()
+
+        # Quantos cabem por linha?
+        items_per_row = max(1, width // item_width)
+
+        # Quantas linhas precisamos?
+        total_items = self.model().rowCount()
+        rows = (total_items + items_per_row - 1) // items_per_row  # Ceil division
+
+        height = rows * item_height + 5  # +5 padding de segurança
+
+        return QSize(width, height)
+
+    def resizeEvent(self, event):
+        """
+        Quando a largura muda, o número de linhas muda.
+        Precisamos avisar o layout para ler o sizeHint() de novo.
+        """
+        super().resizeEvent(event)
+        self.updateGeometry()
+
+    # --- Eventos (snake_case padrão Python/Qt) ---
+
+    def mouseMoveEvent(self, e: QMouseEvent):
+        """Gerencia a detecção de entrada/saída do mouse nos itens."""
+        super().mouseMoveEvent(e)
+
+        index = self.indexAt(e.pos())
+
+        # Se o mouse saiu de um item válido ou entrou no vazio
+        if self.__last_index and (not index.isValid() or index != self.__last_index):
+            item = self.__get_item_from_index(self.__last_index)
+            if item:
+                emoji = item.data(Qt.ItemDataRole.UserRole)
+                self.mouseLeftEmoji.emit(emoji, item)
+            self.__last_index = None
+
+        # Se o mouse entrou num novo item
+        if index.isValid() and index != self.__last_index:
+            self.__last_index = index
+            item = self.__get_item_from_index(index)
+            if item:
+                emoji = item.data(Qt.ItemDataRole.UserRole)
+                self.mouseEnteredEmoji.emit(emoji, item)
+
+    def leaveEvent(self, e: QEvent):
+        """Garante que o sinal de saída seja emitido ao sair do widget."""
+        if self.__last_index:
+            item = self.__get_item_from_index(self.__last_index)
+            if item:
+                emoji = item.data(Qt.ItemDataRole.UserRole)
+                self.mouseLeftEmoji.emit(emoji, item)
+            self.__last_index = None
+        super().leaveEvent(e)
+
+    def mouseReleaseEvent(self, e: QMouseEvent):
+        """Gerencia o clique."""
+        super().mouseReleaseEvent(e)
+        if e.button() == Qt.MouseButton.LeftButton:
+            index = self.indexAt(e.pos())
+            if index.isValid():
+                item = self.__get_item_from_index(index)
+                emoji = item.data(Qt.ItemDataRole.UserRole)
+                self.emojiClicked.emit(emoji, item)
+
+    def contextMenuEvent(self, e):
+        """Gerencia menu de contexto."""
+        index = self.indexAt(e.pos())
         if index.isValid():
-            item_data = proxy.itemData(index)[Qt.ItemDataRole.UserRole]
-            real_index = proxy.mapToSource(index)
-            item = self.model.itemFromIndex(real_index)
-            args = (item_data, item)
-            self.mouseEnteredEmoji.emit(*args)
-            self._last_emoji = args
-        elif self._last_emoji is not None:
-            self.mouseLeftEmoji.emit(*self._last_emoji)
+            item = self.__get_item_from_index(index)
+            emoji = item.data(Qt.ItemDataRole.UserRole)
+            self.contextMenu.emit(emoji, item, self.mapToGlobal(e.pos()))
 
-    def _on_context_menu(self, pos: QPoint):
-        index = self.indexAt(pos)
-        if index.isValid():
-            proxy = self.proxy()
-            item_data = proxy.itemData(index)[Qt.ItemDataRole.UserRole]
-            item = self.model.itemFromIndex(proxy.mapToSource(index))
-            self.contextMenu.emit(item_data, item, self.mapToGlobal(pos))
+    # --- Métodos Privados Auxiliares ---
 
-    def resizeEvent(self, e):
-        super().resizeEvent(e)
-        self._adjust_fixed_height()
+    def __get_item_from_index(self, index):
+        # Se estiver usando proxy, precisa mapear
+        if isinstance(index.model(), QAbstractProxyModel):
+            index = self.__proxy.mapToSource(index)
+        return self.__model.itemFromIndex(index)
 
-    def _adjust_fixed_height(self):
-        itens_total = self._proxy.rowCount()
-        if itens_total == 0:
-            return
-        item_size = self.gridSize()
-        width = self.size().width()
-        if item_size.width() == 0:
-            return
-        items_per_row = max(1, width // item_size.width())
-        rows = -(-itens_total // items_per_row)
-        total_height = rows * item_size.height() + 5
-        self.setFixedHeight(total_height)
+    @staticmethod
+    def _create_emoji_item(emoji: Emoji) -> QStandardItem:
+        item = QStandardItem()
+        item.setData(emoji, Qt.ItemDataRole.UserRole)
+        item.setEditable(False)
+        return item
 
-    def addItem(self, item: QStandardItem):
-        self.model.appendRow(item)
+    def __treat_limit(self):
+        if self.__limit_treatment == self.LimitTreatment.RemoveFirstOne:
+            self.__model.removeRow(0)
+        elif self.__limit_treatment == self.LimitTreatment.RemoveLastOne:
+            self.__model.removeRow(self.__model.rowCount() - 1)
 
-    def removeEmoji(self, emoji: Emoji):
-        item = self.getItem(emoji)
-        if item:
-            self.model.removeRow(item.row())
+    # --- API Pública (camelCase) ---
+    def addEmoji(self, emoji: Emoji, update_geometry: bool = True):
+        """Adiciona um item ao modelo."""
+        if self.__model.rowCount() + 1 > self.__limit:
+            self.__treat_limit()
 
-    def getItem(self, emoji: Emoji) -> typing.Optional[QStandardItem]:
-        match = self.model.match(self.model.index(0, 0), Qt.ItemDataRole.UserRole, emoji, flags=Qt.MatchFlag.MatchExactly)
-        return self.model.itemFromIndex(match[0]) if match else None
+        if self.__model.rowCount() < self.__limit:
+            self.__model.appendRow(self._create_emoji_item(emoji))
+            # Chama ajuste de altura após adicionar (pode ser otimizado para chamar só uma vez no final)
+            if update_geometry:
+                self.updateGeometry()
+
+    def emojiItem(self, emoji: Emoji) -> typing.Optional[QStandardItem]:
+        start_index = self.__model.index(0, 0)
+        matches = self.__model.match(start_index, Qt.ItemDataRole.UserRole, emoji, 1, Qt.MatchFlag.MatchExactly)
+        if matches:
+            return matches[0]
+        return None
+
+    def removeEmoji(self, emoji: Emoji, update_geometry: bool = True):
+        """Remove um emoji específico."""
+        # A lógica de busca depende de como o dado está guardado.
+        # Exemplo simples iterando (lento para muitos itens, ideal seria um dict de mapeamento)
+        match = self.emojiItem(emoji)
+        if match:
+            self.__model.removeRow(match.row())
+            if update_geometry:
+                self.updateGeometry()
 
     def allFiltered(self) -> bool:
-        return self._proxy.rowCount() == 0
+        """Retorna True se todos os itens estiverem filtrados (escondidos pelo Proxy)."""
+        return self.__proxy.rowCount() == 0
 
-    def isEmpty(self) -> bool:
-        return self.model.rowCount() == 0
+    def filterContent(self, text: str):
+        """Aplica filtro."""
+        self.__proxy.setFilterFixedString(text)
+        self.updateGeometry() # Reajusta altura baseado no que sobrou
 
-    def filter(self, text: str):
-        self._proxy.setFilterFixedString(text)
-        self._adjust_fixed_height()
+    def setLimit(self, limit: int):
+        self.__limit = limit
 
-    def proxy(self) -> EmojiSortFilterProxyModel:
-        return self._proxy
+    def limit(self):
+        return self.__limit
+
+    def setLimitTreatment(self, limit_treatment: typing.Optional[LimitTreatment]):
+        self.__limit_treatment = limit_treatment
+
+    def limitTreatment(self) -> LimitTreatment:
+        return self.__limit_treatment
