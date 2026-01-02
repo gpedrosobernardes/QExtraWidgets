@@ -101,6 +101,8 @@ class QEmojiPicker(QWidget):
         self.setFavoriteCategory(favorite_category)
         self.setRecentCategory(recent_category)
 
+        self.__accordion.expandAll()
+
     def __setup_connections(self):
         self.__line_edit.textChanged.connect(self.__filter_emojis)
         self.__accordion.enteredSection.connect(self.__on_entered_section)
