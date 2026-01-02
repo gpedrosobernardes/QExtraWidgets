@@ -2,120 +2,161 @@ import typing
 
 import qtawesome
 from PySide6.QtCore import QRect, Qt, QSize, QPoint
-from PySide6.QtGui import QIcon, QIconEngine, QPainter, QPixmap, QPalette, QColor, QGuiApplication
+from PySide6.QtGui import QIcon, QIconEngine, QPainter, QPixmap, QPalette, QColor
 from PySide6.QtWidgets import QApplication
 
 
-class AutoThemeIconEngine(QIconEngine):
-    def __init__(self, pixmap: QPixmap):
+class ThemeResponsiveIconEngine(QIconEngine):
+    """
+    Motor de ícone dinâmico que atua como Proxy para um QIcon original.
+    Ajusta a renderização baseada na menor dimensão disponível para evitar cortes.
+    """
+
+    def __init__(self, icon: QIcon):
         super().__init__()
-        self._base_pixmap = pixmap
+        self._source_icon = icon
 
-        # Variáveis de Cache
+        # Cache simples
         self._cached_pixmap: typing.Optional[QPixmap] = None
-        self._last_color_key: typing.Optional[int] = None
-        self._last_mode: typing.Optional[QIcon.Mode] = None
+        self._cache_key: typing.Optional[tuple] = None  # (width, height, mode, state, color_rgba)
 
-    # --- MÉTODO CENTRAL DE LÓGICA ---
-    def _get_colored_pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
+    def paint(self, painter: QPainter, rect: QRect, mode: QIcon.Mode, state: QIcon.State):
         """
-        Gera ou recupera do cache o pixmap colorido correto para o estado atual.
-        Este método é usado tanto pelo paint() quanto pelo pixmap().
+        Pinta o ícone centralizado, limitado pela menor dimensão do retângulo.
         """
-        if self._base_pixmap.isNull():
-            return QPixmap()
+        # 1. Determina o tamanho do quadrado delimitador (bounding box)
+        min_side = min(rect.width(), rect.height())
 
-        # 1. Determina a cor alvo (Active/Disabled/etc)
-        # Como não temos o 'painter' aqui, usamos a QApplication como fallback principal
-        # Se quiséssemos ser precisos com o widget pai, precisaríamos passá-lo,
-        # mas QIconEngine não tem acesso fácil ao widget proprietário no método pixmap().
-        # Usar QApplication.palette() é o padrão para "seguir o tema do Windows".
+        # Margem de segurança (2px cada lado) para evitar cortes de anti-aliasing
+        safe_side = min_side - 4
+
+        if safe_side <= 0:
+            return
+
+        bounding_size = QSize(safe_side, safe_side)
+
+        # 2. Obter o Pixmap Colorido
+        # Solicitamos o pixmap com base nesse tamanho delimitador
+        pixmap = self._getColoredPixmap(bounding_size, mode, state)
+
+        if pixmap.isNull():
+            return
+
+        # 3. Cálculo de Escala (Mantendo Aspect Ratio)
+        pixmap_size = pixmap.size()
+
+        # CORREÇÃO AQUI: QSize.scaled aceita apenas (Size, Mode).
+        # A suavização visual é feita pelo painter.setRenderHint posteriormente.
+        scaled_size = pixmap_size.scaled(
+            bounding_size,
+            Qt.AspectRatioMode.KeepAspectRatio
+        )
+
+        # 4. Centralização
+        # Calcula a posição (x, y) para centralizar no rect original
+        x = rect.x() + (rect.width() - scaled_size.width()) // 2
+        y = rect.y() + (rect.height() - scaled_size.height()) // 2
+
+        target_rect = QRect(x, y, scaled_size.width(), scaled_size.height())
+
+        # 5. Desenho
+        # Ativa a suavização na hora de desenhar os pixels na tela
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        painter.drawPixmap(target_rect, pixmap)
+
+    def pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
+        """Retorna o pixmap processado."""
+        return self._getColoredPixmap(size, mode, state)
+
+    def addPixmap(self, pixmap: QPixmap, mode: QIcon.Mode, state: QIcon.State):
+        self._source_icon.addPixmap(pixmap, mode, state)
+        self._clearCache()
+
+    def addFile(self, fileName: str, size: QSize, mode: QIcon.Mode, state: QIcon.State):
+        self._source_icon.addFile(fileName, size, mode, state)
+        self._clearCache()
+
+    def availableSizes(self, mode: QIcon.Mode = QIcon.Mode.Normal, state: QIcon.State = QIcon.State.Off) -> typing.List[QSize]:
+        return self._source_icon.availableSizes(mode, state)
+
+    def actualSize(self, size: QSize, mode: QIcon.Mode = QIcon.Mode.Normal, state: QIcon.State = QIcon.State.Off) -> QSize:
+        return self._source_icon.actualSize(size, mode, state)
+
+    def clone(self):
+        return ThemeResponsiveIconEngine(self._source_icon)
+
+    # --- Lógica Interna ---
+
+    def _getColoredPixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
+        # 1. Cor do Tema
         palette = QApplication.palette()
-
         if mode == QIcon.Mode.Disabled:
             target_color = palette.color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText)
         else:
             target_color = palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText)
 
-        # 2. Verifica Cache
-        current_color_key = target_color.rgba()
+        # 2. Verificação de Cache
+        current_key = (size.width(), size.height(), mode, state, target_color.rgba())
 
-        # O cache precisa considerar o tamanho solicitado também, senão ícones pequenos ficam borrados
-        # se o cache tiver uma imagem grande (ou vice-versa)
-        if (self._cached_pixmap and
-                self._cached_pixmap.size() == size and
-                self._last_color_key == current_color_key and
-                self._last_mode == mode):
+        if self._cached_pixmap and self._cache_key == current_key:
             return self._cached_pixmap
 
-        # 3. Gera Nova Imagem Colorida
-        # Redimensiona a base primeiro para o tamanho desejado (Melhor qualidade)
-        scaled_base = self._base_pixmap.scaled(
-            size,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        )
+        # 3. Obter Pixmap Original
+        base_pixmap = self._source_icon.pixmap(size, mode, state)
 
-        colored_pixmap = QPixmap(scaled_base.size())
-        colored_pixmap.fill(Qt.GlobalColor.transparent)
+        if base_pixmap.isNull():
+            return QPixmap()
 
-        p = QPainter(colored_pixmap)
-        p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
+        # 4. Colorir
+        colored_pixmap = self._generateColoredPixmap(base_pixmap, target_color)
 
-        # Pinta a cor
-        p.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)
-        p.fillRect(colored_pixmap.rect(), target_color)
-
-        # Aplica a máscara (SourceIn mantém a cor onde a imagem existe)
-        p.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
-        p.drawPixmap(0, 0, scaled_base)
-        p.end()
-
-        # Atualiza cache
+        # Atualizar Cache
         self._cached_pixmap = colored_pixmap
-        self._last_color_key = current_color_key
-        self._last_mode = mode
+        self._cache_key = current_key
 
         return colored_pixmap
 
-    # --- OVERRIDES OBRIGATÓRIOS DO QT ---
+    def _generateColoredPixmap(self, base: QPixmap, color: QColor) -> QPixmap:
+        colored = QPixmap(base.size())
+        colored.fill(Qt.GlobalColor.transparent)
 
-    def paint(self, painter: QPainter, rect: QRect, mode: QIcon.Mode, state: QIcon.State):
-        """
-        Chamado quando o widget desenha diretamente (ex: alguns Delegates).
-        """
-        # Pega a imagem colorida já no tamanho final do rect
-        pixmap = self._get_colored_pixmap(rect.size(), mode, state)
+        p = QPainter(colored)
+        p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
 
-        # Centraliza e desenha
-        target_rect = QRect(QPoint(0, 0), pixmap.size())
-        target_rect.moveCenter(rect.center())
+        # Pinta cor
+        p.setCompositionMode(QPainter.CompositionMode.CompositionMode_Source)
+        p.fillRect(colored.rect(), color)
 
-        painter.drawPixmap(target_rect, pixmap)
+        # Recorta forma
+        p.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
+        p.drawPixmap(0, 0, base)
+        p.end()
 
-    def pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
-        """
-        Chamado pelo QToolButton e QIcon::pixmap().
-        AQUI estava o erro: antes retornávamos a imagem sem cor.
-        """
-        return self._get_colored_pixmap(size, mode, state)
+        return colored
 
-    def clone(self):
-        return AutoThemeIconEngine(self._base_pixmap)
+    def _clearCache(self):
+        self._cached_pixmap = None
+        self._cache_key = None
 
 
 class QThemeResponsiveIcon(QIcon):
+    """
+    Wrapper de QIcon que aplica coloração automática baseada no tema do sistema.
+    O ícone se ajusta ao menor espaço disponível mantendo o aspect ratio.
+    """
     def __init__(self, source: typing.Union[str, QPixmap, QIcon], size: int = 64):
-        pixmap = QPixmap()
-        if isinstance(source, str):
-            pixmap = QPixmap(source)
-        elif isinstance(source, QIcon):
-            pixmap = source.pixmap(QSize(size, size))
+        icon = QIcon()
+
+        if isinstance(source, QIcon):
+            icon = source
+        elif isinstance(source, str):
+            icon = QIcon(source)
         elif isinstance(source, QPixmap):
-            pixmap = source
-        super().__init__(AutoThemeIconEngine(pixmap))
+            icon = QIcon()
+            icon.addPixmap(source)
+
+        super().__init__(ThemeResponsiveIconEngine(icon))
 
     @staticmethod
     def fromAwesome(icon_name: str, size: int = 64, **kwargs):
-        # Usamos white/black apenas para gerar a forma, a cor real será sobreposta
         return QThemeResponsiveIcon(qtawesome.icon(icon_name, **kwargs), size)
