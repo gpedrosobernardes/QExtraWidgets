@@ -5,13 +5,10 @@ from PySide6.QtGui import (QTextDocument, QTextCursor, QTextImageFormat,
                            QTextCharFormat, QFontMetrics, QTextFragment, QGuiApplication)
 from emojis.db import Emoji, get_emoji_by_alias, get_emoji_by_code
 
-from extra_qwidgets.widgets.emoji_picker.emoji_image_provider import EmojiImageProvider
-
+from extra_qwidgets.emoji_utils import EmojiFinder, EmojiImageProvider
 
 
 class QTwemojiTextDocument(QTextDocument):
-    # Static compiled regex for performance
-    _EMOJI_PATTERN = R"(?:\x{1F3F4}(?:\x{E0067}\x{E0062}\x{E0065}\x{E006E}\x{E0067}|\x{E0067}\x{E0062}\x{E0073}\x{E0063}\x{E0074}|\x{E0067}\x{E0062}\x{E0077}\x{E006C}\x{E0073})\x{E007F})|(?:[\x{0030}-\x{0039}\x{0023}\x{002A}]\x{FE0F}?\x{20E3})|(?:[\x{1F1E6}-\x{1F1FF}]{2})|(?:\p{Extended_Pictographic}\x{FE0F}?(?:[\x{1F3FB}-\x{1F3FF}])?(?:\x{200D}\p{Extended_Pictographic}\x{FE0F}?(?:[\x{1F3FB}-\x{1F3FF}])?)*)"
     _ALIAS_PATTERN = R"(:\w+:)"
 
     def __init__(self, parent=None, twemoji=True, alias_replacement=True):
@@ -125,15 +122,7 @@ class QTwemojiTextDocument(QTextDocument):
         block_pos = block.position()
 
         # 2. Searches for emojis only in this short text
-        regex = QRegularExpression(self._EMOJI_PATTERN, QRegularExpression.PatternOption.UseUnicodePropertiesOption)
-        iterator = regex.globalMatch(text)
-
-        # 3. Collects matches to process backwards
-        # (Important not to invalidate indices when replacing text with image)
-        matches = []
-        while iterator.hasNext():
-            match = iterator.next()
-            matches.append(match)
+        matches = EmojiFinder.find_all(text)
 
         if not matches:
             return
@@ -273,13 +262,9 @@ class QTwemojiTextDocument(QTextDocument):
 
     def _localize_emojis(self):
         # Used only by _twemojize_full or _detwemojize
-        regex = QRegularExpression(self._EMOJI_PATTERN, QRegularExpression.PatternOption.UseUnicodePropertiesOption)
-        iterator = regex.globalMatch(self.toPlainText())
-        matches = []
-        while iterator.hasNext():
-            match = iterator.next()
-            matches.insert(0, (match.captured(0), match.capturedStart(0), match.capturedEnd(0)))
-        return matches
+        matches = EmojiFinder.find_all(self.toPlainText())
+        # Return in reverse order for safe replacement
+        return [(m.captured(0), m.capturedStart(0), m.capturedEnd(0)) for m in reversed(matches)]
 
     def _localize_emoji_images(self):
         block = self.begin()

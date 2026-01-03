@@ -13,7 +13,7 @@ from extra_qwidgets.widgets.accordion import QAccordion
 from extra_qwidgets.widgets.accordion_item import QAccordionItem
 from extra_qwidgets.widgets.emoji_picker.emoji_category import EmojiCategory
 from extra_qwidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
-from extra_qwidgets.widgets.emoji_picker.emoji_image_provider import EmojiImageProvider
+from extra_qwidgets.emoji_utils import EmojiImageProvider
 
 
 class QEmojiPicker(QWidget):

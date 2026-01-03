@@ -1,5 +1,9 @@
 import pytest
-from PySide6.QtCore import QRegularExpression
+from PySide6.QtGui import QValidator
+
+from extra_qwidgets.emoji_utils import EmojiFinder
+from extra_qwidgets.validators.emoji_validator import QEmojiValidator
+
 
 # emoji test file: https://unicode.org/Public/emoji/latest/emoji-test.txt
 
@@ -18,14 +22,54 @@ emoji_db = get_emoji_db()
 
 
 @pytest.mark.parametrize("emoji", emoji_db)
-def test_regular_expression_emojis(emoji):
-    re_emoji = QRegularExpression(
-        R"(?:\x{1F3F4}(?:\x{E0067}\x{E0062}\x{E0065}\x{E006E}\x{E0067}|\x{E0067}\x{E0062}\x{E0073}\x{E0063}\x{E0074}|\x{E0067}\x{E0062}\x{E0077}\x{E006C}\x{E0073})\x{E007F})|(?:[\x{0030}-\x{0039}\x{0023}\x{002A}]\x{FE0F}?\x{20E3})|(?:[\x{1F1E6}-\x{1F1FF}]{2})|(?:\p{Extended_Pictographic}\x{FE0F}?(?:[\x{1F3FB}-\x{1F3FF}])?(?:\x{200D}\p{Extended_Pictographic}\x{FE0F}?(?:[\x{1F3FB}-\x{1F3FF}])?)*)",
-        QRegularExpression.PatternOption.UseUnicodePropertiesOption
-    )
-
-    iterator = re_emoji.globalMatch(emoji)
-    assert iterator.hasNext()
-    while iterator.hasNext():
-        match = iterator.next()
+def test_emoji_finder_finds_all_emojis(emoji):
+    matches = EmojiFinder.find_all(emoji)
+    assert len(matches) > 0
+    for match in matches:
         assert emoji == match.captured(0)
+
+def test_emoji_finder_mixed_content():
+    text = "Hello 👋 World 🔥"
+    matches = EmojiFinder.find_all(text)
+    assert len(matches) == 2
+    assert matches[0].captured(0) == "👋"
+    assert matches[1].captured(0) == "🔥"
+
+def test_emoji_finder_no_emojis():
+    text = "Hello World 123"
+    matches = EmojiFinder.find_all(text)
+    assert len(matches) == 0
+
+@pytest.mark.parametrize("emoji", emoji_db)
+def test_emoji_validator_accepts_valid_emojis(emoji):
+    validator = QEmojiValidator()
+    state, _, _ = validator.validate(emoji, 0)
+    assert state == QValidator.State.Acceptable
+
+
+def test_emoji_validator_rejects_non_emojis():
+    validator = QEmojiValidator()
+
+    # Test simple text
+    state, _, _ = validator.validate("Hello", 0)
+    assert state == QValidator.State.Invalid
+
+    # Test mixed text and emoji
+    state, _, _ = validator.validate("Hello 👋", 0)
+    assert state == QValidator.State.Invalid
+
+    # Test numbers (without keycap sequence)
+    state, _, _ = validator.validate("123", 0)
+    assert state == QValidator.State.Invalid
+
+def test_emoji_validator_accepts_multiple_emojis():
+    validator = QEmojiValidator()
+    # Test multiple emojis
+    state, _, _ = validator.validate("👋🔥😂", 0)
+    assert state == QValidator.State.Acceptable
+
+
+def test_emoji_validator_accepts_empty():
+    validator = QEmojiValidator()
+    state, _, _ = validator.validate("", 0)
+    assert state == QValidator.State.Acceptable
