@@ -131,7 +131,7 @@ class MainWindow(QMainWindow):
         grp_anim = QGroupBox("Animation")
         v_anim = QVBoxLayout()
 
-        check_animation = QCheckBox("Habilitar Animações")
+        check_animation = QCheckBox("Enable Animation")
         check_animation.setChecked(True)
         check_animation.toggled.connect(self.accordion.setAnimationEnabled)
         v_anim.addWidget(check_animation)
