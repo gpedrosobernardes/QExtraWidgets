@@ -1,7 +1,7 @@
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QLineEdit
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QPassword(QLineEdit):

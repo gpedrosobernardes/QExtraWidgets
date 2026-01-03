@@ -5,8 +5,8 @@ from PySide6.QtWidgets import (
     QCheckBox, QSpinBox, QLabel, QPushButton, QGroupBox, QFormLayout
 )
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
-from extra_qwidgets.widgets.extra_text_edit import QExtraTextEdit
+from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.extra_text_edit import QExtraTextEdit
 
 
 class DemoTextEditWindow(QMainWindow):

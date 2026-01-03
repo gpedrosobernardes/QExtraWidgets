@@ -6,8 +6,8 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem, QMouseEvent
 from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy
 from emojis.db import Emoji
 
-from extra_qwidgets.proxys.emoji_sort_filter import EmojiSortFilterProxyModel
-from extra_qwidgets.widgets.emoji_picker.emoji_delegate import EmojiDelegate
+from qextrawidgets.proxys.emoji_sort_filter import EmojiSortFilterProxyModel
+from qextrawidgets.widgets.emoji_picker.emoji_delegate import EmojiDelegate
 
 
 class QEmojiGrid(QListView):

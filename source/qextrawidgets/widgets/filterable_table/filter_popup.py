@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QFilterPopup(QDialog):

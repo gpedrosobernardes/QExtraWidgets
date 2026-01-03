@@ -5,7 +5,7 @@ from PySide6.QtGui import (QTextDocument, QTextCursor, QTextImageFormat,
                            QTextCharFormat, QFontMetrics, QTextFragment, QGuiApplication, QPixmap, QPainter)
 from emojis.db import Emoji, get_emoji_by_alias, get_emoji_by_code
 
-from extra_qwidgets.emoji_utils import EmojiFinder, EmojiImageProvider
+from qextrawidgets.emoji_utils import EmojiFinder, EmojiImageProvider
 
 
 class QTwemojiTextDocument(QTextDocument):

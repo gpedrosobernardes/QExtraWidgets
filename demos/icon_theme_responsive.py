@@ -8,8 +8,8 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QToolButton, QFrame, QGroupBox
 )
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
-from extra_qwidgets.utils import is_dark_mode
+from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.utils import is_dark_mode
 
 
 class DemoWindow(QMainWindow):

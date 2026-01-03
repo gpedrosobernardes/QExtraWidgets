@@ -4,8 +4,8 @@ from PySide6.QtCore import QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QToolButton
 
-from extra_qwidgets.widgets.accordion_item import QAccordionItem
-from extra_qwidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
+from qextrawidgets.widgets.accordion_item import QAccordionItem
+from qextrawidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
 
 
 class EmojiCategory:

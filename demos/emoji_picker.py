@@ -3,10 +3,10 @@ import sys
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
 from emojis.db import Emoji
 
-from extra_qwidgets.documents.twemoji_text_document import QTwemojiTextDocument
-from extra_qwidgets.icons import QThemeResponsiveIcon
-from extra_qwidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
-from extra_qwidgets.widgets.extra_text_edit import QExtraTextEdit
+from qextrawidgets.documents.twemoji_text_document import QTwemojiTextDocument
+from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
+from qextrawidgets.widgets.extra_text_edit import QExtraTextEdit
 
 
 class MainWindow(QMainWindow):

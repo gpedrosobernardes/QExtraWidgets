@@ -7,9 +7,9 @@ from PySide6.QtWidgets import (
     QCheckBox, QLineEdit, QFormLayout, QTextEdit, QButtonGroup, QComboBox, QSpinBox
 )
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
-from extra_qwidgets.widgets.accordion_item import QAccordionHeader
-from source.extra_qwidgets.widgets.accordion import QAccordion
+from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.accordion_item import QAccordionHeader
+from source.qextrawidgets.widgets.accordion import QAccordion
 
 
 class MainWindow(QMainWindow):

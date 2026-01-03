@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPainter
 from PySide6.QtWidgets import QStyledItemDelegate, QStyleOptionViewItem, QStyle
 
-from extra_qwidgets.emoji_utils import EmojiImageProvider
+from qextrawidgets.emoji_utils import EmojiImageProvider
 
 
 class EmojiDelegate(QStyledItemDelegate):

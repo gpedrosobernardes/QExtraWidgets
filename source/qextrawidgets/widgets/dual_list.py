@@ -2,8 +2,9 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QListWidget, QAbstractItemView, QPushButton, QLineEdit, QLabel, QGroupBox, \
     QVBoxLayout, QHBoxLayout
+from typing import List
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QDualList(QWidget):
@@ -159,17 +160,17 @@ class QDualList(QWidget):
 
     # --- Public API (camelCase) ---
 
-    def setAvailableItems(self, items: list[str]):
+    def setAvailableItems(self, items: List[str]):
         self._list_available.clear()
         self._list_selected.clear()
         self._list_available.addItems(items)
         self._list_available.sortItems()
         self._update_internal_count()
 
-    def getSelectedItems(self) -> list[str]:
+    def getSelectedItems(self) -> List[str]:
         return [self._list_selected.item(i).text() for i in range(self._list_selected.count())]
 
-    def setSelectedItems(self, items: list[str]):
+    def setSelectedItems(self, items: List[str]):
         self._list_selected.clear()
         self._list_selected.addItems(items)
         self._update_internal_count()

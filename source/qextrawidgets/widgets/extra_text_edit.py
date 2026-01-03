@@ -2,7 +2,7 @@ from PySide6.QtCore import QMimeData, QSize, Qt
 from PySide6.QtWidgets import QTextEdit, QSizePolicy
 
 # Ensure the import is correct for your project
-from extra_qwidgets.documents.twemoji_text_document import QTwemojiTextDocument
+from qextrawidgets.documents.twemoji_text_document import QTwemojiTextDocument
 
 
 class QExtraTextEdit(QTextEdit):

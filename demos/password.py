@@ -2,8 +2,8 @@ import sys
 
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QWidget
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
-from extra_qwidgets.widgets.password import QPassword
+from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.password import QPassword
 
 
 class MainWindow(QWidget):

@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt, Signal, QEasingCurve
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFrame
 
-from extra_qwidgets.widgets.accordion_item import QAccordionItem
+from qextrawidgets.widgets.accordion_item import QAccordionItem
 
 
 class QAccordion(QWidget):

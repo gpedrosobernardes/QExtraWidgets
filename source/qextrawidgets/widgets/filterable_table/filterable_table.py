@@ -6,10 +6,10 @@ from PySide6.QtWidgets import (
     QTableView, QWidget
 )
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
-from extra_qwidgets.proxys.multi_filter import QMultiFilterProxy
-from extra_qwidgets.widgets.filterable_table.custom_header import CustomHeader
-from extra_qwidgets.widgets.filterable_table.filter_popup import QFilterPopup
+from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.proxys.multi_filter import QMultiFilterProxy
+from qextrawidgets.widgets.filterable_table.custom_header import CustomHeader
+from qextrawidgets.widgets.filterable_table.filter_popup import QFilterPopup
 
 
 class QFilterableTable(QTableView):

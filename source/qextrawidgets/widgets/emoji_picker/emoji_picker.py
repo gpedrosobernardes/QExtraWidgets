@@ -7,13 +7,14 @@ from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
 # Mocks for external libs mentioned in your original code
 # from extra_qwidgets.widgets.accordion import QAccordion
 from emojis.db import Emoji, get_emojis_by_category, get_categories
+from typing import List
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
-from extra_qwidgets.widgets.accordion import QAccordion
-from extra_qwidgets.widgets.accordion_item import QAccordionItem
-from extra_qwidgets.widgets.emoji_picker.emoji_category import EmojiCategory
-from extra_qwidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
-from extra_qwidgets.emoji_utils import EmojiImageProvider
+from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.accordion import QAccordion
+from qextrawidgets.widgets.accordion_item import QAccordionItem
+from qextrawidgets.widgets.emoji_picker.emoji_category import EmojiCategory
+from qextrawidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
+from qextrawidgets.emoji_utils import EmojiImageProvider
 
 
 class QEmojiPicker(QWidget):
@@ -273,7 +274,7 @@ class QEmojiPicker(QWidget):
         self._shortcuts_group.removeButton(category.shortcut())
         category.deleteLater()
 
-    def categories(self) -> list[EmojiCategory]:
+    def categories(self) -> List[EmojiCategory]:
         return list(self.__categories_data.values())
 
     def category(self, name: str) -> typing.Optional[EmojiCategory]:

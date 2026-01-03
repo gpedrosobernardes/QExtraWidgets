@@ -1,8 +1,8 @@
 import pytest
 from PySide6.QtGui import QValidator
 
-from extra_qwidgets.emoji_utils import EmojiFinder
-from extra_qwidgets.validators.emoji_validator import QEmojiValidator
+from qextrawidgets.emoji_utils import EmojiFinder
+from qextrawidgets.validators import QEmojiValidator
 
 
 # emoji test file: https://unicode.org/Public/emoji/latest/emoji-test.txt

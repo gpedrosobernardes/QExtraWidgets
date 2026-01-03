@@ -1,7 +1,7 @@
 from PySide6.QtCore import QRegularExpression
 from PySide6.QtGui import QValidator
 
-from extra_qwidgets.emoji_utils import EmojiFinder
+from qextrawidgets.emoji_utils import EmojiFinder
 
 
 class QEmojiValidator(QValidator):

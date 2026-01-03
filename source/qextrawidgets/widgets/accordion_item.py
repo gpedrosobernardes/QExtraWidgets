@@ -4,7 +4,7 @@ from PySide6.QtCore import Signal, QSize, QPropertyAnimation, QEasingCurve, QAbs
 from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame, QSizePolicy, QVBoxLayout, QToolButton, QLineEdit
 
-from extra_qwidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QAccordionHeader(QFrame):
