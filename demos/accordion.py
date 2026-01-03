@@ -1,10 +1,10 @@
 import sys
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QEasingCurve
 from PySide6.QtWidgets import (
     QMainWindow, QApplication, QLabel, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QGroupBox, QRadioButton,
-    QCheckBox, QLineEdit, QFormLayout, QTextEdit, QButtonGroup
+    QCheckBox, QLineEdit, QFormLayout, QTextEdit, QButtonGroup, QComboBox, QSpinBox
 )
 
 from extra_qwidgets.icons import QThemeResponsiveIcon
@@ -126,6 +126,41 @@ class MainWindow(QMainWindow):
         v_scroll.addWidget(btn_scroll_item)
         grp_scroll.setLayout(v_scroll)
         layout.addWidget(grp_scroll)
+
+        # --- Group: Animation ---
+        grp_anim = QGroupBox("Animation")
+        v_anim = QVBoxLayout()
+
+        check_animation = QCheckBox("Habilitar Animações")
+        check_animation.setChecked(True)
+        check_animation.toggled.connect(self.accordion.setAnimationEnabled)
+        v_anim.addWidget(check_animation)
+
+        v_anim.addWidget(QLabel("Animation Duration"))
+
+        spin_duration = QSpinBox()
+        spin_duration.setRange(50, 1000)
+        spin_duration.setValue(200)
+        spin_duration.setSingleStep(50)
+        spin_duration.valueChanged.connect(self.accordion.setAnimationDuration)
+        v_anim.addWidget(spin_duration)
+
+        v_anim.addWidget(QLabel("Animation Style"))
+        combo_easing = QComboBox()
+        combo_easing.addItem("Linear", QEasingCurve.Type.Linear)
+        combo_easing.addItem("InOutQuad", QEasingCurve.Type.InOutQuad)
+        combo_easing.addItem("InOutQuart (Padrão)", QEasingCurve.Type.InOutQuart)
+        combo_easing.addItem("OutCubic", QEasingCurve.Type.OutCubic)
+        combo_easing.addItem("InOutBack", QEasingCurve.Type.InOutBack)
+        combo_easing.addItem("OutBounce", QEasingCurve.Type.OutBounce)
+        combo_easing.addItem("OutElastic", QEasingCurve.Type.OutElastic)
+        combo_easing.setCurrentIndex(2)  # InOutQuart
+        combo_easing.currentIndexChanged.connect(lambda: self.accordion.setAnimationEasing(combo_easing.currentData()))
+
+        v_anim.addWidget(combo_easing)
+
+        grp_anim.setLayout(v_anim)
+        layout.addWidget(grp_anim)
 
         return panel
 

@@ -14,6 +14,7 @@ class EmojiCategory:
         self._shortcut = self._create_shortcut_button(text, icon)
         self._grid = QEmojiGrid()
         self._accordion_item = QAccordionItem(text, self._grid)
+        self._accordion_item.setAnimationEnabled(False)
         self._accordion_item.setObjectName(name)
 
     def accordionItem(self) -> QAccordionItem:

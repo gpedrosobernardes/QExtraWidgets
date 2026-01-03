@@ -1,6 +1,6 @@
 from enum import IntEnum, auto
 
-from PySide6.QtCore import Signal, QSize
+from PySide6.QtCore import Signal, QSize, QPropertyAnimation, QEasingCurve, QAbstractAnimation, Property
 from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame, QSizePolicy, QVBoxLayout, QToolButton, QLineEdit
 
@@ -127,7 +127,11 @@ class QAccordionHeader(QFrame):
 
 
 class QAccordionItem(QWidget):
-    def __init__(self, title, content_widget):
+    """
+    Accordion item with optional smooth expand/collapse animation.
+    """
+
+    def __init__(self, title: str, content_widget: QWidget):
         super().__init__()
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
@@ -135,34 +139,141 @@ class QAccordionItem(QWidget):
 
         self._header = QAccordionHeader(title)
         self._content = content_widget
+
+        # Animation setup
+        self._animation_enabled = True
+        self._animation_duration = 200  # milliseconds
+        self._animation_easing = QEasingCurve.Type.InOutQuart
+
+        # Animation object
+        self._animation = QPropertyAnimation(self._content, b"maximumHeight")
+        self._animation.setDuration(self._animation_duration)
+        self._animation.setEasingCurve(self._animation_easing)
+
+        # Initial state
+        self._content.setMinimumHeight(0)
         self._content.setVisible(False)
 
-        self._layout.addWidget(self._header)
-        self._layout.addWidget(self._content)
+        self._layout.addWidget(self._header, Qt.AlignmentFlag.AlignTop)
+        self._layout.addWidget(self._content, True, Qt.AlignmentFlag.AlignTop)
 
         self._header.clicked.connect(self.toggle)
 
     def toggle(self):
-        self.setExpanded(not self._content.isVisible())
+        """Toggles the expanded state."""
+        self.setExpanded(not self.isExpanded())
 
-    def setExpanded(self, expanded):
+    def setExpanded(self, expanded: bool, animated: bool = None):
+        """
+        Sets the expanded state.
+
+        :param expanded: True to expand, False to collapse
+        :param animated: Override animation setting for this call. If None, uses the widget's setting.
+        """
+        # Determine if we should animate
+        use_animation = self._animation_enabled if animated is None else animated
+
+        # Stop any running animation
+        if self._animation.state() == QAbstractAnimation.State.Running:
+            self._animation.stop()
+
+        # Update header state
         self._header.setExpanded(expanded)
-        self._content.setVisible(expanded)
 
-    def isExpanded(self):
-        return self._header.isExpanded() and self._content.isVisible()
+        if expanded:
+            # Expanding
+            self._content.setVisible(True)
+
+            if use_animation:
+                target_height = self._content.sizeHint().height()
+                print(f"Target Height: {target_height}")
+
+                # Animate from 0 to target height
+                self._animation.setStartValue(0)
+                self._animation.setEndValue(target_height)
+                self._animation.start()
+        else:
+            # Collapsing
+            if use_animation:
+                # Get current height
+                current_height = self._content.height()
+                print(f"Current Height: {current_height}")
+
+                # Animate from current height to 0
+                self._animation.setStartValue(current_height)
+                self._animation.setEndValue(0)
+                self._animation.finished.connect(self._on_collapse_finished)
+                self._animation.start()
+            else:
+                # Instant collapse
+                self._content.setVisible(False)
+
+
+    def _on_collapse_finished(self):
+        """Called when collapse animation finishes."""
+        self._animation.finished.disconnect(self._on_collapse_finished)
+        self._content.setVisible(False)
+
+    def isExpanded(self) -> bool:
+        """Returns True if the item is expanded."""
+        return self._header.isExpanded()
+
+    # --- Animation Settings ---
+
+    def setAnimationEnabled(self, enabled: bool):
+        """Enable or disable animations."""
+        self._animation_enabled = enabled
+
+    def animationEnabled(self) -> bool:
+        """Returns True if animations are enabled."""
+        return self._animation_enabled
+
+    def setAnimationDuration(self, duration: int):
+        """
+        Sets the animation duration in milliseconds.
+
+        :param duration: Duration in milliseconds (typical range: 100-500)
+        """
+        self._animation_duration = duration
+        self._animation.setDuration(duration)
+
+    def animationDuration(self) -> int:
+        """Returns the animation duration in milliseconds."""
+        return self._animation_duration
+
+    def setAnimationEasing(self, easing: QEasingCurve.Type):
+        """
+        Sets the animation easing curve.
+
+        :param easing: QEasingCurve.Type (e.g., InOutQuart, OutCubic, Linear)
+        """
+        self._animation_easing = easing
+        self._animation.setEasingCurve(easing)
+
+    def animationEasing(self) -> QEasingCurve.Type:
+        """Returns the animation easing curve."""
+        return self._animation_easing
+
+    # --- Style Settings ---
 
     def setIconPosition(self, position: QAccordionHeader.IconPosition):
+        """Sets the icon position (Leading or Trailing)."""
         self._header.setIconPosition(position)
 
     def setIconStyle(self, style: QAccordionHeader.IndicatorStyle):
+        """Sets the icon style (Arrow or PlusMinus)."""
         self._header.setIconStyle(style)
 
     def setFlat(self, flat: bool):
+        """Sets whether the header is flat or raised."""
         self._header.setFlat(flat)
 
+    # --- Accessors ---
+
     def content(self) -> QWidget:
+        """Returns the content widget."""
         return self._content
 
     def header(self) -> QAccordionHeader:
+        """Returns the header widget."""
         return self._header

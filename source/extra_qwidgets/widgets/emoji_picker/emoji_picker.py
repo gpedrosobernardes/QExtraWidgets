@@ -1,6 +1,5 @@
 import typing
 
-import qtawesome
 from PySide6.QtCore import QCoreApplication, Signal, QSize
 from PySide6.QtGui import QAction, QStandardItem, QFont
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
@@ -306,3 +305,6 @@ class QEmojiPicker(QWidget):
             grid.setLimitTreatment(QEmojiGrid.LimitTreatment.RemoveFirstOne)
             self.picked.connect(self.__add_recent)
         self.__recent_category = active
+
+    def accordion(self) -> QAccordion:
+        return self.__accordion
