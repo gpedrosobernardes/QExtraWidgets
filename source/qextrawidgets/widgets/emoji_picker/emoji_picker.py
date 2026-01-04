@@ -187,7 +187,7 @@ class QEmojiPicker(QWidget):
         clipboard.setText(f":{alias}:")
 
     def __on_mouse_enter_emoji(self, emoji: Emoji, item):
-        pixmap = EmojiImageProvider.get_pixmap(
+        pixmap = EmojiImageProvider.getPixmap(
             emoji,
             self.__emoji_label.size(),
             self.devicePixelRatio()

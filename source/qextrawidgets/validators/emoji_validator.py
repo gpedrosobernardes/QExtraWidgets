@@ -8,7 +8,7 @@ class QEmojiValidator(QValidator):
     def __init__(self, parent=None):
         super().__init__(parent)
         # Allow one or more emojis from start to end
-        emoji_pattern = EmojiFinder.get_emoji_pattern()
+        emoji_pattern = EmojiFinder.getEmojiPattern()
         self._re = QRegularExpression(
             f"^(?:{emoji_pattern})+$",
             QRegularExpression.PatternOption.UseUnicodePropertiesOption

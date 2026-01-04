@@ -26,12 +26,12 @@ class EmojiFinder:
     _COLOR_PATTERN = R"[\x{1F3FB}-\x{1F3FF}]"
 
     @classmethod
-    def get_emoji_pattern(cls) -> str:
+    def getEmojiPattern(cls) -> str:
         """Returns the raw regex pattern string for a single emoji."""
         return cls._EMOJI_PATTERN
 
     @classmethod
-    def get_regex(cls) -> QRegularExpression:
+    def getRegex(cls) -> QRegularExpression:
         """Returns a compiled QRegularExpression for finding emojis."""
         return QRegularExpression(
             cls._EMOJI_PATTERN,
@@ -39,26 +39,26 @@ class EmojiFinder:
         )
 
     @classmethod
-    def find_all_emoji(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:
+    def findEmojis(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:
         """
         Finds all emojis in the given text.
         Returns a generator of QRegularExpressionMatch objects.
         """
-        regex = cls.get_regex()
+        regex = cls.getRegex()
         iterator = regex.globalMatch(text)
         while iterator.hasNext():
             yield iterator.next()
 
     @classmethod
-    def find_all_emoji_objects(cls, text: str, ignore_colors: bool = False) -> typing.Generator[typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
+    def findEmojiObjects(cls, text: str, ignore_colors: bool = False) -> typing.Generator[typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
         """
         Finds all emojis in the given text.
         Returns a generator of Emoji objects.
         """
-        for match in cls.find_all_emoji(text):
+        for match in cls.findEmojis(text):
             emoji_str = match.captured(0)
             if ignore_colors:
-                for color_match in cls.find_emoji_colors(emoji_str):
+                for color_match in cls.findEmojiColors(emoji_str):
                     emoji_str = emoji_str.replace(color_match.captured(0), "")
             emoji = get_emoji_by_code(emoji_str)
             if emoji:
@@ -66,7 +66,7 @@ class EmojiFinder:
 
 
     @classmethod
-    def find_all_aliases(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:
+    def findAliases(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:
         """
         Finds all aliases in the given text.
         Returns a generator of QRegularExpressionMatch objects.
@@ -77,12 +77,12 @@ class EmojiFinder:
             yield iterator.next()
 
     @classmethod
-    def find_all_emoji_aliases(cls, text: str) -> typing.Generator[typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
+    def findEmojiAliases(cls, text: str) -> typing.Generator[typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
         """
         Finds all aliases in the given text.
         Returns a generator of QRegularExpressionMatch objects.
         """
-        for match in cls.find_all_aliases(text):
+        for match in cls.findAliases(text):
             first_captured = match.captured(0)
             alias = first_captured[1:-1]
             emoji = get_emoji_by_alias(alias)
@@ -90,7 +90,7 @@ class EmojiFinder:
                 yield emoji, match
 
     @classmethod
-    def find_emoji_colors(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:
+    def findEmojiColors(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:
         re_color = QRegularExpression(cls._COLOR_PATTERN)
         iterator = re_color.globalMatch(text)
         while iterator.hasNext():
@@ -104,7 +104,7 @@ class EmojiImageProvider:
     """
 
     @staticmethod
-    def get_pixmap(emoji_data: Emoji, size: QSize, dpr: float = 1.0) -> QPixmap:
+    def getPixmap(emoji_data: Emoji, size: QSize, dpr: float = 1.0) -> QPixmap:
         """
         Returns a QPixmap ready to be drawn.
 

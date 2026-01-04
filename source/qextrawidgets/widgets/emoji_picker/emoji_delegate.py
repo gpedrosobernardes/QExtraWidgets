@@ -35,7 +35,7 @@ class EmojiDelegate(QStyledItemDelegate):
         icon_rect = getattr(option, "rect")
         icon_rect_adjusted = icon_rect.adjusted(4, 4, -4, -4)
 
-        pixmap = EmojiImageProvider.get_pixmap(
+        pixmap = EmojiImageProvider.getPixmap(
             emoji_data,
             icon_rect_adjusted.size(),
             painter.device().devicePixelRatio()

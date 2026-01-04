@@ -23,21 +23,21 @@ emoji_db = get_emoji_db()
 
 @pytest.mark.parametrize("emoji", emoji_db)
 def test_emoji_finder_finds_all_emojis(emoji):
-    matches = EmojiFinder.find_all_emoji(emoji)
+    matches = EmojiFinder.findEmojis(emoji)
     assert len(matches) > 0
     for match in matches:
         assert emoji == match.captured(0)
 
 def test_emoji_finder_mixed_content():
     text = "Hello 👋 World 🔥"
-    matches = EmojiFinder.find_all_emoji(text)
+    matches = EmojiFinder.findEmojis(text)
     assert len(matches) == 2
     assert matches[0].captured(0) == "👋"
     assert matches[1].captured(0) == "🔥"
 
 def test_emoji_finder_no_emojis():
     text = "Hello World 123"
-    matches = EmojiFinder.find_all_emoji(text)
+    matches = EmojiFinder.findEmojis(text)
     assert len(matches) == 0
 
 @pytest.mark.parametrize("emoji", emoji_db)

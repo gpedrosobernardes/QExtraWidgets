@@ -126,7 +126,7 @@ class QTwemojiTextDocument(QTextDocument):
 
         dpr = QGuiApplication.primaryScreen().devicePixelRatio()
 
-        pixmap = EmojiImageProvider.get_pixmap(
+        pixmap = EmojiImageProvider.getPixmap(
             emoji_data=emoji,
             size=QSize(size, size),
             dpr=dpr
@@ -174,13 +174,13 @@ class QTwemojiTextDocument(QTextDocument):
         text = block.text()
         block_pos = block.position()
 
-        for emoji, match in self.__reverse_generator(EmojiFinder.find_all_emoji_objects(text, True)):
+        for emoji, match in self.__reverse_generator(EmojiFinder.findEmojiObjects(text, True)):
             image_fmt = self._emoji_to_text_image(emoji)
             self._replace_match(match, image_fmt, block_pos)
 
     def _twemojize_full(self):
         """Full version for use at initialization (total scan)."""
-        for emoji, match in self.__reverse_generator(EmojiFinder.find_all_emoji_objects(super().toPlainText(), True)):
+        for emoji, match in self.__reverse_generator(EmojiFinder.findEmojiObjects(super().toPlainText(), True)):
             image_fmt = self._emoji_to_text_image(emoji)
             self._replace_match(match, image_fmt)
 
@@ -198,7 +198,7 @@ class QTwemojiTextDocument(QTextDocument):
         Could also be optimized for _last_change_pos, but alias is less frequent.
         Kept global logic for safety, or the same logic as _twemojize could be applied.
         """
-        for emoji, match in self.__reverse_generator(EmojiFinder.find_all_emoji_aliases(super().toPlainText())):
+        for emoji, match in self.__reverse_generator(EmojiFinder.findEmojiAliases(super().toPlainText())):
             if self._twemoji:
                 image_fmt = self._emoji_to_text_image(emoji)
                 self._replace_match(match, image_fmt)
