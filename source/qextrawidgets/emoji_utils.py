@@ -11,7 +11,7 @@ class EmojiFinder:
     Utility class for finding emojis in text using PySide6's QRegularExpression.
     Centralizes the regex pattern logic used across the library.
     """
-    
+
     # Regex pattern for a single emoji (based on unicode.org specs)
     # Covers: Tag sequences, Keycap sequences, Regional indicator sequences, Extended Pictographic sequences
     _EMOJI_PATTERN = (
@@ -50,7 +50,8 @@ class EmojiFinder:
             yield iterator.next()
 
     @classmethod
-    def findEmojiObjects(cls, text: str, ignore_colors: bool = False) -> typing.Generator[typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
+    def findEmojiObjects(cls, text: str, ignore_colors: bool = False) -> typing.Generator[
+        typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
         """
         Finds all emojis in the given text.
         Returns a generator of Emoji objects.
@@ -63,7 +64,6 @@ class EmojiFinder:
             emoji = get_emoji_by_code(emoji_str)
             if emoji:
                 yield emoji, match
-
 
     @classmethod
     def findAliases(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:

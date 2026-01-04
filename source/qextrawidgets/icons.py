@@ -1,12 +1,12 @@
 import typing
 
 import qtawesome
-from PySide6.QtCore import QRect, Qt, QSize
-from PySide6.QtGui import QIcon, QIconEngine, QPainter, QPixmap, QPalette, QColor
+from PySide6.QtCore import QRect, Qt, QSize, QUrl, QUrlQuery
+from PySide6.QtGui import QIcon, QIconEngine, QPainter, QPixmap, QPalette, QColor, QPixmapCache
 from PySide6.QtWidgets import QApplication
 
 
-class ThemeResponsiveIconEngine(QIconEngine):
+class QThemeResponsiveIconEngine(QIconEngine):
     """
     Dynamic icon engine that acts as a Proxy for an original QIcon.
     Adjusts rendering based on the smallest available dimension to avoid clipping.
@@ -16,53 +16,17 @@ class ThemeResponsiveIconEngine(QIconEngine):
         super().__init__()
         self._source_icon = icon
 
-        # Simple Cache
-        self._cached_pixmap: typing.Optional[QPixmap] = None
-        self._cache_key: typing.Optional[tuple] = None  # (width, height, mode, state, color_rgba)
-
     def paint(self, painter: QPainter, rect: QRect, mode: QIcon.Mode, state: QIcon.State):
-        """
-        Paints the icon centered, limited by the smallest dimension of the rectangle.
-        """
-        # 1. Determine bounding box size
-        min_side = min(rect.width(), rect.height())
+        dpr = painter.device().devicePixelRatioF()
 
-        # Safety margin (2px each side) to avoid anti-aliasing clipping
-        safe_side = min_side - 4
-
-        if safe_side <= 0:
-            return
-
-        bounding_size = QSize(safe_side, safe_side)
-
-        # 2. Get Colored Pixmap
-        # We request the pixmap based on this bounding size
-        pixmap = self._get_colored_pixmap(bounding_size, mode, state)
+        pixmap = self._get_colored_pixmap(rect.size() * dpr, mode, state)
+        pixmap.setDevicePixelRatio(dpr)
 
         if pixmap.isNull():
             return
 
-        # 3. Scale Calculation (Maintaining Aspect Ratio)
-        pixmap_size = pixmap.size()
-
-        # CORRECTION HERE: QSize.scaled accepts only (Size, Mode).
-        # Visual smoothing is done by painter.setRenderHint later.
-        scaled_size = pixmap_size.scaled(
-            bounding_size,
-            Qt.AspectRatioMode.KeepAspectRatio
-        )
-
-        # 4. Centering
-        # Calculates position (x, y) to center in original rect
-        x = rect.x() + (rect.width() - scaled_size.width()) // 2
-        y = rect.y() + (rect.height() - scaled_size.height()) // 2
-
-        target_rect = QRect(x, y, scaled_size.width(), scaled_size.height())
-
-        # 5. Drawing
-        # Activates smoothing when drawing pixels on screen
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-        painter.drawPixmap(target_rect, pixmap)
+        # Desenha o pixmap com tamanho explícito para garantir escala correta
+        painter.drawPixmap(rect, pixmap)
 
     def pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
         """Returns processed pixmap."""
@@ -70,11 +34,9 @@ class ThemeResponsiveIconEngine(QIconEngine):
 
     def addPixmap(self, pixmap: QPixmap, mode: QIcon.Mode, state: QIcon.State):
         self._source_icon.addPixmap(pixmap, mode, state)
-        self._clear_cache()
 
     def addFile(self, file_name: str, size: QSize, mode: QIcon.Mode, state: QIcon.State):
         self._source_icon.addFile(file_name, size, mode, state)
-        self._clear_cache()
 
     def availableSizes(self, mode: QIcon.Mode = QIcon.Mode.Normal, state: QIcon.State = QIcon.State.Off) -> typing.List[QSize]:
         return self._source_icon.availableSizes(mode, state)
@@ -83,7 +45,7 @@ class ThemeResponsiveIconEngine(QIconEngine):
         return self._source_icon.actualSize(size, mode, state)
 
     def clone(self):
-        return ThemeResponsiveIconEngine(self._source_icon)
+        return QThemeResponsiveIconEngine(self._source_icon)
 
     # --- Internal Logic ---
 
@@ -96,10 +58,22 @@ class ThemeResponsiveIconEngine(QIconEngine):
             target_color = palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText)
 
         # 2. Cache Check
-        current_key = (size.width(), size.height(), mode, state, target_color.rgba())
+        url = QUrl()
+        url.setScheme("icons")
+        url.setPath(str(id(self)))
 
-        if self._cached_pixmap and self._cache_key == current_key:
-            return self._cached_pixmap
+        query_params = QUrlQuery()
+        query_params.addQueryItem("width", str(size.width()))
+        query_params.addQueryItem("height", str(size.height()))
+        query_params.addQueryItem("mode", str(mode.value))
+        query_params.addQueryItem("state", str(state.value))
+        query_params.addQueryItem("color", str(target_color.rgba()))
+
+        url.setQuery(query_params)
+
+        base_pixmap = QPixmap()
+        if QPixmapCache.find(url.toString(), base_pixmap):
+            return base_pixmap
 
         # 3. Get Original Pixmap
         base_pixmap = self._source_icon.pixmap(size, mode, state)
@@ -110,9 +84,7 @@ class ThemeResponsiveIconEngine(QIconEngine):
         # 4. Colorize
         colored_pixmap = self._generate_colored_pixmap(base_pixmap, target_color)
 
-        # Update Cache
-        self._cached_pixmap = colored_pixmap
-        self._cache_key = current_key
+        QPixmapCache.insert(url.toString(), colored_pixmap)
 
         return colored_pixmap
 
@@ -120,6 +92,7 @@ class ThemeResponsiveIconEngine(QIconEngine):
     def _generate_colored_pixmap(base: QPixmap, color: QColor) -> QPixmap:
         colored = QPixmap(base.size())
         colored.fill(Qt.GlobalColor.transparent)
+        colored.setDevicePixelRatio(base.devicePixelRatio())
 
         p = QPainter(colored)
         p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
@@ -134,10 +107,6 @@ class ThemeResponsiveIconEngine(QIconEngine):
         p.end()
 
         return colored
-
-    def _clear_cache(self):
-        self._cached_pixmap = None
-        self._cache_key = None
 
 
 class QThemeResponsiveIcon(QIcon):
@@ -156,7 +125,7 @@ class QThemeResponsiveIcon(QIcon):
             icon = QIcon()
             icon.addPixmap(source)
 
-        super().__init__(ThemeResponsiveIconEngine(icon))
+        super().__init__(QThemeResponsiveIconEngine(icon))
 
     @staticmethod
     def fromAwesome(icon_name: str, **kwargs):

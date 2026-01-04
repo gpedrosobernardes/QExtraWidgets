@@ -27,10 +27,11 @@ class DemoWindow(QMainWindow):
         # 1. Theme Control Section
         btn_theme_toggle = QPushButton("Toggle Theme (Light / Dark)")
         btn_theme_toggle.setFixedHeight(40)
-        btn_theme_toggle.setIconSize(QSize(32, 32))
+        btn_theme_toggle.setIconSize(QSize(40, 40))
         # A simple icon for the theme button
         btn_theme_toggle.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.palette"))
         btn_theme_toggle.clicked.connect(self.toggleTheme)
+
 
         main_layout.addWidget(btn_theme_toggle)
 
