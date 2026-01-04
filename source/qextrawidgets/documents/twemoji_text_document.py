@@ -11,8 +11,8 @@ from qextrawidgets.emoji_utils import EmojiFinder, EmojiImageProvider
 
 T = typing.TypeVar('T')
 
-class QTwemojiTextDocument(QTextDocument):
 
+class QTwemojiTextDocument(QTextDocument):
 
     def __init__(self, parent=None, twemoji=True, alias_replacement=True, emoji_margin=1):
         super().__init__(parent)
@@ -110,7 +110,7 @@ class QTwemojiTextDocument(QTextDocument):
 
     # --- Main Logic (Optimization B applied) ---
 
-    def _on_contents_change(self, position, chars_removed, chars_added):
+    def _on_contents_change(self, position, *_):
         """Captures the change position before it is processed."""
         self._last_change_pos = position
 
@@ -157,7 +157,7 @@ class QTwemojiTextDocument(QTextDocument):
         """Calculates the emoji size based on configuration or font."""
         if self._emoji_size != -1:
             return self._emoji_size
-        
+
         font_height = self._font_height(cursor)
         return int(font_height * 0.9)
 
@@ -186,14 +186,15 @@ class QTwemojiTextDocument(QTextDocument):
 
     def updateEmojiImages(self):
         """Updates the margin and size of existing emoji images without converting to text."""
-        for fragment in self.__reverse_generator(self.emoji_fragments()):
-            emoji = self._text_image_to_emoji(fragment.charFormat().toImageFormat())
-            new_img_fmt = self._emoji_to_text_image(emoji)
-            self._replace_match(fragment, new_img_fmt)
+        for block in self.__reverse_generator(self._blocks()):
+            for fragment in self.__reverse_generator(self.emoji_fragments(block)):
+                emoji = self._text_image_to_emoji(fragment.charFormat().toImageFormat())
+                new_img_fmt = self._emoji_to_text_image(emoji)
+                self._replace_match(fragment, new_img_fmt)
 
     def _replace_alias(self):
         """
-        Alias replacement (:smile:).
+        Alias replacement - :smile: -> 😄
         Could also be optimized for _last_change_pos, but alias is less frequent.
         Kept global logic for safety, or the same logic as _twemojize could be applied.
         """
@@ -204,7 +205,8 @@ class QTwemojiTextDocument(QTextDocument):
             else:
                 self._replace_match(match, emoji.emoji)
 
-    def _replace_match(self, match: typing.Union[QRegularExpressionMatch, QTextFragment], content: typing.Union[str, QTextImageFormat], offset: int = 0):
+    def _replace_match(self, match: typing.Union[QRegularExpressionMatch, QTextFragment],
+                       content: typing.Union[str, QTextImageFormat], offset: int = 0):
         cursor = QTextCursor(self)
 
         start = match.position() if isinstance(match, QTextFragment) else match.capturedStart(0)
@@ -222,7 +224,7 @@ class QTwemojiTextDocument(QTextDocument):
 
     # --- Helpers and Utilities ---
 
-    def _limit_line(self, position, chars_removed, chars_added):
+    def _limit_line(self, *_):
         if self._line_limit <= 0:
             return
 
@@ -238,7 +240,9 @@ class QTwemojiTextDocument(QTextDocument):
     def toPlainText(self) -> str:
         return self._to_plain_text()
 
-    def _to_plain_text(self, first_block: typing.Optional[QTextBlock] = None, last_block: typing.Optional[QTextBlock] = None, selection_cursor: typing.Optional[QTextCursor] = None) -> str:
+    def _to_plain_text(self, first_block: typing.Optional[QTextBlock] = None,
+                       last_block: typing.Optional[QTextBlock] = None,
+                       selection_cursor: typing.Optional[QTextCursor] = None) -> str:
         result = ""
         for block in self._blocks(first_block, last_block):
             for frag in self._fragments(block):
@@ -263,7 +267,8 @@ class QTwemojiTextDocument(QTextDocument):
             if self._is_emoji_frag(frag):
                 yield frag
 
-    def _blocks(self, first_block: typing.Optional[QTextBlock] = None, last_block: typing.Optional[QTextBlock] = None) -> typing.Generator[QTextBlock, None, None]:
+    def _blocks(self, first_block: typing.Optional[QTextBlock] = None,
+                last_block: typing.Optional[QTextBlock] = None) -> typing.Generator[QTextBlock, None, None]:
         if first_block is None:
             block = self.firstBlock()
         else:
@@ -292,9 +297,10 @@ class QTwemojiTextDocument(QTextDocument):
         return False
 
     def _detwemojize(self):
-        for fragment in self.__reverse_generator(self.emoji_fragments()):
-            emoji = self._text_image_to_emoji(fragment.charFormat().toImageFormat())
-            self._replace_match(fragment, emoji.emoji)
+        for block in self.__reverse_generator(self._blocks()):
+            for fragment in self.__reverse_generator(self.emoji_fragments(block)):
+                emoji = self._text_image_to_emoji(fragment.charFormat().toImageFormat())
+                self._replace_match(fragment, emoji.emoji)
 
     @staticmethod
     def __reverse_generator(generator: typing.Generator[T, None, None]) -> typing.List[T]:
