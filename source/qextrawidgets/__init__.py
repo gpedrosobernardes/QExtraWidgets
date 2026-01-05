@@ -13,3 +13,4 @@ from .widgets import (
 from .documents import QTwemojiTextDocument
 from .proxys import QMultiFilterProxy, EmojiSortFilterProxyModel
 from .validators import QEmojiValidator
+from .delegates import QStandardTwemojiDelegate

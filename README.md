@@ -74,15 +74,33 @@ btn.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.house"))
 
 ---
 
-### 5. Other Useful Widgets
+### 5. QStandardTwemojiDelegate
 
-| Widget | Description | Image |
-| --- | --- | --- |
-| **QPassword** | A line edit with a built-in eye icon to toggle password visibility. | ![QPassword](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPassword.png) |
-| **QPager** | A classic pagination control for navigating large datasets. | ![QPager](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPager.png) |
-| **QColorButton** | A button that displays a selected color and opens a dialog on click. | ![QColorButton](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QColorButton.png) |
-| **QDualList** | Two lists side-by-side for moving items (Select/Deselect). | ![QDualList](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png) |
-| **QSearchLineEdit** | A search input field with a clear button and search icon. | ![QSearchLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png) |
+A delegate that renders Twemoji images within standard item views (like `QListView`, `QTableView`, `QTreeView`).
+
+* **Unicode Support:** Renders standard Unicode emojis as high-quality Twemoji images.
+* **Alignment:** Supports standard Qt text alignment flags.
+* **Mixed Content:** Handles text mixed with emojis seamlessly.
+
+```python
+from qextrawidgets.delegates.standard_twemoji_delegate import QStandardTwemojiDelegate
+
+view = QListView()
+delegate = QStandardTwemojiDelegate(view)
+view.setItemDelegate(delegate)
+```
+
+---
+
+### 6. Other Useful Widgets
+
+| Widget                | Description | Image                                                                                                                            |
+|-----------------------| --- |----------------------------------------------------------------------------------------------------------------------------------|
+| **QPasswordLineEdit** | A line edit with a built-in eye icon to toggle password visibility. | ![QPasswordLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPasswordLineEdit.png) |
+| **QPager**            | A classic pagination control for navigating large datasets. | ![QPager](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPager.png)                       |
+| **QColorButton**      | A button that displays a selected color and opens a dialog on click. | ![QColorButton](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QColorButton.png)           |
+| **QDualList**         | Two lists side-by-side for moving items (Select/Deselect). | ![QDualList](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png)                 |
+| **QSearchLineEdit**   | A search input field with a clear button and search icon. | ![QSearchLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png)     |
 
 ---
 
