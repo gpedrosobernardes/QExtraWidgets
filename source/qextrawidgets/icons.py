@@ -3,7 +3,7 @@ import typing
 import qtawesome
 from PySide6.QtCore import QRect, Qt, QSize, QUrl, QUrlQuery
 from PySide6.QtGui import QIcon, QIconEngine, QPainter, QPixmap, QPalette, QColor, QPixmapCache
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QStyle
 
 
 class QThemeResponsiveIconEngine(QIconEngine):
@@ -19,14 +19,26 @@ class QThemeResponsiveIconEngine(QIconEngine):
     def paint(self, painter: QPainter, rect: QRect, mode: QIcon.Mode, state: QIcon.State):
         dpr = painter.device().devicePixelRatioF()
 
-        pixmap = self._get_colored_pixmap(rect.size() * dpr, mode, state)
+        min_side = min(rect.width(), rect.height())
+        size = QSize(min_side, min_side)
+
+        pixmap = self._get_colored_pixmap(size * dpr, mode, state)
         pixmap.setDevicePixelRatio(dpr)
 
         if pixmap.isNull():
             return
 
-        # Desenha o pixmap com tamanho explícito para garantir escala correta
-        painter.drawPixmap(rect, pixmap)
+        target_rect = QStyle.alignedRect(
+            Qt.LayoutDirection.LeftToRight,  # Direção do layout (LTR)
+            Qt.AlignmentFlag.AlignCenter,  # Alinhamento desejado
+            size,  # Tamanho do objeto
+            rect  # O retângulo limite (o que veio no paint)
+        )
+
+        target_rect.adjusted(-5, -5, -5, -5)
+
+        # 3. Desenhar na posição calculada
+        painter.drawPixmap(target_rect, pixmap)
 
     def pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
         """Returns processed pixmap."""
