@@ -10,9 +10,6 @@ class QExtraTextEdit(QTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Document Configuration
-        self.setDocument(QTwemojiTextDocument(self, dpr=self.devicePixelRatio()))
-
         # Private Variables
         self._validator = None
         self._max_height = 16777215  # QWIDGETSIZE_MAX (Qt Default)
@@ -50,15 +47,6 @@ class QExtraTextEdit(QTextEdit):
             return QSize(super().sizeHint().width(), int(final_height))
 
         return super().sizeHint()
-
-    def createMimeDataFromSelection(self) -> QMimeData:
-        """Preserves custom emojis when copying/dragging."""
-        document: QTwemojiTextDocument = self.document()
-        custom_text = document.selectionToPlainText(self.textCursor())
-
-        new_mime_data = QMimeData()
-        new_mime_data.setText(custom_text)
-        return new_mime_data
 
     # --- Getters and Setters ---
 

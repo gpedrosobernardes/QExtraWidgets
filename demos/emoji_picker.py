@@ -1,12 +1,11 @@
 import sys
 
-from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout
-from emojis.db import Emoji
+from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QLineEdit
 
-from qextrawidgets.documents.twemoji_text_document import QTwemojiTextDocument
 from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.utils import QEmojiFonts
+from qextrawidgets.widgets.emoji_picker import QLazyLoadingEmojiDelegate
 from qextrawidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
-from qextrawidgets.widgets.extra_text_edit import QExtraTextEdit
 
 
 class MainWindow(QMainWindow):
@@ -18,18 +17,23 @@ class MainWindow(QMainWindow):
 
         widget = QWidget()
 
-        text_edit = QExtraTextEdit()
-        document: QTwemojiTextDocument = text_edit.document()
-        document.setLineLimit(1)
+        font = QEmojiFonts.twemojiFont()
+        # font.setWordSpacing(-5)
+
+
+        line_edit = QLineEdit()
+        line_edit.setFont(font)
 
         emoji_picker = QEmojiPicker()
-        emoji_picker.picked.connect(lambda emoji: text_edit.insertPlainText(Emoji(*emoji).emoji))
+        emoji_picker.picked.connect(lambda emoji: line_edit.insert(emoji))
+
+        emoji_picker.setEmojiDelegate(QLazyLoadingEmojiDelegate())
 
         # center line_edit on widget
         layout = QVBoxLayout()
 
         layout.addWidget(emoji_picker)
-        layout.addWidget(text_edit)
+        layout.addWidget(line_edit)
         widget.setLayout(layout)
 
         self.setCentralWidget(widget)

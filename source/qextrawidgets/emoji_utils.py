@@ -2,8 +2,8 @@ import typing
 
 from PySide6.QtCore import QRegularExpression, QSize, QRegularExpressionMatch, QUrl, QUrlQuery
 from PySide6.QtGui import QPixmap, QPixmapCache, QImageReader, Qt, QPainter
-from emojis.db import Emoji, get_emoji_by_alias, get_emoji_by_code
 from twemoji_api.api import get_emoji_path
+from emoji_data_python import unified_to_char, char_to_unified
 
 
 class EmojiFinder:
@@ -51,17 +51,17 @@ class EmojiFinder:
 
     @classmethod
     def findEmojiObjects(cls, text: str, ignore_colors: bool = False) -> typing.Generator[
-        typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
+        typing.Tuple[EmojiData, QRegularExpressionMatch], None, None]:
         """
         Finds all emojis in the given text.
-        Returns a generator of Emoji objects.
+        Returns a generator of EmojiData objects.
         """
         for match in cls.findEmojis(text):
             emoji_str = match.captured(0)
             if ignore_colors:
                 for color_match in cls.findEmojiColors(emoji_str):
                     emoji_str = emoji_str.replace(color_match.captured(0), "")
-            emoji = get_emoji_by_code(emoji_str)
+            emoji = EmojiDatabase.getEmojiByCode(emoji_str)
             if emoji:
                 yield emoji, match
 
@@ -77,7 +77,7 @@ class EmojiFinder:
             yield iterator.next()
 
     @classmethod
-    def findEmojiAliases(cls, text: str) -> typing.Generator[typing.Tuple[Emoji, QRegularExpressionMatch], None, None]:
+    def findEmojiAliases(cls, text: str) -> typing.Generator[typing.Tuple[EmojiData, QRegularExpressionMatch], None, None]:
         """
         Finds all aliases in the given text.
         Returns a generator of QRegularExpressionMatch objects.
@@ -85,7 +85,7 @@ class EmojiFinder:
         for match in cls.findAliases(text):
             first_captured = match.captured(0)
             alias = first_captured[1:-1]
-            emoji = get_emoji_by_alias(alias)
+            emoji = EmojiDatabase.getEmojiByAlias(alias)
             if emoji:
                 yield emoji, match
 
@@ -104,14 +104,15 @@ class EmojiImageProvider:
     """
 
     @staticmethod
-    def getPixmap(emoji_data: Emoji, margin: int, size: QSize, dpr: float = 1.0) -> QPixmap:
+    def getPixmap(emoji: str, margin: int, size: QSize, dpr: float = 1.0, source_format: str = "png") -> QPixmap:
         """
         Returns a QPixmap ready to be drawn.
 
-        :param emoji_data: Object containing the emoji path or code.
+        :param emoji: Emoji string.
         :param size: Desired QSize (logical size).
         :param dpr: Device Pixel Ratio (for Retina/4K screens).
-        :param margin:
+        :param margin: Margin around the emoji (in pixels).
+        :param source_format: Source image format (png, svg).
         """
 
         # 1. Calculate real physical size (pixels)
@@ -119,8 +120,7 @@ class EmojiImageProvider:
         target_height = int(size.height() * dpr)
 
         # 2. Generate unique key for Cache
-        emoji_alias = emoji_data[0][0]
-        cache_url = EmojiImageProvider.getUrl(emoji_alias, margin, size, dpr)
+        cache_url = EmojiImageProvider.getUrl(char_to_unified(emoji), margin, size, dpr, source_format)
 
         # 3. Try to fetch from Cache
         pixmap = QPixmap()
@@ -130,7 +130,7 @@ class EmojiImageProvider:
         # --- CACHE MISS (Load from disk) ---
 
         # 4. Load using QImageReader (more efficient than QPixmap(path))
-        emoji_path = str(get_emoji_path(emoji_data[1]))
+        emoji_path = str(get_emoji_path(emoji, source_format))
         reader = QImageReader(emoji_path)
 
         if reader.canRead():
@@ -166,7 +166,7 @@ class EmojiImageProvider:
         return fallback
 
     @staticmethod
-    def getUrl(alias: str, margin: int, size: QSize, dpr: float) -> QUrl:
+    def getUrl(alias: str, margin: int, size: QSize, dpr: float, source_format: str) -> QUrl:
         url = QUrl()
         url.setScheme("twemoji")
         url.setPath(alias)
@@ -176,6 +176,7 @@ class EmojiImageProvider:
         query_params.addQueryItem("width", str(size.width()))
         query_params.addQueryItem("height", str(size.height()))
         query_params.addQueryItem("dpr", str(dpr))
+        query_params.addQueryItem("source_format", source_format)
 
         url.setQuery(query_params)
 

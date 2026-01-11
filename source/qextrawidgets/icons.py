@@ -35,7 +35,7 @@ class QThemeResponsiveIconEngine(QIconEngine):
             rect  # O retângulo limite (o que veio no paint)
         )
 
-        target_rect.adjusted(-5, -5, -5, -5)
+        target_rect.adjusted(5, 5, -5, -5)
 
         # 3. Desenhar na posição calculada
         painter.drawPixmap(target_rect, pixmap)

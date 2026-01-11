@@ -8,5 +8,6 @@ from .extra_text_edit import QExtraTextEdit
 from .search_line_edit import QSearchLineEdit
 
 # Subpackages
-from .emoji_picker import QEmojiPicker
 from .filterable_table import QFilterableTable
+from .emoji_picker import QEmojiPicker
+from .icon_combo_box import QIconComboBox
