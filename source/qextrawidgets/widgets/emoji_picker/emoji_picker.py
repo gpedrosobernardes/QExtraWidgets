@@ -163,17 +163,24 @@ class QEmojiPicker(QWidget):
 
     def __on_hover_emoji(self, item: QStandardItem):
         alias = item.data(QEmojiDataRole.AliasRole)
+        metrics = QFontMetrics(self.__aliases_emoji_label.font())
+        elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self.__aliases_emoji_label.width())
+        self.__aliases_emoji_label.setText(elided_alias)
+
         emoji = item.text()
         emoji_delegate = self.emojiDelegate()
-        self.__emoji_label.clear()
         if emoji_delegate:
             emoji_image_getter = emoji_delegate.emojiImageGetter()
             pixmap = emoji_image_getter(emoji, self.emojiSize(), self.devicePixelRatio())
             self.__emoji_label.setPixmap(pixmap)
         else:
-            metrics = QFontMetrics(self.__aliases_emoji_label.font())
-            elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self.__aliases_emoji_label.width())
-            self.__aliases_emoji_label.setText(elided_alias)
+            self.__emoji_label.setText(emoji)
+
+    def __clear_emoji_preview(self):
+        self.__current_alias = ""
+        self.__emoji_label.clear()
+        self.__aliases_emoji_label.clear()
+        self.__aliases_emoji_label.setToolTip("")
 
     def __on_emoji_clicked(self, item: QStandardItem):
         self.picked.emit(item.text())
@@ -307,6 +314,7 @@ class QEmojiPicker(QWidget):
         # Connections
         shortcut.clicked.connect(lambda: self._on_schortcut_clicked(section))
         grid.entered.connect(lambda _index: self.__on_hover_emoji(self.__item_from_proxy(proxy, _index)))
+        grid.left.connect(self.__clear_emoji_preview)
         grid.clicked.connect(lambda _index: self.__on_emoji_clicked(self.__item_from_proxy(proxy, _index)))
         grid.customContextMenuRequested.connect(lambda pos: self.__on_context_menu(grid, pos))
 

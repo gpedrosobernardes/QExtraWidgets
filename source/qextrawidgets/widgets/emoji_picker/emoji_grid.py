@@ -1,4 +1,4 @@
-from PySide6.QtCore import QSize, Qt
+from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy
 
@@ -6,6 +6,8 @@ from qextrawidgets.utils import QEmojiFonts
 
 
 class QEmojiGrid(QListView):
+    left = Signal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -62,6 +64,10 @@ class QEmojiGrid(QListView):
         height = rows * item_height + 5  # +5 safety padding
 
         return QSize(width, height)
+
+    def leaveEvent(self, event):
+        super().leaveEvent(event)
+        self.left.emit()
 
     def resizeEvent(self, event):
         """
