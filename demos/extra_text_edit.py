@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QCheckBox, QSpinBox, QLabel, QPushButton, QGroupBox, QFormLayout
 )
 
+from qextrawidgets import QTwemojiTextDocument
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.widgets.extra_text_edit import QExtraTextEdit
 from qextrawidgets.validators import QEmojiValidator
@@ -57,6 +58,7 @@ class DemoTextEditWindow(QMainWindow):
         # 2. The Main Widget (QExtraTextEdit)
         self._text_edit = QExtraTextEdit()
         self._text_edit.setPlaceholderText("Type here... Try :100: or paste an emoji.")
+        self._text_edit.setDocument(QTwemojiTextDocument())
 
         # Define an initial maximum height to demonstrate scrolling
         self._text_edit.setMaximumHeight(150)
