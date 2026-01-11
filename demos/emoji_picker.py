@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         emoji_picker = QEmojiPicker()
         emoji_picker.picked.connect(lambda emoji: line_edit.insert(emoji))
 
-        emoji_picker.setEmojiDelegate(QLazyLoadingEmojiDelegate())
+        # emoji_picker.setEmojiDelegate(QLazyLoadingEmojiDelegate())
 
         # center line_edit on widget
         layout = QVBoxLayout()

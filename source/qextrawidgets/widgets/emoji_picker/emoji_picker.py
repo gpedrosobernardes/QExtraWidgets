@@ -1,8 +1,8 @@
 import typing
 from enum import Enum
 
-from PySide6.QtCore import QCoreApplication, QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt
-from PySide6.QtGui import QFont, QIcon, QStandardItem
+from PySide6.QtCore import QCoreApplication, QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt, QEvent
+from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
                                QWidget, QApplication, QButtonGroup, QToolButton, QMenu)
 from emoji_data_python import emoji_data
@@ -163,7 +163,6 @@ class QEmojiPicker(QWidget):
 
     def __on_hover_emoji(self, item: QStandardItem):
         alias = item.data(QEmojiDataRole.AliasRole)
-        self.__aliases_emoji_label.setText(alias)
         emoji = item.text()
         emoji_delegate = self.emojiDelegate()
         self.__emoji_label.clear()
@@ -172,7 +171,9 @@ class QEmojiPicker(QWidget):
             pixmap = emoji_image_getter(emoji, self.emojiSize(), self.devicePixelRatio())
             self.__emoji_label.setPixmap(pixmap)
         else:
-            self.__emoji_label.setText(emoji)
+            metrics = QFontMetrics(self.__aliases_emoji_label.font())
+            elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self.__aliases_emoji_label.width())
+            self.__aliases_emoji_label.setText(elided_alias)
 
     def __on_emoji_clicked(self, item: QStandardItem):
         self.picked.emit(item.text())
