@@ -4,7 +4,7 @@ from enum import Enum
 from PySide6.QtCore import QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt
 from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
-                               QWidget, QApplication, QButtonGroup, QMenu, QToolButton)
+                               QWidget, QApplication, QButtonGroup, QMenu, QToolButton, QStyledItemDelegate)
 from emoji_data_python import emoji_data
 
 from qextrawidgets.icons import QThemeResponsiveIcon
@@ -73,7 +73,7 @@ class QEmojiPicker(QWidget):
 
         self.__emoji_size = None
         if emoji_font is None:
-            emoji_font = QEmojiFonts.twemojiFont()
+            emoji_font = QEmojiFonts.loadTwemojiFont()
         self.__emoji_font = emoji_font
         self.__emoji_delegate = None
 
@@ -115,8 +115,8 @@ class QEmojiPicker(QWidget):
 
         self.__accordion.expandAll()
 
-        self.setEmojiFont(emoji_font)
         self.setEmojiSize(emoji_size)
+        self.setEmojiFont(emoji_font)
 
         self.__setup_layout()
         self.translateUI()
@@ -186,7 +186,7 @@ class QEmojiPicker(QWidget):
     def __on_emoji_clicked(self, proxy_index: QModelIndex):
         item = self.__model.itemFromProxyIndex(proxy_index)
         item.setData(True, QEmojiDataRole.RecentRole)
-        self.picked.emit(item.text())
+        self.picked.emit(item.data(Qt.ItemDataRole.UserRole))
 
     def __item_from_position(self, list_view: QEmojiGrid, position: QPoint) -> typing.Optional[QStandardItem]:
         proxy_index = list_view.indexAt(position)
@@ -262,11 +262,12 @@ class QEmojiPicker(QWidget):
             items = self.__model.getEmojiItems()
 
         for item in items:
+            if item.icon():
+                item.setIcon(QIcon())
+
             if emoji_pixmap_getter:
                 if item.text():
                     item.setText("")
-                if item.icon():
-                    item.setIcon(QIcon())
             else:
                 item.setText(item.data(Qt.ItemDataRole.UserRole))
 
@@ -434,17 +435,23 @@ class QEmojiPicker(QWidget):
             proxy.setCategoryFilter(None)
         self.__recent_category = active
 
-    def setEmojiFont(self, font: QFont):
-        self.__emoji_font = font
+    def _get_emoji_grid_font(self):
+        font = QFont(self.emojiFont())
+        pixel_size = get_max_pixel_size("👏", font.family(), self._get_emoji_icon_size())
+        font.setPixelSize(pixel_size)
+        return font
+
+    def setEmojiFont(self, font_family: str):
+        self.__emoji_font = font_family
 
         for grid in self.grids():
-            grid.setFont(font)
+            grid.setFont(self._get_emoji_grid_font())
 
-        emoji_label_font = QFont(font)
+        emoji_label_font = QFont(font_family)
         emoji_label_font.setPixelSize(24)
         self.__emoji_label.setFont(emoji_label_font)
 
-    def emojiFont(self) -> QFont:
+    def emojiFont(self) -> str:
         return self.__emoji_font
 
     def setEmojiSize(self, size: QSize):
@@ -453,14 +460,8 @@ class QEmojiPicker(QWidget):
 
             for grid in self.grids():
                 grid.setGridSize(size)
-
-                size_with_margin = self._get_emoji_icon_size()
-                grid.setIconSize(size_with_margin)
-
-                font = QFont(self.emojiFont())
-                pixel_size = get_max_pixel_size("👏", font.family(), size_with_margin)
-                font.setPixelSize(pixel_size)
-                grid.setFont(font)
+                grid.setIconSize(self._get_emoji_icon_size())
+                grid.setFont(self._get_emoji_grid_font())
 
             self.__model.setEmojiSize(size)
 
@@ -471,17 +472,17 @@ class QEmojiPicker(QWidget):
         if emoji_pixmap_getter != self._emoji_pixmap_getter:
             self._emoji_pixmap_getter = emoji_pixmap_getter
 
-            if emoji_pixmap_getter:
-                for grid in self.grids():
+            for grid in self.grids():
+                if emoji_pixmap_getter:
                     delegate = QLazyLoadingEmojiDelegate()
-                    delegate.painted.connect(lambda proxy_index: self._set_emoji_icon(self.__model.itemFromProxyIndex(proxy_index)))
+                    delegate.painted.connect(
+                        lambda proxy_index: self._set_emoji_icon(self.__model.itemFromProxyIndex(proxy_index)))
                     grid.setItemDelegate(delegate)
-            else:
-                for grid in self.grids():
+                else:
                     delegate = grid.itemDelegate()
                     if isinstance(delegate, QLazyLoadingEmojiDelegate):
                         delegate.painted.disconnect()
-                        grid.setItemDelegate(None)
+                        grid.setItemDelegate(QStyledItemDelegate())
 
             self._redraw_emoji_items()
             self._redraw_alias_emoji()
