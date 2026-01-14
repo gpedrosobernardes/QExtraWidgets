@@ -163,6 +163,9 @@ class QAccordionItem(QWidget):
         """Toggles the expanded state."""
         self.setExpanded(not self.isExpanded())
 
+    def setTitle(self, text: str):
+        self.header().setTitle(text)
+
     def setExpanded(self, expanded: bool, animated: bool = None):
         """
         Sets the expanded state.

@@ -2,6 +2,7 @@ import sys
 
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QLineEdit
 
+from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts
 from qextrawidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
@@ -17,7 +18,6 @@ class MainWindow(QMainWindow):
         widget = QWidget()
 
         font = QEmojiFonts.twemojiFont()
-        # font.setWordSpacing(-5)
 
         line_edit = QLineEdit()
         line_edit.setFont(font)
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
         emoji_picker = QEmojiPicker()
         emoji_picker.picked.connect(lambda emoji: line_edit.insert(emoji))
 
-        # emoji_picker.setEmojiPixmapGetter(lambda emoji, size, dpr: EmojiImageProvider.getPixmap(emoji, 0, size, dpr))
+        emoji_picker.setEmojiPixmapGetter(lambda emoji, size, dpr: EmojiImageProvider.getPixmap(emoji, 0, size, dpr))
 
         # center line_edit on widget
         layout = QVBoxLayout()
