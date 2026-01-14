@@ -253,7 +253,8 @@ class QEmojiPicker(QWidget):
             emoji_pixmap_getter = self.emojiPixmapGetter()
             emoji = item.data(Qt.ItemDataRole.UserRole)
             dpr = self.devicePixelRatio()
-            item.setIcon(emoji_pixmap_getter(emoji, self._get_emoji_icon_size(), dpr))
+            margin = self.emojiSize().width() * 0.2
+            item.setIcon(emoji_pixmap_getter(emoji, margin, self._get_emoji_icon_size(), dpr))
 
     def _redraw_emoji_items(self, items: typing.Optional[typing.List[QStandardItem]] = None):
         emoji_pixmap_getter = self.emojiPixmapGetter()
@@ -278,7 +279,7 @@ class QEmojiPicker(QWidget):
             if emoji_pixmap_getter:
                 size = self.__skin_tone_selector.iconSize()
                 dpr = self.devicePixelRatio()
-                self.__skin_tone_selector.setItemIcon(index, emoji_pixmap_getter(emoji, size, dpr))
+                self.__skin_tone_selector.setItemIcon(index, emoji_pixmap_getter(emoji, 0, size, dpr))
             else:
                 self.__skin_tone_selector.setItemText(index, emoji)
 
@@ -287,7 +288,7 @@ class QEmojiPicker(QWidget):
             emoji_pixmap_getter = self.emojiPixmapGetter()
 
             if emoji_pixmap_getter:
-                pixmap = emoji_pixmap_getter(self._emoji_on_label, self.emojiSize(), self.devicePixelRatio())
+                pixmap = emoji_pixmap_getter(self._emoji_on_label, 0, self.emojiSize(), self.devicePixelRatio())
                 self.__emoji_label.setPixmap(pixmap)
             else:
                 self.__emoji_label.setText(self._emoji_on_label)
@@ -460,7 +461,7 @@ class QEmojiPicker(QWidget):
 
             for grid in self.grids():
                 grid.setGridSize(size)
-                grid.setIconSize(self._get_emoji_icon_size())
+                grid.setIconSize(size)
                 grid.setFont(self._get_emoji_grid_font())
 
             self.__model.setEmojiSize(size)
@@ -468,7 +469,7 @@ class QEmojiPicker(QWidget):
     def emojiSize(self) -> QSize:
         return self.__emoji_size
 
-    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Optional[typing.Callable[[str, QSize, float], QPixmap]]):
+    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Optional[typing.Callable[[str, int, QSize, float], QPixmap]]):
         if emoji_pixmap_getter != self._emoji_pixmap_getter:
             self._emoji_pixmap_getter = emoji_pixmap_getter
 
@@ -488,5 +489,5 @@ class QEmojiPicker(QWidget):
             self._redraw_alias_emoji()
             self._redraw_skintones()
 
-    def emojiPixmapGetter(self) -> typing.Optional[typing.Callable[[str, QSize, float], QPixmap]]:
+    def emojiPixmapGetter(self) -> typing.Optional[typing.Callable[[str, int, QSize, float], QPixmap]]:
         return self._emoji_pixmap_getter

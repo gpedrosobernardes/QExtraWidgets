@@ -115,9 +115,7 @@ class MainWindow(QMainWindow):
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
         if state == Qt.CheckState.Checked.value:
-            self.emoji_picker.setEmojiPixmapGetter(
-                lambda emoji, size, dpr: EmojiImageProvider.getPixmap(emoji, 0, size, dpr)
-            )
+            self.emoji_picker.setEmojiPixmapGetter(EmojiImageProvider.getPixmap)
         else:
             self.emoji_picker.setEmojiPixmapGetter(None)
 
