@@ -1,5 +1,5 @@
-from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, Qt
-from qextrawidgets.widgets.emoji_picker.emoji_model import QEmojiDataRole
+from PySide6.QtCore import QSortFilterProxyModel, QModelIndex
+from qextrawidgets.widgets.emoji_picker.enums import QEmojiDataRole
 
 
 class QEmojiSortFilterProxyModel(QSortFilterProxyModel):

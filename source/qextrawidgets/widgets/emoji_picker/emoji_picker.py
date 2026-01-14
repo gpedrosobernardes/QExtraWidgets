@@ -4,18 +4,18 @@ from enum import Enum
 from PySide6.QtCore import QCoreApplication, QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt
 from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
-                               QWidget, QApplication, QButtonGroup, QMenu)
+                               QWidget, QApplication, QButtonGroup, QMenu, QToolButton)
 from emoji_data_python import emoji_data
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts, get_max_pixel_size
-from qextrawidgets.widgets.QExtraToolButton import QExtraToolButton
 from qextrawidgets.widgets.accordion import QAccordion
 from qextrawidgets.widgets.accordion_item import QAccordionItem
 from qextrawidgets.widgets.emoji_picker import QLazyLoadingEmojiDelegate
 from qextrawidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
-from qextrawidgets.widgets.emoji_picker.emoji_model import QEmojiModel, QEmojiDataRole, EmojiSkinTone
+from qextrawidgets.widgets.emoji_picker.emoji_model import QEmojiModel
 from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel
+from qextrawidgets.widgets.emoji_picker.enums import QEmojiDataRole, EmojiSkinTone
 from qextrawidgets.widgets.icon_combo_box import QIconComboBox
 from qextrawidgets.widgets.search_line_edit import QSearchLineEdit
 
@@ -145,25 +145,22 @@ class QEmojiPicker(QWidget):
     def __setup_connections(self):
         self.__search_line_edit.textChanged.connect(self.__filter_emojis)
         self.__accordion.enteredSection.connect(self.__on_entered_section)
-        # self.__accordion.leftSection.connect(self.__on_left_section)
         self.__skin_tone_selector.currentDataChanged.connect(self._set_skin_tone)
 
     def __on_entered_section(self, section: QAccordionItem):
-        sections = [category_data["section"] for category_data in self.__categories_data]
-        category_data = self.__categories_data[sections.index(section)]
+        shortcut = self.shortcut(self.sections().index(section))
         if section.header().isExpanded():
-            category_data["shortcut"].setChecked(True)
+            shortcut.setChecked(True)
 
     def __filter_emojis(self):
-        for category_data in self.__categories_data:
-            text = self.__search_line_edit.text()
-            proxy = category_data["proxy"]
+        text = self.__search_line_edit.text()
+
+        for proxy, section in zip(self.proxys(), self.sections()):
             proxy.setFilterFixedString(text)
-            section = category_data["section"]
             section.setVisible(proxy.rowCount() != 0 or not text)
 
     def __on_hover_emoji(self, index: QModelIndex):
-        item = self.__item_from_proxy_index(index)
+        item = self.__model.itemFromProxyIndex(index)
         alias = item.data(QEmojiDataRole.AliasRole)
         metrics = QFontMetrics(self.__aliases_emoji_label.font())
         elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self.__aliases_emoji_label.width())
@@ -172,25 +169,21 @@ class QEmojiPicker(QWidget):
         self._redraw_alias_emoji()
 
     def __clear_emoji_preview(self):
-        self.__current_alias = ""
-        self.__emoji_label.clear()
-        self.__aliases_emoji_label.clear()
-        self.__aliases_emoji_label.setToolTip("")
         self._emoji_on_label = None
+        self.__emoji_label.clear()
+        self.__current_alias = ""
+        self.__aliases_emoji_label.clear()
 
     def __on_emoji_clicked(self, proxy_index: QModelIndex):
-        item = self.__item_from_proxy_index(proxy_index)
-        self.picked.emit(item.text())
+        item = self.__model.itemFromProxyIndex(proxy_index)
         item.setData(True, QEmojiDataRole.RecentRole)
+        self.picked.emit(item.text())
 
-    def __item_from_proxy_index(self, proxy_index: QModelIndex):
-        proxy: QEmojiSortFilterProxyModel = proxy_index.model()
-        model_index = proxy.mapToSource(proxy_index)
-        return self.__model.itemFromIndex(model_index)
-
-    def __item_from_position(self, list_view: QEmojiGrid, position: QPoint):
+    def __item_from_position(self, list_view: QEmojiGrid, position: QPoint) -> typing.Optional[QStandardItem]:
         proxy_index = list_view.indexAt(position)
-        return self.__item_from_proxy_index(proxy_index)
+        if not proxy_index:
+            return None
+        return self.__model.itemFromProxyIndex(proxy_index)
 
     def __on_context_menu(self, grid: QEmojiGrid, position: QPoint):
         menu = QMenu()
@@ -310,8 +303,8 @@ class QEmojiPicker(QWidget):
         return label
 
     @staticmethod
-    def _create_shortcut_button(text: str, icon: QIcon) -> QExtraToolButton:
-        btn = QExtraToolButton()
+    def _create_shortcut_button(text: str, icon: QIcon) -> QToolButton:
+        btn = QToolButton()
         btn.setCheckable(True)
         btn.setAutoRaise(True)  # Visual flat/clean
         btn.setFixedSize(32, 32)
@@ -330,7 +323,6 @@ class QEmojiPicker(QWidget):
     def resetPicker(self):
         """Resets picker state."""
         self.__search_line_edit.clear()
-        # Scroll to top
         self._accordion.resetScroll()
 
     def addCategory(self, text: str, icon: QIcon) -> int:
@@ -368,14 +360,17 @@ class QEmojiPicker(QWidget):
         return self.__categories_data.index(category_data)
 
     def removeCategory(self, index: int):
-        items = self.__categories_data.pop(index)
+        section, shortcut, grid = self.section(index), self.shortcut(index), self.grid(index)
 
-        self.__accordion.removeAccordionItem(items["section"])
-        self._shortcuts_layout.removeWidget(items["shortcut"])
-        self._shortcuts_group.removeButton(items["shortcut"])
-        items["grid"].deleteLater()
-        items["shortcut"].deleteLater()
-        items["section"].deleteLater()
+        self.__accordion.removeAccordionItem(section)
+        self._shortcuts_layout.removeWidget(shortcut)
+        self._shortcuts_group.removeButton(shortcut)
+
+        section.deleteLater()
+        grid.deleteLater()
+        shortcut.deleteLater()
+
+        self.__categories_data.pop(index)
 
     def accordion(self) -> QAccordion:
         return self.__accordion
@@ -385,6 +380,21 @@ class QEmojiPicker(QWidget):
 
     def proxy(self, index: int) -> QEmojiSortFilterProxyModel:
         return self.__categories_data[index]["proxy"]
+
+    def proxys(self) -> typing.List[QEmojiSortFilterProxyModel]:
+        return [data["proxy"] for data in self.__categories_data]
+
+    def shortcut(self, index: int) -> QToolButton:
+        return self.__categories_data[index]["shortcut"]
+
+    def section(self, index: int) -> QAccordionItem:
+        return self.__categories_data[index]["section"]
+
+    def sections(self) -> typing.List[QAccordionItem]:
+        return [data["section"] for data in self.__categories_data]
+
+    def grid(self, index: int) -> QEmojiGrid:
+        return self.__categories_data[index]["grid"]
 
     def grids(self) -> typing.List[QEmojiGrid]:
         return [data["grid"] for data in self.__categories_data]
@@ -455,7 +465,7 @@ class QEmojiPicker(QWidget):
             if emoji_pixmap_getter:
                 for grid in self.grids():
                     delegate = QLazyLoadingEmojiDelegate()
-                    delegate.painted.connect(lambda proxy_index: self._set_emoji_icon(self.__item_from_proxy_index(proxy_index)))
+                    delegate.painted.connect(lambda proxy_index: self._set_emoji_icon(self.__model.itemFromProxyIndex(proxy_index)))
                     grid.setItemDelegate(delegate)
             else:
                 for grid in self.grids():

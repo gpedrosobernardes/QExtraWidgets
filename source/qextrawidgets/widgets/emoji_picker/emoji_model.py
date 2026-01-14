@@ -1,48 +1,21 @@
 import typing
-from enum import IntEnum, StrEnum
 
-from PySide6.QtCore import QSize
+from PySide6.QtCore import QSize, QModelIndex
 from PySide6.QtGui import QStandardItemModel, QStandardItem, Qt, QIcon
 
-
-class QEmojiDataRole(IntEnum):
-    AliasRole = Qt.ItemDataRole.UserRole + 1
-    CategoryRole = Qt.ItemDataRole.UserRole + 2
-    RecentRole = Qt.ItemDataRole.UserRole + 3
-    FavoriteRole = Qt.ItemDataRole.UserRole + 4
-    SkinTonesRole =  Qt.ItemDataRole.UserRole + 5
-    HasSkinTonesRole = Qt.ItemDataRole.UserRole + 6
-
-
-class EmojiSkinTone(StrEnum):
-    """
-    Modificadores de tom de pele (Fitzpatrick scale) suportados pelo Windows/Unicode.
-    Herda de 'str' para facilitar a concatenação direta.
-    """
-
-    # Padrão (Geralmente Amarelo/Neutro) - Não adiciona nenhum código
-    Default = ""
-
-    # Tipo 1-2: Pele Clara
-    Light = "1F3FB"  # 🏻
-
-    # Tipo 3: Pele Morena Clara
-    MediumLight = "1F3FC"  # 🏼
-
-    # Tipo 4: Pele Morena
-    Medium = "1F3FD"  # 🏽
-
-    # Tipo 5: Pele Morena Escura
-    MediumDark = "1F3FE"  # 🏾
-
-    # Tipo 6: Pele Escura
-    Dark = "1F3FF"  # 🏿
+from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel
+from qextrawidgets.widgets.emoji_picker.enums import QEmojiDataRole
 
 
 class QEmojiModel(QStandardItemModel):
     def __init__(self):
         super().__init__()
         self._emoji_size_hint = None
+
+    def itemFromProxyIndex(self, proxy_index: QModelIndex) -> typing.Optional[QStandardItem]:
+        proxy: QEmojiSortFilterProxyModel = proxy_index.model()
+        model_index = proxy.mapToSource(proxy_index)
+        return self.itemFromIndex(model_index)
 
     def setEmojiSize(self, size: QSize):
         self._emoji_size_hint = size
