@@ -1,32 +1,30 @@
 import typing
 from enum import Enum
 
-from PySide6.QtCore import QCoreApplication, QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt, QEvent
-from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics
+from PySide6.QtCore import QCoreApplication, QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt
+from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
-                               QWidget, QApplication, QButtonGroup, QToolButton, QMenu)
+                               QWidget, QApplication, QButtonGroup, QMenu)
 from emoji_data_python import emoji_data
 
 from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.utils import QEmojiFonts
+from qextrawidgets.utils import QEmojiFonts, get_max_pixel_size
 from qextrawidgets.widgets.QExtraToolButton import QExtraToolButton
-from qextrawidgets.widgets.icon_combo_box import QIconComboBox
 from qextrawidgets.widgets.accordion import QAccordion
 from qextrawidgets.widgets.accordion_item import QAccordionItem
 from qextrawidgets.widgets.emoji_picker import QLazyLoadingEmojiDelegate
 from qextrawidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
-from qextrawidgets.widgets.emoji_picker.emoji_model import QEmojiModel, QEmojiDataRole
+from qextrawidgets.widgets.emoji_picker.emoji_model import QEmojiModel, QEmojiDataRole, EmojiSkinTone
 from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel
+from qextrawidgets.widgets.icon_combo_box import QIconComboBox
 from qextrawidgets.widgets.search_line_edit import QSearchLineEdit
 
 
 class QEmojiPicker(QWidget):
     picked = Signal(str)
 
-    SkinTones = {'': '👏', '1F3FB': '👏🏻', '1F3FC': '👏🏼', '1F3FD': '👏🏽', '1F3FE': '👏🏾', '1F3FF': '👏🏿'}
-
     class EmojiCategories(Enum):
-        Activies = QT_TR_NOOP("Activities")
+        Activities = QT_TR_NOOP("Activities")
         FoodAndDrink = QT_TR_NOOP("Food & Drink")
         AnimalsAndNature = QT_TR_NOOP("Animals & Nature")
         PeopleAndBody = QT_TR_NOOP("People & Body")
@@ -43,17 +41,26 @@ class QEmojiPicker(QWidget):
         super().__init__()
 
         self._icons = {
-            "Activities": QThemeResponsiveIcon.fromAwesome("fa6s.gamepad", options=[{"scale_factor": 0.9}]),
-            "Food & Drink": QThemeResponsiveIcon.fromAwesome("fa6s.bowl-food"),
-            "Animals & Nature": QThemeResponsiveIcon.fromAwesome("fa6s.leaf"),
-            "People & Body": QThemeResponsiveIcon.fromAwesome("fa6s.user"),
-            "Symbols": QThemeResponsiveIcon.fromAwesome("fa6s.heart"),
-            "Flags": QThemeResponsiveIcon.fromAwesome("fa6s.flag"),
-            "Travel & Places": QThemeResponsiveIcon.fromAwesome("fa6s.bicycle", options=[{"scale_factor": 0.9}]),
-            "Objects": QThemeResponsiveIcon.fromAwesome("fa6s.lightbulb"),
-            "Smileys & Emotion": QThemeResponsiveIcon.fromAwesome("fa6s.face-smile"),
-            "Favorites": QThemeResponsiveIcon.fromAwesome("fa6s.star"),
-            "Recent": QThemeResponsiveIcon.fromAwesome("fa6s.clock-rotate-left")
+            self.EmojiCategories.Activities.value: QThemeResponsiveIcon.fromAwesome("fa6s.gamepad", options=[{"scale_factor": 0.9}]),
+            self.EmojiCategories.FoodAndDrink.value: QThemeResponsiveIcon.fromAwesome("fa6s.bowl-food"),
+            self.EmojiCategories.AnimalsAndNature.value: QThemeResponsiveIcon.fromAwesome("fa6s.leaf"),
+            self.EmojiCategories.PeopleAndBody.value: QThemeResponsiveIcon.fromAwesome("fa6s.user"),
+            self.EmojiCategories.Symbols.value: QThemeResponsiveIcon.fromAwesome("fa6s.heart"),
+            self.EmojiCategories.Flags.value: QThemeResponsiveIcon.fromAwesome("fa6s.flag"),
+            self.EmojiCategories.TravelAndPlaces.value: QThemeResponsiveIcon.fromAwesome("fa6s.bicycle", options=[{"scale_factor": 0.9}]),
+            self.EmojiCategories.Objects.value: QThemeResponsiveIcon.fromAwesome("fa6s.lightbulb"),
+            self.EmojiCategories.SmileysAndEmotion.value: QThemeResponsiveIcon.fromAwesome("fa6s.face-smile"),
+            self.EmojiCategories.Favorites.value: QThemeResponsiveIcon.fromAwesome("fa6s.star"),
+            self.EmojiCategories.Recent.value: QThemeResponsiveIcon.fromAwesome("fa6s.clock-rotate-left")
+        }
+
+        self._skin_tone_selector_emojis = {
+            EmojiSkinTone.Default: "👏",
+            EmojiSkinTone.Light: "👏🏻",
+            EmojiSkinTone.MediumLight: "👏🏼",
+            EmojiSkinTone.Medium: "👏🏽",
+            EmojiSkinTone.MediumDark: "👏🏾",
+            EmojiSkinTone.Dark: "👏🏿"
         }
 
         # Private variables
@@ -61,6 +68,8 @@ class QEmojiPicker(QWidget):
         self.__recent_category = None
         self.__favorite_category_index = None
         self.__recent_category_index = None
+        self._emoji_pixmap_getter = None
+        self._emoji_on_label = None
         self.__categories_data = []  # Stores references to grids and layouts
         # Layout inside the scroll area where grids are located
 
@@ -77,9 +86,8 @@ class QEmojiPicker(QWidget):
         self.__search_line_edit = self._create_search_line_edit()
         self.__skin_tone_selector = QIconComboBox()
 
-
-        for key, emoji in self.SkinTones.items():
-            self.__skin_tone_selector.addItem(text=emoji, data=key, font=QFont(emoji_font))
+        for skin_tone, emoji in self._skin_tone_selector_emojis.items():
+            self.__skin_tone_selector.addItem(text=emoji, data=skin_tone.value, font=QFont(emoji_font))
 
         self._shortcuts_container = QWidget()
         self._shortcuts_container.setFixedHeight(40)  # Fixed height for the bar
@@ -130,22 +138,15 @@ class QEmojiPicker(QWidget):
         main_layout.addWidget(self.__accordion)
         main_layout.addLayout(content_layout)
 
+    def _set_skin_tone(self, skin_tone: str):
+        self.__model.setSkinTone(skin_tone)
+        self._redraw_emoji_items(self.__model.filterEmojisItems(QEmojiDataRole.HasSkinTonesRole, True))
 
     def __setup_connections(self):
         self.__search_line_edit.textChanged.connect(self.__filter_emojis)
         self.__accordion.enteredSection.connect(self.__on_entered_section)
         # self.__accordion.leftSection.connect(self.__on_left_section)
-        self.__skin_tone_selector.currentDataChanged.connect(self.__change_skin_tone)
-
-    def __change_skin_tone(self, key: str):
-        for row in range(self.__model.rowCount()):
-            item = self.__model.item(row)
-            skin_tones: dict = item.data(QEmojiDataRole.SkinTonesRole)
-            if skin_tones:
-                if key in skin_tones:
-                    item.setText(skin_tones[key].char)
-                else:
-                    item.setText(item.data(QEmojiDataRole.YellowEmojiRole))
+        self.__skin_tone_selector.currentDataChanged.connect(self._set_skin_tone)
 
     def __on_entered_section(self, section: QAccordionItem):
         sections = [category_data["section"] for category_data in self.__categories_data]
@@ -161,38 +162,35 @@ class QEmojiPicker(QWidget):
             section = category_data["section"]
             section.setVisible(proxy.rowCount() != 0 or not text)
 
-    def __on_hover_emoji(self, item: QStandardItem):
+    def __on_hover_emoji(self, index: QModelIndex):
+        item = self.__item_from_proxy_index(index)
         alias = item.data(QEmojiDataRole.AliasRole)
         metrics = QFontMetrics(self.__aliases_emoji_label.font())
         elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self.__aliases_emoji_label.width())
         self.__aliases_emoji_label.setText(elided_alias)
-
-        emoji = item.text()
-        emoji_delegate = self.emojiDelegate()
-        if emoji_delegate:
-            emoji_image_getter = emoji_delegate.emojiImageGetter()
-            pixmap = emoji_image_getter(emoji, self.emojiSize(), self.devicePixelRatio())
-            self.__emoji_label.setPixmap(pixmap)
-        else:
-            self.__emoji_label.setText(emoji)
+        self._emoji_on_label = item.data(Qt.ItemDataRole.UserRole)
+        self._redraw_alias_emoji()
 
     def __clear_emoji_preview(self):
         self.__current_alias = ""
         self.__emoji_label.clear()
         self.__aliases_emoji_label.clear()
         self.__aliases_emoji_label.setToolTip("")
+        self._emoji_on_label = None
 
-    def __on_emoji_clicked(self, item: QStandardItem):
+    def __on_emoji_clicked(self, proxy_index: QModelIndex):
+        item = self.__item_from_proxy_index(proxy_index)
         self.picked.emit(item.text())
         item.setData(True, QEmojiDataRole.RecentRole)
 
-    def __item_from_proxy(self, proxy: QEmojiSortFilterProxyModel, proxy_index: QModelIndex):
+    def __item_from_proxy_index(self, proxy_index: QModelIndex):
+        proxy: QEmojiSortFilterProxyModel = proxy_index.model()
         model_index = proxy.mapToSource(proxy_index)
         return self.__model.itemFromIndex(model_index)
 
     def __item_from_position(self, list_view: QEmojiGrid, position: QPoint):
         proxy_index = list_view.indexAt(position)
-        return self.__item_from_proxy(list_view.model(), proxy_index)
+        return self.__item_from_proxy_index(proxy_index)
 
     def __on_context_menu(self, grid: QEmojiGrid, position: QPoint):
         menu = QMenu()
@@ -231,18 +229,65 @@ class QEmojiPicker(QWidget):
                     categories.append(data.category)
                     self.addCategory(data.category, self._icons[data.category])
 
-                self.__model.addEmoji(data.char, " ".join(f":{alias}:" for alias in data.short_names), data.category, skin_tones=data.skin_variations)
+                if data.skin_variations:
+                    skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if (found_skin_tone := data.skin_variations.get(skin_tone.value))}
+                    if skin_tones:
+                        skin_tones[EmojiSkinTone.Default.value] = data.char
+                    else:
+                        skin_tones = None
+                else:
+                    skin_tones = None
 
-    def _on_schortcut_clicked(self, section: QAccordionItem):
+                self.__model.addEmoji(data.char, " ".join(f":{alias}:" for alias in data.short_names), data.category, skin_tones=skin_tones)
+
+    def _on_shortcut_clicked(self, section: QAccordionItem):
         self.__accordion.collapseAll()
         section.setExpanded(True)
         QApplication.processEvents()
         self.__accordion.scrollToItem(section)
 
-    def _update_grid_font(self, grid: QEmojiGrid, size: int):
-        font = self.emojiFont()
-        font.setPixelSize(size)
-        grid.setFont(font)
+    def _set_emoji_icon(self, item: QStandardItem):
+        if not item.icon():
+            emoji_pixmap_getter = self.emojiPixmapGetter()
+            emoji = item.data(Qt.ItemDataRole.UserRole)
+            dpr = self.devicePixelRatio()
+            item.setIcon(emoji_pixmap_getter(emoji, QSize(100, 100), dpr))
+
+    def _redraw_emoji_items(self, items: typing.Optional[typing.List[QStandardItem]] = None):
+        emoji_pixmap_getter = self.emojiPixmapGetter()
+
+        if items is None:
+            items = self.__model.getEmojiItems()
+
+        for item in items:
+            if emoji_pixmap_getter:
+                if item.text():
+                    item.setText("")
+                if item.icon():
+                    item.setIcon(QIcon())
+            else:
+                item.setText(item.data(Qt.ItemDataRole.UserRole))
+
+    def _redraw_skintones(self):
+        emoji_pixmap_getter = self.emojiPixmapGetter()
+
+        for index, emoji in enumerate(self._skin_tone_selector_emojis.values()):
+            if emoji_pixmap_getter:
+                size = self.__skin_tone_selector.iconSize()
+                dpr = self.devicePixelRatio()
+                self.__skin_tone_selector.setItemIcon(index, emoji_pixmap_getter(emoji, size, dpr))
+            else:
+                self.__skin_tone_selector.setItemText(index, emoji)
+
+    def _redraw_alias_emoji(self):
+        if self._emoji_on_label:
+            emoji_pixmap_getter = self.emojiPixmapGetter()
+
+            if emoji_pixmap_getter:
+                pixmap = emoji_pixmap_getter(self._emoji_on_label, self.emojiSize(), self.devicePixelRatio())
+                self.__emoji_label.setPixmap(pixmap)
+            else:
+                self.__emoji_label.setText(self._emoji_on_label)
 
     @staticmethod
     def _create_search_line_edit() -> QLineEdit:
@@ -312,10 +357,10 @@ class QEmojiPicker(QWidget):
         self._shortcuts_group.addButton(shortcut)
 
         # Connections
-        shortcut.clicked.connect(lambda: self._on_schortcut_clicked(section))
-        grid.entered.connect(lambda _index: self.__on_hover_emoji(self.__item_from_proxy(proxy, _index)))
+        shortcut.clicked.connect(lambda: self._on_shortcut_clicked(section))
+        grid.entered.connect(self.__on_hover_emoji)
         grid.left.connect(self.__clear_emoji_preview)
-        grid.clicked.connect(lambda _index: self.__on_emoji_clicked(self.__item_from_proxy(proxy, _index)))
+        grid.clicked.connect(self.__on_emoji_clicked)
         grid.customContextMenuRequested.connect(lambda pos: self.__on_context_menu(grid, pos))
 
         category_data = dict(grid=grid, shortcut=shortcut, section=section, proxy=proxy)
@@ -389,29 +434,39 @@ class QEmojiPicker(QWidget):
 
             for grid in self.grids():
                 grid.setGridSize(size)
-                grid.setIconSize(size)
-                self._update_grid_font(grid, self.emojiSize().height() * 0.5)
 
-            # Usamos o tamanho cheio para o sizeHint do modelo.
-            # Se usarmos size * 0.9 aqui, alguns estilos de sistema desenharão
-            # a seleção/hover em um retângulo menor que o grid cell, causando inconsistência.
-            # O delegate se encarrega de aplicar a margem apenas no desenho do emoji.
+                size_with_margin = size * 0.8
+                grid.setIconSize(size_with_margin)
+
+                font = QFont(self.emojiFont())
+                pixel_size = get_max_pixel_size("👏", font.family(), size_with_margin)
+                font.setPixelSize(pixel_size)
+                grid.setFont(font)
+
             self.__model.setEmojiSize(size)
 
     def emojiSize(self) -> QSize:
         return self.__emoji_size
 
-    def setEmojiDelegate(self, emoji_delegate: QLazyLoadingEmojiDelegate):
-        self.__emoji_delegate = emoji_delegate
+    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Optional[typing.Callable[[str, QSize, float], QPixmap]]):
+        if emoji_pixmap_getter != self._emoji_pixmap_getter:
+            self._emoji_pixmap_getter = emoji_pixmap_getter
 
-        for grid in self.grids():
-            grid.setItemDelegate(emoji_delegate)
+            if emoji_pixmap_getter:
+                for grid in self.grids():
+                    delegate = QLazyLoadingEmojiDelegate()
+                    delegate.painted.connect(lambda proxy_index: self._set_emoji_icon(self.__item_from_proxy_index(proxy_index)))
+                    grid.setItemDelegate(delegate)
+            else:
+                for grid in self.grids():
+                    delegate = grid.itemDelegate()
+                    if isinstance(delegate, QLazyLoadingEmojiDelegate):
+                        delegate.painted.disconnect()
+                        grid.setItemDelegate(None)
 
-        for index, emoji in enumerate(self.SkinTones.values()):
-            size = self.__skin_tone_selector.iconSize()
-            dpr = self.devicePixelRatio()
-            getter = emoji_delegate.emojiImageGetter()
-            self.__skin_tone_selector.setItemIcon(index, getter(emoji, size, dpr))
+            self._redraw_emoji_items()
+            self._redraw_alias_emoji()
+            self._redraw_skintones()
 
-    def emojiDelegate(self) -> typing.Optional[QLazyLoadingEmojiDelegate]:
-        return self.__emoji_delegate
+    def emojiPixmapGetter(self) -> typing.Optional[typing.Callable[[str, QSize, float], QPixmap]]:
+        return self._emoji_pixmap_getter

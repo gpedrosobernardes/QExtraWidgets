@@ -4,7 +4,6 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, Q
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts
-from qextrawidgets.widgets.emoji_picker import QLazyLoadingEmojiDelegate
 from qextrawidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
 
 
@@ -20,14 +19,13 @@ class MainWindow(QMainWindow):
         font = QEmojiFonts.twemojiFont()
         # font.setWordSpacing(-5)
 
-
         line_edit = QLineEdit()
         line_edit.setFont(font)
 
         emoji_picker = QEmojiPicker()
         emoji_picker.picked.connect(lambda emoji: line_edit.insert(emoji))
 
-        # emoji_picker.setEmojiDelegate(QLazyLoadingEmojiDelegate())
+        # emoji_picker.setEmojiPixmapGetter(lambda emoji, size, dpr: EmojiImageProvider.getPixmap(emoji, 0, size, dpr))
 
         # center line_edit on widget
         layout = QVBoxLayout()
