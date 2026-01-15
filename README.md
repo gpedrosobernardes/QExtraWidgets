@@ -14,7 +14,7 @@ pip install qextrawidgets
 
 * Python 3.9+
 * PySide6 >= 6.10.1
-* twemoji-api == 2.0.0
+* twemoji-api >= 2.0.0
 * emoji-data-python == 1.6.0
 * qtawesome == 1.4.0
 
@@ -34,7 +34,7 @@ A powerful `QTableView` extension that adds Excel-like filtering capabilities to
 
 ---
 
-### 2. QEmojiPicker & Responsive Text Edit
+### 2. QEmojiPicker & QTwemojiTextEdit
 
 A full-featured Emoji Picker and a Text Edit that renders Twemoji images inline.
 
@@ -82,7 +82,10 @@ A delegate that renders Twemoji images within standard item views (like `QListVi
 * **Alignment:** Supports standard Qt text alignment flags.
 * **Mixed Content:** Handles text mixed with emojis seamlessly.
 
+![QStandardTwemojiDelegate](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QStandardTwemojiDelegate.png)
+
 ```python
+from PySide6.QtWidgets import QListView
 from qextrawidgets.delegates.standard_twemoji_delegate import QStandardTwemojiDelegate
 
 view = QListView()
@@ -94,13 +97,14 @@ view.setItemDelegate(delegate)
 
 ### 6. Other Useful Widgets
 
-| Widget                | Description | Image                                                                                                                            |
-|-----------------------| --- |----------------------------------------------------------------------------------------------------------------------------------|
-| **QPasswordLineEdit** | A line edit with a built-in eye icon to toggle password visibility. | ![QPasswordLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPasswordLineEdit.png) |
-| **QPager**            | A classic pagination control for navigating large datasets. | ![QPager](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPager.png)                       |
+| Widget                | Description                                                          | Image                                                                                                                            |
+|-----------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
+| **QPasswordLineEdit** | A line edit with a built-in eye icon to toggle password visibility.  | ![QPasswordLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPasswordLineEdit.png) |
+| **QPager**            | A classic pagination control for navigating large datasets.          | ![QPager](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPager.png)                       |
 | **QColorButton**      | A button that displays a selected color and opens a dialog on click. | ![QColorButton](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QColorButton.png)           |
-| **QDualList**         | Two lists side-by-side for moving items (Select/Deselect). | ![QDualList](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png)                 |
-| **QSearchLineEdit**   | A search input field with a clear button and search icon. | ![QSearchLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png)     |
+| **QDualList**         | Two lists side-by-side for moving items (Select/Deselect).           | ![QDualList](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png)                 |
+| **QSearchLineEdit**   | A search input field with a clear button and search icon.            | ![QSearchLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png)     |
+| **QIconComboBox**     | A ToolButton-style combo box optimized for icons or short text.      |                                                                                                                                  |
 
 ---
 

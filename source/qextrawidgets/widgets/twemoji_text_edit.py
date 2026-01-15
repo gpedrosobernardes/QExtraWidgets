@@ -6,7 +6,9 @@ from qextrawidgets import QExtraTextEdit, QTwemojiTextDocument
 class QTwemojiTextEdit(QExtraTextEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setDocument(QTwemojiTextDocument())
+        document = QTwemojiTextDocument()
+        document.setDevicePixelRatio(self.devicePixelRatio())
+        self.setDocument(document)
 
     def createMimeDataFromSelection(self) -> QMimeData:
         """Preserves custom emojis when copying/dragging."""

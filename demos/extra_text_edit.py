@@ -9,6 +9,7 @@ from qextrawidgets import QTwemojiTextDocument
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.widgets.extra_text_edit import QExtraTextEdit
 from qextrawidgets.validators import QEmojiValidator
+from qextrawidgets.widgets.twemoji_text_edit import QTwemojiTextEdit
 
 
 class DemoTextEditWindow(QMainWindow):
@@ -56,12 +57,8 @@ class DemoTextEditWindow(QMainWindow):
         self._main_layout.addWidget(lbl_intro)
 
         # 2. The Main Widget (QExtraTextEdit)
-        self._text_edit = QExtraTextEdit()
+        self._text_edit = QTwemojiTextEdit()
         self._text_edit.setPlaceholderText("Type here... Try :100: or paste an emoji.")
-
-        document = QTwemojiTextDocument()
-        document.setDevicePixelRatio(self.devicePixelRatio())
-        self._text_edit.setDocument(document)
 
         # Define an initial maximum height to demonstrate scrolling
         self._text_edit.setMaximumHeight(150)
