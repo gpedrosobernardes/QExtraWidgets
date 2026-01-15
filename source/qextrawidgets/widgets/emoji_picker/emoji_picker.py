@@ -232,9 +232,9 @@ class QEmojiPicker(QWidget):
                     self.addCategory(data.category, data.category, self._icons[data.category])
 
                 if data.skin_variations:
-                    skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if (found_skin_tone := data.skin_variations.get(str(skin_tone)))}
+                    skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if (found_skin_tone := data.skin_variations.get(skin_tone))}
                     if skin_tones:
-                        skin_tones[EmojiSkinTone.Default.value] = data.char
+                        skin_tones[EmojiSkinTone.Default] = data.char
                     else:
                         skin_tones = None
                 else:
@@ -419,7 +419,7 @@ class QEmojiPicker(QWidget):
         if favorite_category is not None and not active:
             self.removeCategory(favorite_category_key)
         elif favorite_category is None and active:
-            self.insertCategory(favorite_category_key, 0, favorite_category, self._icons[favorite_category_key])
+            self.insertCategory(favorite_category_key, 0, favorite_category_key, self._icons[favorite_category_key])
             proxy = self.proxy(favorite_category_key)
             proxy.setFavoriteFilter(True)
             proxy.setCategoryFilter(None)
@@ -431,7 +431,7 @@ class QEmojiPicker(QWidget):
         if recent_category is not None and not active:
             self.removeCategory(recent_category_key)
         elif recent_category is None and active:
-            self.insertCategory(recent_category_key, 0, recent_category, self._icons[recent_category_key])
+            self.insertCategory(recent_category_key, 0, recent_category_key, self._icons[recent_category_key])
             proxy = self.proxy(recent_category_key)
             proxy.setRecentFilter(True)
             proxy.setCategoryFilter(None)
