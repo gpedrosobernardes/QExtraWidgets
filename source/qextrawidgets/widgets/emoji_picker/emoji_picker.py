@@ -281,6 +281,7 @@ class QEmojiPicker(QWidget):
                 dpr = self.devicePixelRatio()
                 self.__skin_tone_selector.setItemIcon(index, emoji_pixmap_getter(emoji, 0, size, dpr))
             else:
+                self.__skin_tone_selector.setItemIcon(index, None)
                 self.__skin_tone_selector.setItemText(index, emoji)
 
     def _redraw_alias_emoji(self):
@@ -447,6 +448,11 @@ class QEmojiPicker(QWidget):
 
         for grid in self.grids():
             grid.setFont(self._get_emoji_grid_font())
+
+        for index, emoji in enumerate(self._skin_tone_selector_emojis.values()):
+            skin_tone_selector_font = QFont(font_family)
+            skin_tone_selector_font.setPixelSize(14)
+            self.__skin_tone_selector.setItemFont(index, skin_tone_selector_font)
 
         emoji_label_font = QFont(font_family)
         emoji_label_font.setPixelSize(24)
