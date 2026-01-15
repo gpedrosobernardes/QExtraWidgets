@@ -4,7 +4,7 @@ from PySide6.QtCore import QSize, QModelIndex
 from PySide6.QtGui import QStandardItemModel, QStandardItem, Qt, QIcon
 
 from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel
-from qextrawidgets.widgets.emoji_picker.enums import QEmojiDataRole
+from qextrawidgets.widgets.emoji_picker.enums import QEmojiDataRole, EmojiSkinTone
 
 
 class QEmojiModel(QStandardItemModel):
@@ -27,7 +27,7 @@ class QEmojiModel(QStandardItemModel):
     def emojiSize(self) -> QSize:
         return self._emoji_size_hint
 
-    def addEmoji(self, emoji: str, alias: str, category: str, recent: bool = False, favorite: bool = False, skin_tones: typing.List[str] = None):
+    def addEmoji(self, emoji: str, alias: str, category: str, recent: bool = False, favorite: bool = False, skin_tones: typing.Dict[EmojiSkinTone, str] = None):
         item = QStandardItem(emoji)
         item.setData(emoji, Qt.ItemDataRole.UserRole)
         item.setData(alias, QEmojiDataRole.AliasRole)

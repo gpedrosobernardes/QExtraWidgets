@@ -1,0 +1,115 @@
+THIRD-PARTY SOFTWARE NOTICES
+
+This software includes external components and libraries developed by third parties.
+Below is a list of these components and their respective license terms.
+
+================================================================================
+1. Qt for Python (PySide6) Ecosystem
+================================================================================
+Components:
+  - PySide6 (6.10.1)
+  - PySide6_Essentials (6.10.1)
+  - PySide6_Addons (6.10.1)
+  - shiboken6 (6.10.1)
+
+Copyright (C) The Qt Company Ltd.
+License: LGPL v3 (GNU Lesser General Public License version 3)
+Source: https://pyside.org
+Upstream Source (Qt): https://download.qt.io/
+
+This software uses the "Qt" libraries under the terms of the GNU Lesser General
+Public License (LGPL) version 3. The source code for the Qt libraries can be
+obtained from the links above.
+
+--------------------------------------------------------------------------------
+
+================================================================================
+2. Twemoji Ecosystem (Code, Font & Graphics)
+================================================================================
+
+A. Python Wrapper
+   Component: twemoji-api (2.0.0)
+   Code License: MIT License
+   URL: https://github.com/gpedrosobernardes/twemoji_api
+
+B. Font Compilation (Font File)
+   Component: ttf-twemoji
+   Copyright (C) Joe Baker (JoeBlakeB)
+   License: MIT License (Build Scripts) / CC-BY 4.0 (Font Data)
+   URL: https://github.com/JoeBlakeB/ttf-twemoji
+
+C. Original Graphics Assets
+   Component: Twemoji
+   Copyright (C) Twitter, Inc and other contributors.
+   Graphics License: CC-BY 4.0 (Creative Commons Attribution 4.0 International)
+   URL: https://github.com/twitter/twemoji
+
+GRAPHICS & FONT NOTICE:
+The emoji graphics and the generated font file used by this software are provided
+under the CC-BY 4.0 license. You are free to share and adapt them, provided you
+give appropriate credit to the authors listed above.
+
+--------------------------------------------------------------------------------
+
+================================================================================
+3. Other Open Source Libraries
+================================================================================
+
+Library: QtAwesome (1.4.0)
+License: MIT License
+URL: https://github.com/spyder-ide/qtawesome
+
+Library: QtPy (2.4.3)
+License: MIT License
+URL: https://github.com/spyder-ide/qtpy
+
+Library: emoji_data_python (1.6.0)
+License: MIT License
+URL: https://github.com/alexmick/emoji-data-python/
+(Includes data from https://github.com/iamcal/emoji-data)
+
+Library: packaging (25.0)
+License: Apache Software License / BSD License
+URL: https://github.com/pypa/packaging
+
+--------------------------------------------------------------------------------
+
+================================================================================
+FULL LICENSE TEXTS
+================================================================================
+
+--- MIT License ---
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--- LGPL v3 Notice ---
+This application uses libraries from the Qt Toolkit licensed under LGPLv3.
+You may obtain a copy of the License at: https://www.gnu.org/licenses/lgpl-3.0.html
+
+--- CC-BY 4.0 Notice (Twemoji Graphics & Font) ---
+Twemoji graphics and derived fonts are licensed under Creative Commons Attribution
+4.0 International. You are free to share and adapt the material for any purpose,
+even commercially, under the following terms: Attribution — You must give
+appropriate credit.
+To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/
+
+--- Apache License 2.0 (Packaging) ---
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0

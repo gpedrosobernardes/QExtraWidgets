@@ -5,7 +5,7 @@ from PySide6.QtCore import QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt
 from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
                                QWidget, QApplication, QButtonGroup, QMenu, QToolButton, QStyledItemDelegate)
-from emoji_data_python import emoji_data
+from emoji_data_python import emoji_data, EmojiChar
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts, get_max_pixel_size
@@ -217,6 +217,16 @@ class QEmojiPicker(QWidget):
 
         menu.exec(grid.mapToGlobal(position))
 
+    @staticmethod
+    def _get_emoji_skin_tones_dict(emoji: str, skin_variations: typing.Dict[str, EmojiChar]) -> typing.Dict[EmojiSkinTone, str]:
+        if skin_variations:
+            skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if
+                          (found_skin_tone := skin_variations.get(skin_tone))}
+            if skin_tones:
+                skin_tones[EmojiSkinTone.Default] = emoji
+            return skin_tones
+        return None
+
     def __add_base_categories(self):
         """
         Creates categories.
@@ -231,15 +241,7 @@ class QEmojiPicker(QWidget):
                     categories.append(data.category)
                     self.addCategory(data.category, data.category, self._icons[data.category])
 
-                if data.skin_variations:
-                    skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if (found_skin_tone := data.skin_variations.get(skin_tone))}
-                    if skin_tones:
-                        skin_tones[EmojiSkinTone.Default] = data.char
-                    else:
-                        skin_tones = None
-                else:
-                    skin_tones = None
-
+                skin_tones = self._get_emoji_skin_tones_dict(data.char, data.skin_variations)
                 self.__model.addEmoji(data.char, " ".join(f":{alias}:" for alias in data.short_names), data.category, skin_tones=skin_tones)
 
     def _on_shortcut_clicked(self, section: QAccordionItem):
