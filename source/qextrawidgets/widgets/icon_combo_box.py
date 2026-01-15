@@ -1,3 +1,5 @@
+import typing
+
 from PySide6.QtWidgets import QToolButton, QMenu, QWidgetAction, QWidget, QVBoxLayout
 from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QSize, Signal
@@ -143,7 +145,7 @@ class QIconComboBox(QToolButton):
             return self._items[index]['text']
         return ""
 
-    def setItemIcon(self, index: int, icon: QIcon | str | None):
+    def setItemIcon(self, index: int, icon: typing.Optional[typing.Union[QIcon, str]]):
         if 0 <= index < len(self._items):
             if isinstance(icon, str):
                 icon = QIcon.fromTheme(icon)

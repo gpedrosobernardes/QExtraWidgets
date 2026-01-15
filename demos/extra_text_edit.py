@@ -58,7 +58,10 @@ class DemoTextEditWindow(QMainWindow):
         # 2. The Main Widget (QExtraTextEdit)
         self._text_edit = QExtraTextEdit()
         self._text_edit.setPlaceholderText("Type here... Try :100: or paste an emoji.")
-        self._text_edit.setDocument(QTwemojiTextDocument())
+
+        document = QTwemojiTextDocument()
+        document.setDevicePixelRatio(self.devicePixelRatio())
+        self._text_edit.setDocument(document)
 
         # Define an initial maximum height to demonstrate scrolling
         self._text_edit.setMaximumHeight(150)

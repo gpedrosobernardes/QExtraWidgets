@@ -20,9 +20,9 @@ class MainWindow(QMainWindow):
 
         # 1. Standard Buttons
         layout.addWidget(QLabel("Standard Buttons:"))
-        color_button_1 = QColorButton("Color Button 1 (Blue)", "#0077B6")
-        color_button_2 = QColorButton("Color Button 2 (Red)", "#CC2936")
-        color_button_3 = QColorButton("Color Button 3 (Custom Text)", "#C5D86D", "#000000")
+        color_button_1 = QColorButton("#0077B6", "Color Button 1 (Blue)")
+        color_button_2 = QColorButton("#CC2936", "Color Button 2 (Red)")
+        color_button_3 = QColorButton("#C5D86D", "Color Button 3 (Custom Text)", "#000000")
         
         layout.addWidget(color_button_1)
         layout.addWidget(color_button_2)
@@ -35,9 +35,9 @@ class MainWindow(QMainWindow):
         
         # Create a checkable button with distinct colors for Normal and Checked states
         self.toggle_btn = QColorButton(
-            text="Click to Toggle (Blue)", 
-            color="#0077B6",           # Normal Color (Blue)
-            checked_color="#CC2936"    # Checked Color (Red)
+            "#0077B6", # Normal Color (Blue)
+            "Click to Toggle (Blue)",
+            checked_color="#CC2936" # Checked Color (Red)
         )
         self.toggle_btn.setCheckable(True)
         self.toggle_btn.toggled.connect(self.on_toggle)

@@ -1,9 +1,9 @@
-from enum import IntEnum, StrEnum
+from enum import Enum
 
 from PySide6.QtGui import Qt
 
 
-class QEmojiDataRole(IntEnum):
+class QEmojiDataRole(int, Enum):
     AliasRole = Qt.ItemDataRole.UserRole + 1
     CategoryRole = Qt.ItemDataRole.UserRole + 2
     RecentRole = Qt.ItemDataRole.UserRole + 3
@@ -12,7 +12,7 @@ class QEmojiDataRole(IntEnum):
     HasSkinTonesRole = Qt.ItemDataRole.UserRole + 6
 
 
-class EmojiSkinTone(StrEnum):
+class EmojiSkinTone(str, Enum):
     """
     Modificadores de tom de pele (Fitzpatrick scale) suportados pelo Windows/Unicode.
     Herda de 'str' para facilitar a concatenação direta.

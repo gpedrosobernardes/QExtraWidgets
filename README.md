@@ -12,11 +12,11 @@ pip install qextrawidgets
 
 **Requirements:**
 
-* Python 3.8+
+* Python 3.9+
 * PySide6 >= 6.10.1
-* QtAwesome
-* Emojis
-* Twemoji-API
+* twemoji-api == 2.0.0
+* emoji-data-python == 1.6.0
+* qtawesome == 1.4.0
 
 ---
 

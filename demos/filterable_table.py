@@ -76,7 +76,8 @@ class DemoTableWindow(QMainWindow):
             row_items.append(it_id)
 
             # Name
-            name = f"{random.choice(names)} {random.choice(["Smith", "Johnson", "Brown", "Taylor", "Anderson", "Thompson", "Harris", "Walker", "White", "Clark"])}"
+            last_names = ["Smith", "Johnson", "Brown", "Taylor", "Anderson", "Thompson", "Harris", "Walker", "White", "Clark"]
+            name = f"{random.choice(names)} {random.choice(last_names)}"
             row_items.append(QStandardItem(name))
 
             # Department

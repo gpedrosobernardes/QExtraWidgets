@@ -29,10 +29,9 @@ classifiers = [
 ]
 dependencies = [
     "PySide6>=6.10.1",
-    "QtAwesome>=1.4.0",
-    "emojis>=0.7.0",
-    "twemoji-api>=1.0.2",
-    "pydantic>=2.12.5",
+    "twemoji-api>=2.0.0",
+    "emoji-data-python==1.6.0",
+    "qtawesome==1.4.0"
 ]
 
 [project.urls]
