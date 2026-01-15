@@ -22,6 +22,6 @@ class QMultiFilterProxy(QSortFilterProxyModel):
         for col, text_list in self._filters.items():
             index = model.index(source_row, col, source_parent)
             value = str(model.data(index))
-            if not any(text in value for text in text_list):
+            if not any(text == value for text in text_list):
                 return False
         return True
