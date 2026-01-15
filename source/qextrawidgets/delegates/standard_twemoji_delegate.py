@@ -1,6 +1,6 @@
-import re
 import typing
 
+import emoji_data_python
 from PySide6.QtCore import QModelIndex, Qt, QPoint, QSize
 from PySide6.QtGui import QPainter, QPalette, QFontMetrics
 from PySide6.QtWidgets import (
@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QStyleOptionViewItem,
     QStyle,
 )
-from emojis import emojis
 
 from qextrawidgets.emoji_utils import EmojiImageProvider
 
@@ -17,6 +16,8 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
     """
     Delegate that renders text with Twemoji support.
     """
+
+    EmojiRegex = emoji_data_python.get_emoji_regex()
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         """
@@ -65,7 +66,7 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
         emoji_size = QSize(fm.ascent(), fm.ascent())
         total_width = 0
         for block in blocks:
-            if isinstance(block, emojis.db.Emoji):
+            if self.EmojiRegex.match(block):
                 total_width += emoji_size.width()
             else:
                 total_width += fm.horizontalAdvance(block)
@@ -103,9 +104,9 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
 
         # ===== drawing =====
         for block in blocks:
-            if isinstance(emoji := block, emojis.db.Emoji):
+            if self.EmojiRegex.match(block):
                 pixmap = EmojiImageProvider.getPixmap(
-                    emoji,
+                    block,
                     0,
                     emoji_size,
                     painter.device().devicePixelRatio(),
@@ -121,8 +122,8 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
 
         painter.restore()
 
-    @staticmethod
-    def get_text_blocks(text: str) -> typing.List[typing.Union[str, emojis.db.Emoji]]:
+    @classmethod
+    def get_text_blocks(cls, text: str) -> typing.List[str]:
         """
         Splits the text into blocks of text and Emoji objects.
 
@@ -132,17 +133,4 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
         Returns:
             typing.List[typing.Union[str, emojis.db.Emoji]]: A list of text blocks and Emoji objects.
         """
-        result = []
-        for text_block in re.split(emojis.RE_EMOJI_TO_TEXT, text):
-            text_block = QStandardTwemojiDelegate._remove_emoji_color(text_block)
-            if text_block:
-                emoji = emojis.db.get_emoji_by_code(text_block)
-                if emoji:
-                    result.append(emoji)
-                else:
-                    result.append(text_block)
-        return result
-
-    @staticmethod
-    def _remove_emoji_color(text: str) -> str:
-        return re.sub(r"[\U0001F3FB-\U0001F3FF]", "", text)
+        return cls.EmojiRegex.split(text)
