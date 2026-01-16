@@ -22,7 +22,7 @@ class QThemeResponsiveIconEngine(QIconEngine):
         min_side = min(rect.width(), rect.height())
         size = QSize(min_side, min_side)
 
-        pixmap = self._get_colored_pixmap(size * dpr, mode, state)
+        pixmap = self.themePixmap(size * dpr, mode, state, QApplication.styleHints().colorScheme())
         pixmap.setDevicePixelRatio(dpr)
 
         if pixmap.isNull():
@@ -42,7 +42,7 @@ class QThemeResponsiveIconEngine(QIconEngine):
 
     def pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
         """Returns processed pixmap."""
-        return self._get_colored_pixmap(size, mode, state)
+        return self.themePixmap(size, mode, state, QApplication.styleHints().colorScheme())
 
     def addPixmap(self, pixmap: QPixmap, mode: QIcon.Mode, state: QIcon.State):
         self._source_icon.addPixmap(pixmap, mode, state)
@@ -61,13 +61,9 @@ class QThemeResponsiveIconEngine(QIconEngine):
 
     # --- Internal Logic ---
 
-    def _get_colored_pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
+    def themePixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State, scheme: Qt.ColorScheme) -> QPixmap:
         # 1. Theme Color
-        palette = QApplication.palette()
-        if mode == QIcon.Mode.Disabled:
-            target_color = palette.color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.WindowText)
-        else:
-            target_color = palette.color(QPalette.ColorGroup.Active, QPalette.ColorRole.WindowText)
+        target_color = Qt.GlobalColor.white if scheme == Qt.ColorScheme.Dark else Qt.GlobalColor.black
 
         # 2. Cache Check
         url = QUrl()
@@ -75,11 +71,10 @@ class QThemeResponsiveIconEngine(QIconEngine):
         url.setPath(str(id(self)))
 
         query_params = QUrlQuery()
-        query_params.addQueryItem("width", str(size.width()))
-        query_params.addQueryItem("height", str(size.height()))
+        query_params.addQueryItem("size", str(size))
         query_params.addQueryItem("mode", str(mode.value))
         query_params.addQueryItem("state", str(state.value))
-        query_params.addQueryItem("color", str(target_color.rgba()))
+        query_params.addQueryItem("scheme", str(scheme))
 
         url.setQuery(query_params)
 
@@ -126,9 +121,7 @@ class QThemeResponsiveIcon(QIcon):
     QIcon wrapper that applies automatic coloring based on system theme.
     The icon adjusts to the smallest available space maintaining aspect ratio.
     """
-    def __init__(self, source: typing.Union[str, QPixmap, QIcon]):
-        icon = QIcon()
-
+    def __init__(self, source: typing.Union[str, QPixmap, QIcon] = None):
         if isinstance(source, QIcon):
             icon = source
         elif isinstance(source, str):
@@ -136,9 +129,16 @@ class QThemeResponsiveIcon(QIcon):
         elif isinstance(source, QPixmap):
             icon = QIcon()
             icon.addPixmap(source)
+        else:
+            icon = QIcon()
 
-        super().__init__(QThemeResponsiveIconEngine(icon))
+        self._engine = QThemeResponsiveIconEngine(icon)
+
+        super().__init__(self._engine)
 
     @staticmethod
     def fromAwesome(icon_name: str, **kwargs):
         return QThemeResponsiveIcon(qtawesome.icon(icon_name, **kwargs))
+
+    def themePixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State, scheme: Qt.ColorScheme) -> QPixmap:
+        return self._engine.themePixmap(size, mode, state, scheme)

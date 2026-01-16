@@ -5,6 +5,7 @@ from PySide6.QtGui import Qt, QMouseEvent
 from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame, QSizePolicy, QVBoxLayout, QToolButton, QLineEdit
 
 from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.theme_responsive_label import QThemeResponsiveLabel
 
 
 class QAccordionHeader(QFrame):
@@ -34,14 +35,8 @@ class QAccordionHeader(QFrame):
 
         # --- CHANGE: We use QToolButton instead of QLabel ---
         # This allows QAutoIcon to manage dynamic painting (colors)
-        self._btn_icon = QToolButton()
-        self._btn_icon.setFixedSize(24, 24)
-        self._btn_icon.setIconSize(QSize(16, 16))  # Icon drawing size
-        self._btn_icon.setAutoRaise(True)  # Remove button borders
-
-        # Important: The button must ignore the mouse so that the click
-        # is captured by the Header (QFrame) and not "stolen" by the button.
-        self._btn_icon.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self._label = QThemeResponsiveLabel()
+        self._label.setFixedSize(24, 24)
 
         # Layout
         self._layout_header = QHBoxLayout(self)
@@ -94,7 +89,7 @@ class QAccordionHeader(QFrame):
             icon_name = "fa6s.minus" if self._is_expanded else "fa6s.plus"
 
         if icon_name:
-            self._btn_icon.setIcon(QThemeResponsiveIcon.fromAwesome(icon_name))
+            self._label.setIcon(QThemeResponsiveIcon.fromAwesome(icon_name))
 
     def setIconPosition(self, position: IconPosition):
         if position in [QAccordionHeader.IconPosition.TrailingPosition, QAccordionHeader.IconPosition.LeadingPosition]:
@@ -106,14 +101,14 @@ class QAccordionHeader(QFrame):
             self._layout_header.takeAt(0)
 
         if self._icon_position == QAccordionHeader.IconPosition.LeadingPosition:
-            self._layout_header.addWidget(self._btn_icon)
+            self._layout_header.addWidget(self._label)
             self._layout_header.addWidget(self._label_title)
             self._label_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
 
         elif self._icon_position == QAccordionHeader.IconPosition.TrailingPosition:
             self._label_title.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
             self._layout_header.addWidget(self._label_title)
-            self._layout_header.addWidget(self._btn_icon)
+            self._layout_header.addWidget(self._label)
 
     def setTitle(self, title: str):
         self._label_title.setText(title)
@@ -123,7 +118,7 @@ class QAccordionHeader(QFrame):
 
     def iconWidget(self) -> QWidget:
         # Renamed from iconLabel because it is now a button
-        return self._btn_icon
+        return self._label
 
 
 class QAccordionItem(QWidget):
@@ -189,7 +184,6 @@ class QAccordionItem(QWidget):
 
             if use_animation:
                 target_height = self._content.sizeHint().height()
-                print(f"Target Height: {target_height}")
 
                 # Animate from 0 to target height
                 self._animation.setStartValue(0)
@@ -200,7 +194,6 @@ class QAccordionItem(QWidget):
             if use_animation:
                 # Get current height
                 current_height = self._content.height()
-                print(f"Current Height: {current_height}")
 
                 # Animate from current height to 0
                 self._animation.setStartValue(current_height)

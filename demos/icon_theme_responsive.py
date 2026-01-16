@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets import QThemeResponsiveLabel
 from qextrawidgets.utils import is_dark_mode
 
 
@@ -111,6 +112,25 @@ class DemoWindow(QMainWindow):
         layout_multistate.addWidget(self.btn_toggle_state)
         group_multistate.setLayout(layout_multistate)
         main_layout.addWidget(group_multistate)
+
+        # 4. QThemeResponsiveLabel Section
+        group_label = QGroupBox("QThemeResponsiveLabel")
+        layout_label = QVBoxLayout()
+
+        lbl_desc = QLabel("This QLabel automatically updates its pixmap when the theme changes or it is resized.\n"
+                          "Try resizing the window to see it in action.")
+        lbl_desc.setStyleSheet("color: gray; font-style: italic; margin-bottom: 10px;")
+
+        self.responsive_label = QThemeResponsiveLabel()
+        self.responsive_label.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.ghost"))
+        # Set a minimum size so it's visible even without text
+        self.responsive_label.setMinimumSize(64, 64)
+        self.responsive_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        layout_label.addWidget(lbl_desc)
+        layout_label.addWidget(self.responsive_label)
+        group_label.setLayout(layout_label)
+        main_layout.addWidget(group_label)
 
         # Initialize with light theme
         self.applyLightTheme()

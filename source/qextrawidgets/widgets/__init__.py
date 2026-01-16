@@ -11,3 +11,4 @@ from .search_line_edit import QSearchLineEdit
 from .filterable_table import QFilterableTable
 from .emoji_picker import QEmojiPicker
 from .icon_combo_box import QIconComboBox
+from .theme_responsive_label import QThemeResponsiveLabel
