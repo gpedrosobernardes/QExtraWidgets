@@ -65,33 +65,33 @@ class QThemeResponsiveIconEngine(QIconEngine):
         # 1. Theme Color
         target_color = Qt.GlobalColor.white if scheme == Qt.ColorScheme.Dark else Qt.GlobalColor.black
 
-        # 2. Cache Check
-        url = QUrl()
-        url.setScheme("icons")
-        url.setPath(str(id(self)))
-
-        query_params = QUrlQuery()
-        query_params.addQueryItem("size", str(size))
-        query_params.addQueryItem("mode", str(mode.value))
-        query_params.addQueryItem("state", str(state.value))
-        query_params.addQueryItem("scheme", str(scheme))
-
-        url.setQuery(query_params)
-
-        base_pixmap = QPixmap()
-        if QPixmapCache.find(url.toString(), base_pixmap):
-            return base_pixmap
+        # # 2. Cache Check
+        # url = QUrl()
+        # url.setScheme("icons")
+        # url.setPath(str(id(self)))
+        #
+        # query_params = QUrlQuery()
+        # query_params.addQueryItem("size", str(size))
+        # query_params.addQueryItem("mode", str(mode.value))
+        # query_params.addQueryItem("state", str(state.value))
+        # query_params.addQueryItem("scheme", str(scheme))
+        #
+        # url.setQuery(query_params)
+        #
+        # base_pixmap = QPixmap()
+        # if QPixmapCache.find(url.toString(), base_pixmap):
+        #     return base_pixmap
 
         # 3. Get Original Pixmap
         base_pixmap = self._source_icon.pixmap(size, mode, state)
 
-        if base_pixmap.isNull():
-            return QPixmap()
+        # if base_pixmap.isNull():
+        #     return QPixmap()
 
         # 4. Colorize
         colored_pixmap = self._generate_colored_pixmap(base_pixmap, target_color)
 
-        QPixmapCache.insert(url.toString(), colored_pixmap)
+        # QPixmapCache.insert(url.toString(), colored_pixmap)
 
         return colored_pixmap
 

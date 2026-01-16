@@ -67,10 +67,10 @@ class MainWindow(QMainWindow):
 
         rb_arrow = QRadioButton("Arrow")
         rb_arrow.setChecked(True)
-        rb_arrow.toggled.connect(lambda: self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.Arrow))
+        rb_arrow.toggled.connect(lambda checked: self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.Arrow) if checked else None)
 
         rb_plus = QRadioButton("Plus / Minus (+/-)")
-        rb_plus.toggled.connect(lambda: self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.PlusMinus))
+        rb_plus.toggled.connect(lambda checked: self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.PlusMinus) if checked else None)
 
         bg_style.addButton(rb_arrow)
         bg_style.addButton(rb_plus)

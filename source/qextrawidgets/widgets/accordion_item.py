@@ -148,6 +148,7 @@ class QAccordionItem(QWidget):
 
         # Initial state
         self._content.setMinimumHeight(0)
+        self._content.setVisible(False)
 
         self._layout.addWidget(self._header, Qt.AlignmentFlag.AlignTop)
         self._layout.addWidget(self._content, Qt.AlignmentFlag.AlignTop)
