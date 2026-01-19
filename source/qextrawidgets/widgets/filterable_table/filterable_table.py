@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.proxys.multi_filter import QMultiFilterProxy
-from qextrawidgets.widgets.filterable_table.custom_header import CustomHeader
+from qextrawidgets.widgets.filterable_table.filter_header import QFilterHeader
 from qextrawidgets.widgets.filterable_table.filter_popup import QFilterPopup
 
 
@@ -26,7 +26,7 @@ class QFilterableTable(QTableView):
         self._proxy = QMultiFilterProxy()
         self._popups: Dict[int, QFilterPopup] = {}
 
-        header = CustomHeader(Qt.Orientation.Horizontal, self)
+        header = QFilterHeader(Qt.Orientation.Horizontal, self)
         header.setSectionsClickable(True)
         header.sectionClicked.connect(self._on_header_clicked)
         self.setHorizontalHeader(header)

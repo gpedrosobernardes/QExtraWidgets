@@ -76,7 +76,7 @@ class QFilterHeader(QHeaderView):
                 mode = QIcon.Mode.Normal
                 if not self.isEnabled():
                     mode = QIcon.Mode.Disabled
-                elif opt.state & QStyle.State_MouseOver:
+                elif opt.state & QStyle.StateFlag.State_MouseOver:
                     mode = QIcon.Mode.Active
 
                 icon.paint(painter, icon_rect, alignment=Qt.AlignmentFlag.AlignCenter, mode=mode)
