@@ -4,6 +4,12 @@
 
 ---
 
+## 📖 Documentation
+
+The complete documentation is available at: [https://gpedrosobernardes.github.io/QExtraWidgets/](https://gpedrosobernardes.github.io/QExtraWidgets/)
+
+---
+
 ## 📦 Installation
 
 ```bash
