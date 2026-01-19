@@ -2,7 +2,7 @@ from enum import IntEnum, auto
 
 from PySide6.QtCore import Signal, QSize, QPropertyAnimation, QEasingCurve, QAbstractAnimation, Property
 from PySide6.QtGui import Qt, QMouseEvent
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame, QSizePolicy, QVBoxLayout, QToolButton, QLineEdit
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame, QSizePolicy, QVBoxLayout, QToolButton, QLineEdit, QApplication
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.widgets.theme_responsive_label import QThemeResponsiveLabel
@@ -59,6 +59,12 @@ class QAccordionHeader(QFrame):
         self.updateIcon()
         self.refreshLayout()
         self.setFlat(False)
+
+    def closeEvent(self, event) -> None:
+        """Disconnects signals to prevent crashes on destruction."""
+        # QAccordionHeader doesn't have _on_theme_change, it uses QThemeResponsiveLabel
+        # So we don't need to disconnect anything here that doesn't exist.
+        super().closeEvent(event)
 
     def setFlat(self, flat: bool) -> None:
         """Defines whether the header looks like a raised button or plain text.

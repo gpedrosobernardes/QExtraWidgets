@@ -1,10 +1,10 @@
-# Referência da API
+# API Reference
 
-Esta página contém a referência automática da API para o pacote `qextrawidgets`.
+This page contains the automatic API reference for the `qextrawidgets` package.
 
 ## Widgets
 
-Os widgets principais da biblioteca.
+The main widgets of the library.
 
 ::: qextrawidgets.widgets.accordion
 ::: qextrawidgets.widgets.accordion_item
@@ -23,6 +23,8 @@ Os widgets principais da biblioteca.
 ::: qextrawidgets.widgets.emoji_picker.emoji_picker
 ::: qextrawidgets.widgets.emoji_picker.emoji_grid
 ::: qextrawidgets.widgets.emoji_picker.emoji_model
+
+The QEmojiSortFilterProxyModel supports an injectable pixmap getter via `setEmojiPixmapGetter`. The getter may return either a QPixmap or a QIcon; the proxy converts QPixmap to QIcon for DecorationRole to ensure consistent native rendering. If the getter returns an invalid value, the model provides an empty QIcon.
 
 ### Filterable Table
 
@@ -45,7 +47,7 @@ Os widgets principais da biblioteca.
 
 ::: qextrawidgets.documents.twemoji_text_document
 
-## Utilitários e Ícones
+## Utilities and Icons
 
 ::: qextrawidgets.icons
 ::: qextrawidgets.utils

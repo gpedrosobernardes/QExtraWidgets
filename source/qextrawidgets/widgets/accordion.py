@@ -134,8 +134,11 @@ class QAccordion(QWidget):
             position (int, optional): Insert position (-1 for end). Defaults to -1.
         """
         self._scroll_layout.insertWidget(position, item)
-        item.expandedChanged.connect(lambda expanded: self._on_item_expanded(position, expanded))
-        self._items.append(item)
+        item.expandedChanged.connect(lambda expanded: self._on_item_expanded(self._items.index(item), expanded))
+        if position == -1:
+            self._items.append(item)
+        else:
+            self._items.insert(position, item)
 
     def removeAccordionItem(self, item: QAccordionItem) -> None:
         """Removes an accordion item.

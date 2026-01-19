@@ -83,7 +83,7 @@ class EmojiImageProvider:
     """Utility class for loading, resizing, and caching emoji images."""
 
     @staticmethod
-    def getPixmap(emoji: str, margin: int, size: QSize, dpr: float = 1.0, source_format: str = "png") -> QPixmap:
+    def getPixmap(emoji: str, margin: int, size: int, dpr: float = 1.0, source_format: str = "png") -> QPixmap:
         """Loads and returns a colorized or processed emoji pixmap.
 
         Uses caching to improve performance on subsequent calls.
@@ -91,7 +91,7 @@ class EmojiImageProvider:
         Args:
             emoji (str): Emoji character.
             margin (int): Margin around the emoji in pixels.
-            size (QSize): Target logical size.
+            size (int): Target logical size.
             dpr (float, optional): Device pixel ratio. Defaults to 1.0.
             source_format (str, optional): Image format (png or svg). Defaults to "png".
 
@@ -100,8 +100,7 @@ class EmojiImageProvider:
         """
 
         # 1. Calculate real physical size (pixels)
-        target_width = int(size.width() * dpr)
-        target_height = int(size.height() * dpr)
+        target_size = int(size * dpr)
 
         # 2. Generate unique key for Cache
         cache_url = EmojiImageProvider.getUrl(char_to_unified(emoji), margin, size, dpr, source_format)
@@ -115,11 +114,18 @@ class EmojiImageProvider:
 
         # 4. Load using QImageReader (more efficient than QPixmap(path))
         emoji_path = str(get_emoji_path(emoji, source_format))
+        if not emoji_path:
+            # Fallback (Returns a transparent pixmap or placeholder in case of error)
+            fallback = QPixmap(target_size, target_size)
+            fallback.fill(Qt.GlobalColor.transparent)
+            fallback.setDevicePixelRatio(dpr)
+            return fallback
+
         reader = QImageReader(emoji_path)
 
         if reader.canRead():
             # Important for SVG: Define render size before reading
-            reader.setScaledSize(QSize(target_width, target_height))
+            reader.setScaledSize(QSize(target_size, target_size))
 
             image = reader.read()
             if not image.isNull():
@@ -128,9 +134,8 @@ class EmojiImageProvider:
 
                 # Apply margin
                 if margin > 0:
-                    height = int((size.height() + (margin * 2)) * dpr)
-                    width = int((size.width() + (margin * 2)) * dpr)
-                    final_pixmap = QPixmap(width, height)
+                    final_size = int((size + (margin * 2)) * dpr)
+                    final_pixmap = QPixmap(final_size, final_size)
                     final_pixmap.setDevicePixelRatio(dpr)
                     final_pixmap.fill(Qt.GlobalColor.transparent)
 
@@ -150,7 +155,7 @@ class EmojiImageProvider:
         return fallback
 
     @staticmethod
-    def getUrl(alias: str, margin: int, size: QSize, dpr: float, source_format: str) -> QUrl:
+    def getUrl(alias: str, margin: int, size: int, dpr: float, source_format: str) -> QUrl:
         """Generates a unique QUrl key for caching an emoji pixmap.
 
         Args:
@@ -169,8 +174,7 @@ class EmojiImageProvider:
 
         query_params = QUrlQuery()
         query_params.addQueryItem("margin", str(margin))
-        query_params.addQueryItem("width", str(size.width()))
-        query_params.addQueryItem("height", str(size.height()))
+        query_params.addQueryItem("size", str(size))
         query_params.addQueryItem("dpr", str(dpr))
         query_params.addQueryItem("source_format", source_format)
 

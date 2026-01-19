@@ -33,26 +33,6 @@ class QEmojiModel(QStandardItemModel):
         model_index = proxy.mapToSource(proxy_index)
         return self.itemFromIndex(model_index)
 
-    def setEmojiSize(self, size: QSize) -> None:
-        """Sets the size hint for all emojis in the model.
-
-        Args:
-            size (QSize): The new size hint.
-        """
-        self._emoji_size_hint = size
-
-        for row in range(self.rowCount()):
-            item = self.item(row)
-            item.setSizeHint(self.emojiSize())
-
-    def emojiSize(self) -> QSize:
-        """Returns the current emoji size hint.
-
-        Returns:
-            QSize: The emoji size hint.
-        """
-        return self._emoji_size_hint
-
     def addEmoji(self, emoji: str, alias: str, category: str, recent: bool = False, favorite: bool = False,
                  skin_tones: typing.Dict[EmojiSkinTone, str] = None) -> None:
         """Adds a new emoji to the model with its metadata.
@@ -66,7 +46,7 @@ class QEmojiModel(QStandardItemModel):
             skin_tones (Dict[EmojiSkinTone, str], optional): Dictionary mapping skin tones to emoji variations. Defaults to None.
         """
         item = QStandardItem(emoji)
-        item.setData(emoji, Qt.ItemDataRole.UserRole)
+        item.setData(emoji, Qt.ItemDataRole.EditRole)
         item.setData(alias, QEmojiDataRole.AliasRole)
         item.setData(category, QEmojiDataRole.CategoryRole)
         item.setData(recent, QEmojiDataRole.RecentRole)
@@ -85,7 +65,7 @@ class QEmojiModel(QStandardItemModel):
             item = self.item(row)
             skin_tones: dict = item.data(QEmojiDataRole.SkinTonesRole)
             if skin_tones:
-                item.setData(skin_tones[skin_tone], Qt.ItemDataRole.UserRole)
+                item.setData(skin_tones[skin_tone], Qt.ItemDataRole.EditRole)
 
     def emojiItem(self, emoji: str) -> typing.Optional[QStandardItem]:
         """Finds and returns the item for a specific emoji character.

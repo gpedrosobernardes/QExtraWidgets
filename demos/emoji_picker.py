@@ -100,7 +100,7 @@ class MainWindow(QMainWindow):
         self.line_edit.insert(emoji)
 
     def _on_emoji_size_changed(self, value: int) -> None:
-        self.emoji_picker.setEmojiSize(QSize(value, value))
+        self.emoji_picker.setEmojiSize(value)
 
     def _on_favorite_changed(self, state: int) -> None:
         self.emoji_picker.setFavoriteCategory(state == Qt.CheckState.Checked.value)

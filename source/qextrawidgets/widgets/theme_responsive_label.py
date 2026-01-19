@@ -2,7 +2,7 @@ from typing import Optional
 
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QResizeEvent
-from PySide6.QtWidgets import QLabel, QApplication
+from PySide6.QtWidgets import QLabel, QApplication, QWidget
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 
@@ -13,7 +13,7 @@ class QThemeResponsiveLabel(QLabel):
     when the system theme or the widget size changes.
     """
 
-    def __init__(self, parent: Optional[QLabel] = None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initializes the label.
 

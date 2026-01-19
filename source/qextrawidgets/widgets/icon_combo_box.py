@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon, QFont
 from PySide6.QtCore import Qt, QSize, Signal
 
 class QIconComboBox(QToolButton):
-    """A widget similar to QComboBox, but optimized for icons or short text.
+    """A widget similar to QComboBox but optimized for icons or short text.
 
     It maintains a 1:1 aspect ratio and the style of a QToolButton.
 
@@ -197,7 +197,7 @@ class QIconComboBox(QToolButton):
             btn = self._items[index]['button']
             btn.setText(text)
             if not self._items[index]['icon']:
-                btn.setToolButtonStyle(Qt.ToolButtonButtonStyle.ToolButtonTextOnly)
+                btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
 
             if index == self._current_index:
                 self.setCurrentIndex(index)

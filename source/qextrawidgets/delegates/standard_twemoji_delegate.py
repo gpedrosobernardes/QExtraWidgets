@@ -64,11 +64,11 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
         blocks = self.get_text_blocks(text)
 
         # ===== total width =====
-        emoji_size = QSize(fm.ascent(), fm.ascent())
+        emoji_size = fm.ascent()
         total_width = 0
         for block in blocks:
             if self.EmojiRegex.match(block):
-                total_width += emoji_size.width()
+                total_width += emoji_size
             else:
                 total_width += fm.horizontalAdvance(block)
 
@@ -113,7 +113,7 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
                     painter.device().devicePixelRatio(),
                 )
                 painter.drawPixmap(image_cursor, pixmap)
-                advance = emoji_size.width()
+                advance = emoji_size
             else:
                 painter.drawText(text_cursor, block)
                 advance = fm.horizontalAdvance(block)

@@ -1,8 +1,6 @@
-from PySide6.QtCore import QSize, Qt, Signal, QEvent
-from PySide6.QtGui import QFont, QResizeEvent
+from PySide6.QtCore import QSize, Qt, Signal, QEvent, QModelIndex
+from PySide6.QtGui import QResizeEvent, QStandardItem
 from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy, QWidget
-
-from qextrawidgets.utils import QEmojiFonts
 
 
 class QEmojiGrid(QListView):
