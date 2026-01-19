@@ -51,7 +51,7 @@ class QEmojiPicker(QWidget):
         Args:
             favorite_category (bool, optional): Whether to show the favorites category. Defaults to True.
             recent_category (bool, optional): Whether to show the recents category. Defaults to True.
-            emoji_size (QSize, optional): Size of individual emoji items. Defaults to QSize(40, 40).
+            emoji_size (int, optional): Size of individual emoji items. Defaults to 40.
             emoji_font (str, optional): Font family to use for emojis. If None, Twemoji is loaded. Defaults to None.
         """
         super().__init__()
