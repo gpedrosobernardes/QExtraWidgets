@@ -1,4 +1,4 @@
 include LICENSE
 include THIRD-PARTY.txt
 include README.md
-recursive-include qextrawidgets *.ttf
+recursive-include source/qextrawidgets *.ttf

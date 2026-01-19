@@ -32,7 +32,7 @@ class QIconComboBox(QToolButton):
 
         # Main Button Configuration
         self.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.setToolButtonStyle(Qt.ToolButtonButtonStyle.ToolButtonIconOnly)
+        self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
         self.setFixedSize(self._size, self._size)
         self.setStyleSheet("QToolButton::menu-indicator { image: none; }")
 
@@ -78,7 +78,7 @@ class QIconComboBox(QToolButton):
             btn_item.setIconSize(QSize(int(self._size * 0.6), int(self._size * 0.6)))
         elif text:
             btn_item.setText(text)
-            btn_item.setToolButtonStyle(Qt.ToolButtonButtonStyle.ToolButtonTextOnly)
+            btn_item.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
 
         btn_item.clicked.connect(lambda: self.setCurrentIndex(index))
         btn_item.clicked.connect(self._menu.close)
@@ -116,10 +116,10 @@ class QIconComboBox(QToolButton):
 
             if item['icon']:
                 self.setIcon(item['icon'])
-                self.setToolButtonStyle(Qt.ToolButtonButtonStyle.ToolButtonIconOnly)
+                self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
             elif item['text']:
                 self.setText(item['text'])
-                self.setToolButtonStyle(Qt.ToolButtonButtonStyle.ToolButtonTextOnly)
+                self.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
 
             self.currentIndexChanged.emit(index)
             self.currentDataChanged.emit(item['data'])
@@ -232,11 +232,11 @@ class QIconComboBox(QToolButton):
             if icon:
                 btn.setIcon(icon)
                 btn.setIconSize(QSize(int(self._size * 0.6), int(self._size * 0.6)))
-                btn.setToolButtonStyle(Qt.ToolButtonButtonStyle.ToolButtonIconOnly)
+                btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
             else:
                 btn.setIcon(QIcon())
                 if self._items[index]['text']:
-                    btn.setToolButtonStyle(Qt.ToolButtonButtonStyle.ToolButtonTextOnly)
+                    btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
 
             if index == self._current_index:
                 self.setCurrentIndex(index)

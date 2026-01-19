@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qextrawidgets"
-version = "0.1.7"
+version = "0.1.10"
 description = "A collection of extra widgets for PySide6 including Emoji Picker, Filterable Table, and more."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -38,6 +38,9 @@ dependencies = [
 "Homepage" = "https://github.com/gpedrosobernardes/QExtraWidgets"
 "Documentation" = "https://gpedrosobernardes.github.io/QExtraWidgets/"
 "Bug Tracker" = "https://github.com/gpedrosobernardes/QExtraWidgets/issues"
+
+[tool.setuptools]
+include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["source"]

@@ -71,7 +71,7 @@ class DemoTextEditWindow(QMainWindow):
 
         # Toggle: Responsiveness (Auto-grow)
         self._chk_responsive = QCheckBox("Enable Responsiveness (Auto-Height)")
-        self._chk_responsive.setChecked(self._text_edit.responsive())
+        self._chk_responsive.setChecked(self._text_edit.isResponsive())
 
         # Control: Maximum Height
         self._spin_max_height = QSpinBox()
