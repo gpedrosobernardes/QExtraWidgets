@@ -45,7 +45,7 @@ To ensure consistency and maintainability, please adhere to the following techni
 ### 1. Tech Stack & Dependencies
 Ensure your code is compatible with the following core libraries:
 - **GUI Library:** PySide6 (v6.10.1).
-- **Icons:** qtawesome (v1.4.0) - Used for vector icons.
+- **Icons:** qtawesome (v1.4.0) – Used for vector icons.
 - **Emoji Data:** emoji-data-python (v1.6.0) - Contains the emoji data.
 - **Emoji Icons:** twemoji-api (v2.0.0) - Serves Twitter PNG and SVG icons for emojis.
 

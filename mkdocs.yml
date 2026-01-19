@@ -1,0 +1,15 @@
+site_name: QExtraWidgets
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [source]
+
+nav:
+  - Home: index.md
+  - Referência da API: api.md
