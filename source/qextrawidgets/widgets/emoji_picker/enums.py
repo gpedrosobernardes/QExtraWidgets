@@ -4,34 +4,52 @@ from PySide6.QtGui import Qt
 
 
 class QEmojiDataRole(int, Enum):
+    """Custom item data roles for emoji-related data in models.
+
+    Attributes:
+        AliasRole: Role for emoji text aliases (e.g., ":smile:").
+        CategoryRole: Role for emoji category names.
+        RecentRole: Role for boolean indicating if the emoji is recently used.
+        FavoriteRole: Role for boolean indicating if the emoji is a favorite.
+        SkinTonesRole: Role for dictionary of skin tone variations.
+        HasSkinTonesRole: Role for boolean indicating if the emoji supports skin tones.
+    """
     AliasRole = Qt.ItemDataRole.UserRole + 1
     CategoryRole = Qt.ItemDataRole.UserRole + 2
     RecentRole = Qt.ItemDataRole.UserRole + 3
     FavoriteRole = Qt.ItemDataRole.UserRole + 4
-    SkinTonesRole =  Qt.ItemDataRole.UserRole + 5
+    SkinTonesRole = Qt.ItemDataRole.UserRole + 5
     HasSkinTonesRole = Qt.ItemDataRole.UserRole + 6
 
 
 class EmojiSkinTone(str, Enum):
-    """
-    Modificadores de tom de pele (Fitzpatrick scale) suportados pelo Windows/Unicode.
-    Herda de 'str' para facilitar a concatenação direta.
+    """Skin tone modifiers (Fitzpatrick scale) supported by Unicode.
+
+    Inherits from 'str' to facilitate direct concatenation with base emojis.
+
+    Attributes:
+        Default: Default skin tone (usually yellow/neutral). No modifier.
+        Light: Type 1-2: Light skin tone.
+        MediumLight: Type 3: Medium-light skin tone.
+        Medium: Type 4: Medium skin tone.
+        MediumDark: Type 5: Medium-dark skin tone.
+        Dark: Type 6: Dark skin tone.
     """
 
-    # Padrão (Geralmente Amarelo/Neutro) - Não adiciona nenhum código
+    # Default (Generally Yellow/Neutral) - Adds no code
     Default = ""
 
-    # Tipo 1-2: Pele Clara
+    # Type 1-2: Light Skin
     Light = "1F3FB"  # 🏻
 
-    # Tipo 3: Pele Morena Clara
+    # Type 3: Medium-Light Skin
     MediumLight = "1F3FC"  # 🏼
 
-    # Tipo 4: Pele Morena
+    # Type 4: Medium Skin
     Medium = "1F3FD"  # 🏽
 
-    # Tipo 5: Pele Morena Escura
+    # Type 5: Medium-Dark Skin
     MediumDark = "1F3FE"  # 🏾
 
-    # Tipo 6: Pele Escura
+    # Type 6: Dark Skin
     Dark = "1F3FF"  # 🏿

@@ -9,16 +9,21 @@ from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QPager(QWidget):
-    """
-    Pagination component.
-    - Sliding window of buttons.
-    - Click on current page to type the number (in-place editing).
+    """Pagination component with a sliding window of buttons and in-place editing.
+
+    Signals:
+        currentPageChanged (int): Emitted when the current page changes.
     """
 
     # Public signals
     currentPageChanged = Signal(int)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget = None) -> None:
+        """Initializes the pager widget.
+
+        Args:
+            parent (QWidget, optional): Parent widget. Defaults to None.
+        """
         super().__init__(parent)
 
         # --- Data Variables ---
@@ -67,6 +72,14 @@ class QPager(QWidget):
 
     @staticmethod
     def _create_nav_button(icon: QIcon) -> QPushButton:
+        """Creates a navigation button (first, prev, next, last).
+
+        Args:
+            icon (QIcon): Button icon.
+
+        Returns:
+            QPushButton: The created button.
+        """
         btn = QPushButton()
         btn.setIcon(icon)
         btn.setFixedSize(30, 30)
@@ -75,6 +88,14 @@ class QPager(QWidget):
 
     @staticmethod
     def _create_page_button(text: str) -> QPushButton:
+        """Creates a button representing a page number.
+
+        Args:
+            text (str): Button text (page number).
+
+        Returns:
+            QPushButton: The created page button.
+        """
         btn = QPushButton(text)
         btn.setCheckable(True)
         btn.setFixedSize(30, 30)
@@ -82,7 +103,11 @@ class QPager(QWidget):
         return btn
 
     def _create_editor(self) -> QSpinBox:
-        """Creates the numeric input that replaces the button."""
+        """Creates the numeric input that replaces the button for in-place editing.
+
+        Returns:
+            QSpinBox: The created spin box editor.
+        """
         spin = QSpinBox()
         spin.setFixedSize(60, 30)  # Slightly wider to fit large numbers
         spin.setFrame(False)  # No border to look integrated
@@ -92,7 +117,8 @@ class QPager(QWidget):
         spin.setValue(self._current_page)
         return spin
 
-    def _setup_connections(self):
+    def _setup_connections(self) -> None:
+        """Sets up signals and slots connections."""
         self._btn_first.clicked.connect(lambda: self.setCurrentPage(1))
         self._btn_prev.clicked.connect(lambda: self.setCurrentPage(self._current_page - 1))
         self._btn_next.clicked.connect(lambda: self.setCurrentPage(self._current_page + 1))
@@ -100,8 +126,8 @@ class QPager(QWidget):
 
     # --- Visualization and Editing Logic ---
 
-    def _update_view(self):
-        """Rebuilds the number bar."""
+    def _update_view(self) -> None:
+        """Rebuilds the number bar based on current state."""
 
         # 1. Calculate Sliding Window
         half = self._max_visible_buttons // 2
@@ -144,10 +170,13 @@ class QPager(QWidget):
         self._btn_next.setEnabled(self._current_page < self._total_pages)
         self._btn_last.setEnabled(self._current_page < self._total_pages)
 
-    def __on_edit_requested(self, button_sender: QPushButton):
-        """
-        Slot called when the user clicks on the current page.
+    def __on_edit_requested(self, button_sender: QPushButton) -> None:
+        """Slot called when the user clicks on the current page to start editing.
+
         Replaces the button with a SpinBox.
+
+        Args:
+            button_sender (QPushButton): The button that was clicked.
         """
         # 1. Identify position in layout
         index = self._numbers_layout.indexOf(button_sender)
@@ -175,7 +204,12 @@ class QPager(QWidget):
 
     # --- Public API ---
 
-    def setTotalPages(self, total: int):
+    def setTotalPages(self, total: int) -> None:
+        """Sets the total number of pages.
+
+        Args:
+            total (int): Total page count.
+        """
         if total < 1: total = 1
         self._total_pages = total
         if self._current_page > total:
@@ -183,18 +217,38 @@ class QPager(QWidget):
         else:
             self._update_view()
 
-    def totalPages(self):
+    def totalPages(self) -> int:
+        """Returns the total number of pages.
+
+        Returns:
+            int: Total page count.
+        """
         return self._total_pages
 
-    def setVisibleButtonCount(self, count: int):
+    def setVisibleButtonCount(self, count: int) -> None:
+        """Sets how many page buttons are visible at once.
+
+        Args:
+            count (int): Maximum number of visible page buttons.
+        """
         if count < 1: count = 1
         self._max_visible_buttons = count
         self._update_view()
 
-    def visibleButtonCount(self):
+    def visibleButtonCount(self) -> int:
+        """Returns the maximum number of visible page buttons.
+
+        Returns:
+            int: Visible button count.
+        """
         return self._max_visible_buttons
 
-    def setCurrentPage(self, page: int):
+    def setCurrentPage(self, page: int) -> None:
+        """Sets the current page index.
+
+        Args:
+            page (int): Page index to set.
+        """
         if page < 1: page = 1
         if page > self._total_pages: page = self._total_pages
 
@@ -207,5 +261,10 @@ class QPager(QWidget):
         self._update_view()
         self.currentPageChanged.emit(page)
 
-    def currentPage(self):
+    def currentPage(self) -> int:
+        """Returns the current page index.
+
+        Returns:
+            int: Current page.
+        """
         return self._current_page

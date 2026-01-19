@@ -1,13 +1,20 @@
 from PySide6.QtCore import QMimeData, QSize, Qt
 from PySide6.QtGui import QKeyEvent, QValidator
-from PySide6.QtWidgets import QTextEdit, QSizePolicy
+from PySide6.QtWidgets import QTextEdit, QSizePolicy, QWidget
 
 # Ensure the import is correct for your project
 from qextrawidgets.documents.twemoji_text_document import QTwemojiTextDocument
 
 
 class QExtraTextEdit(QTextEdit):
-    def __init__(self, parent=None):
+    """A QTextEdit extension that supports auto-resizing based on content and input validation."""
+
+    def __init__(self, parent: QWidget = None) -> None:
+        """Initializes the text edit widget.
+
+        Args:
+            parent (QWidget, optional): Parent widget. Defaults to None.
+        """
         super().__init__(parent)
 
         # Private Variables
@@ -27,8 +34,10 @@ class QExtraTextEdit(QTextEdit):
     # --- Qt System Overrides ---
 
     def sizeHint(self) -> QSize:
-        """
-        Informs the layout of the ideal size of the widget at this moment.
+        """Informs the layout of the ideal size of the widget at this moment.
+
+        Returns:
+            QSize: The suggested size for the widget.
         """
         if self._responsive and self.document():
             # 1. Calculates the height of the actual content
@@ -50,10 +59,20 @@ class QExtraTextEdit(QTextEdit):
 
     # --- Getters and Setters ---
 
-    def responsive(self) -> bool:
+    def isResponsive(self) -> bool:
+        """Returns whether the widget automatically resizes based on content.
+
+        Returns:
+            bool: True if responsive, False otherwise.
+        """
         return self._responsive
 
-    def setResponsive(self, responsive: bool = True):
+    def setResponsive(self, responsive: bool = True) -> None:
+        """Sets whether the widget should automatically resize based on content.
+
+        Args:
+            responsive (bool, optional): True to enable auto-resize. Defaults to True.
+        """
         if self._responsive == responsive:
             return
 
@@ -75,23 +94,43 @@ class QExtraTextEdit(QTextEdit):
             self.updateGeometry()
 
     def maximumHeight(self) -> int:
+        """Returns the maximum height the widget can grow to.
+
+        Returns:
+            int: Maximum height in pixels.
+        """
         return self._max_height
 
-    def setMaximumHeight(self, height: int):
+    def setMaximumHeight(self, height: int) -> None:
+        """Sets the maximum height the widget can grow to.
+
+        Args:
+            height (int): Maximum height in pixels.
+        """
         self._max_height = height
         # We don't call super().setMaximumHeight here to not lock the widget visually
         # The constraint is applied logically in sizeHint
         self.updateGeometry()
 
-    def setValidator(self, validator: QValidator):
+    def setValidator(self, validator: QValidator) -> None:
+        """Sets a validator for the input text.
+
+        Args:
+            validator (QValidator): The validator to use.
+        """
         self._validator = validator
 
     def validator(self) -> QValidator:
+        """Returns the current input validator.
+
+        Returns:
+            QValidator: The current validator.
+        """
         return self._validator
 
     # --- Internal Logic ---
 
-    def _on_text_changed(self):
+    def _on_text_changed(self) -> None:
         """Called when text changes to recalculate geometry."""
         if not self._responsive:
             return
@@ -109,7 +148,12 @@ class QExtraTextEdit(QTextEdit):
         else:
             self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
-    def keyPressEvent(self, event: QKeyEvent):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Handles key press events and applies validation.
+
+        Args:
+            event (QKeyEvent): Key event.
+        """
         if self._validator is None:
             return super().keyPressEvent(event)
 
@@ -133,7 +177,12 @@ class QExtraTextEdit(QTextEdit):
             super().keyPressEvent(event)
         return None
 
-    def insertFromMimeData(self, source: QMimeData):
+    def insertFromMimeData(self, source: QMimeData) -> None:
+        """Handles insertion from MIME data (pasting) and applies validation.
+
+        Args:
+            source (QMimeData): MIME data to insert.
+        """
         if source.hasText() and self._validator is not None:
             state, _, _ = self._validator.validate(source.text(), 0)
             if state == QValidator.State.Acceptable:

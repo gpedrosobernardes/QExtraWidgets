@@ -1,3 +1,5 @@
+"""Emoji Picker module for selecting and managing emojis with skin tone support."""
+
 from .emoji_delegate import QLazyLoadingEmojiDelegate
 from .emoji_grid import QEmojiGrid
 from .emoji_model import QEmojiModel

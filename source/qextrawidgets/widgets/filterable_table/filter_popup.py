@@ -2,7 +2,8 @@ from typing import Generator, Set
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
-    QVBoxLayout, QPushButton, QHBoxLayout, QDialog, QLineEdit, QListView, QFrame, QCheckBox, QToolButton, QSizePolicy
+    QVBoxLayout, QPushButton, QHBoxLayout, QDialog, QLineEdit, QListView, QFrame, QCheckBox, QToolButton, QSizePolicy,
+    QWidget
 )
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 
@@ -10,7 +11,18 @@ from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QFilterPopup(QDialog):
-    def __init__(self, parent=None):
+    """A popup dialog used for filtering and sorting columns in a QFilterableTable.
+
+    Provides options to sort data, search for specific values, and select/deselect
+    items to be displayed in the table.
+    """
+
+    def __init__(self, parent: QWidget = None) -> None:
+        """Initializes the filter popup.
+
+        Args:
+            parent (QWidget, optional): Parent widget. Defaults to None.
+        """
         super().__init__(parent)
         self.setWindowFlags(Qt.WindowType.Popup)
         self.setSizeGripEnabled(True)
@@ -19,7 +31,8 @@ class QFilterPopup(QDialog):
         self._setup_model()
         self._setup_connections()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
+        """Sets up the user interface components."""
         self.order_button = self._create_filter_button(self.tr("Order A to Z"))
         self.order_button.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.arrow-down-a-z"))
 
@@ -66,19 +79,25 @@ class QFilterPopup(QDialog):
         layout.addLayout(btn_layout)
 
     @staticmethod
-    def _create_filter_button(text: str):
+    def _create_filter_button(text: str) -> QToolButton:
+        """Creates a tool button for filter actions.
+
+        Args:
+            text (str): Button text.
+
+        Returns:
+            QToolButton: The created tool button.
+        """
         tool_button = QToolButton()
         tool_button.setText(text)
         tool_button.setAutoRaise(True)
-        # TextBesideIcon is good, but make sure the icon exists
         tool_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
-        # Preferred is better than Expanding for tool buttons,
-        # so they don't get huge horizontally unnecessarily.
         tool_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
         tool_button.setCursor(Qt.CursorShape.PointingHandCursor)
         return tool_button
 
-    def _setup_model(self):
+    def _setup_model(self) -> None:
+        """Sets up the data model and proxy model for the list view."""
         self.model = QStandardItemModel()
         self.proxy_model = QSortFilterProxyModel()
         self.proxy_model.setSourceModel(self.model)
@@ -92,7 +111,8 @@ class QFilterPopup(QDialog):
 
         self.items_listview.setModel(self.proxy_model)
 
-    def _setup_connections(self):
+    def _setup_connections(self) -> None:
+        """Sets up signals and slots connections."""
         self.search_field.textChanged.connect(self.proxy_model.setFilterFixedString)
         self.cancel_button.clicked.connect(self.reject)
         self.apply_button.clicked.connect(self.accept)
@@ -103,19 +123,21 @@ class QFilterPopup(QDialog):
         self.check_all_box.clicked.connect(self._on_check_all_clicked)
         self.model.itemChanged.connect(self._update_select_all_state)
 
-    def _on_clear_filter(self):
+    def _on_clear_filter(self) -> None:
+        """Handles the clear filter action."""
         self.search_field.clear()
         self._set_all_items_checked(True)
         self.check_all_box.setCheckState(Qt.CheckState.Checked)
 
-    def _on_check_all_clicked(self):
+    def _on_check_all_clicked(self) -> None:
+        """Handles clicking the 'Select All' checkbox."""
         state = self.check_all_box.checkState()
         is_checked = state == Qt.CheckState.Checked
 
         self.model.blockSignals(True)
         # When clicking "Select All", we only affect what is VISIBLE in the search
-        rowCount = self.proxy_model.rowCount()
-        for row in range(rowCount):
+        row_count = self.proxy_model.rowCount()
+        for row in range(row_count):
             proxy_idx = self.proxy_model.index(row, 0)
             source_idx = self.proxy_model.mapToSource(proxy_idx)
             item = self.model.itemFromIndex(source_idx)
@@ -124,7 +146,12 @@ class QFilterPopup(QDialog):
         self.model.blockSignals(False)
         self.check_all_box.setCheckState(state)
 
-    def _update_select_all_state(self, item=None):
+    def _update_select_all_state(self, item: QStandardItem = None) -> None:
+        """Updates the state of the 'Select All' checkbox based on items.
+
+        Args:
+            item (QStandardItem, optional): The item that changed. Defaults to None.
+        """
         checked_count = 0
         total_count = self.proxy_model.rowCount()
 
@@ -147,7 +174,12 @@ class QFilterPopup(QDialog):
             self.check_all_box.setCheckState(Qt.CheckState.PartiallyChecked)
         self.check_all_box.blockSignals(False)
 
-    def _set_all_items_checked(self, checked: bool):
+    def _set_all_items_checked(self, checked: bool) -> None:
+        """Sets the check state of all items in the model.
+
+        Args:
+            checked (bool): True to check all items, False to uncheck all.
+        """
         state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
         for row in range(self.model.rowCount()):
             item = self.model.item(row, 0)
@@ -156,9 +188,12 @@ class QFilterPopup(QDialog):
     # --- Data API ---
 
     def getSelectedData(self) -> Set[str]:
-        """
-        Returns ALL checked items in the original model,
-        regardless of whether they are filtered by the popup search or not.
+        """Returns all checked items in the original model.
+
+        Regardless of whether they are filtered by the popup search or not.
+
+        Returns:
+            Set[str]: Set of checked item texts.
         """
         data = set()
         for row in range(self.model.rowCount()):
@@ -168,25 +203,40 @@ class QFilterPopup(QDialog):
         return data
 
     def getData(self) -> Set[str]:
-        """Returns all data contained in the popup."""
+        """Returns all data contained in the popup.
+
+        Returns:
+            Set[str]: Set of all item texts.
+        """
         return {self.model.item(row, 0).text() for row in range(self.model.rowCount())}
 
-    def addData(self, data: str):
+    def addData(self, data: str) -> None:
+        """Adds a new item to the filter popup if it doesn't exist.
+
+        Args:
+            data (str): Item text to add.
+        """
         if not self.model.findItems(data):
             item = QStandardItem(data)
             item.setCheckable(True)
             item.setCheckState(Qt.CheckState.Checked)
             self.model.appendRow(item)
 
-    def removeData(self, data: str):
-        """Removes the item from the popup (used when it is no longer valid in the context)."""
+    def removeData(self, data: str) -> None:
+        """Removes the item from the popup.
+
+        Args:
+            data (str): Item text to remove.
+        """
         items = self.model.findItems(data)
         for item in items:
             self.model.removeRow(item.row())
 
     def isFiltering(self) -> bool:
-        """
-        Returns True if there is any unchecked item.
+        """Checks if there is any unchecked item, indicating an active filter.
+
+        Returns:
+            bool: True if any item is unchecked, False otherwise.
         """
         for row in range(self.model.rowCount()):
             if self.model.item(row, 0).checkState() == Qt.CheckState.Unchecked:

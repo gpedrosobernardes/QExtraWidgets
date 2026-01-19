@@ -1,12 +1,19 @@
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QLineEdit
+from PySide6.QtWidgets import QLineEdit, QWidget
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QPasswordLineEdit(QLineEdit):
-    def __init__(self, parent=None):
-        super(QPasswordLineEdit, self).__init__(parent)
+    """A line edit widget for passwords with a built-in toggle button to show/hide the text."""
+
+    def __init__(self, parent: QWidget = None) -> None:
+        """Initializes the password line edit.
+
+        Args:
+            parent (QWidget, optional): Parent widget. Defaults to None.
+        """
+        super().__init__(parent)
         self._action = QAction("&Hide/show", self)
         self._action.setCheckable(True)
         self._action.toggled.connect(self.setPasswordHidden)
@@ -14,17 +21,18 @@ class QPasswordLineEdit(QLineEdit):
         self.setPasswordHidden(True)
 
     def isPasswordHidden(self) -> bool:
-        """
-        Returns if the password is hidden.
-        :return: bool
+        """Checks if the password is currently hidden (EchoMode.Password).
+
+        Returns:
+            bool: True if hidden, False otherwise.
         """
         return self.echoMode() == QLineEdit.EchoMode.Password
 
-    def setPasswordHidden(self, hide: bool):
-        """
-        Sets if the password is hidden.
-        :param hide: bool
-        :return: None
+    def setPasswordHidden(self, hide: bool) -> None:
+        """Sets whether the password should be hidden or visible.
+
+        Args:
+            hide (bool): True to hide the password, False to show it.
         """
         if hide:
             self.setEchoMode(QLineEdit.EchoMode.Password)

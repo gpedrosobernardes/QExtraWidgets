@@ -21,9 +21,18 @@ from qextrawidgets.widgets.search_line_edit import QSearchLineEdit
 
 
 class QEmojiPicker(QWidget):
+    """A comprehensive emoji picker widget.
+
+    Features categories, search, skin tone selection, and recent/favorite emojis.
+
+    Signals:
+        picked (str): Emitted when an emoji is selected.
+    """
+
     picked = Signal(str)
 
     class EmojiCategory(Enum):
+        """Standard emoji categories."""
         Activities = QT_TR_NOOP("Activities")
         FoodAndDrink = QT_TR_NOOP("Food & Drink")
         AnimalsAndNature = QT_TR_NOOP("Animals & Nature")
@@ -36,8 +45,16 @@ class QEmojiPicker(QWidget):
         Favorites = QT_TR_NOOP("Favorites")
         Recents = QT_TR_NOOP("Recents")
 
+    def __init__(self, favorite_category: bool = True, recent_category: bool = True,
+                 emoji_size: QSize = QSize(40, 40), emoji_font: typing.Optional[str] = None) -> None:
+        """Initializes the emoji picker.
 
-    def __init__(self, favorite_category: bool = True, recent_category: bool = True, emoji_size = QSize(40, 40), emoji_font = None):
+        Args:
+            favorite_category (bool, optional): Whether to show the favorites category. Defaults to True.
+            recent_category (bool, optional): Whether to show the recents category. Defaults to True.
+            emoji_size (QSize, optional): Size of individual emoji items. Defaults to QSize(40, 40).
+            emoji_font (str, optional): Font family to use for emojis. If None, Twemoji is loaded. Defaults to None.
+        """
         super().__init__()
 
         self._icons = {
@@ -121,7 +138,8 @@ class QEmojiPicker(QWidget):
         self.__setup_layout()
         self.translateUI()
 
-    def __setup_layout(self):
+    def __setup_layout(self) -> None:
+        """Sets up the initial layout of the widget."""
         header_layout = QHBoxLayout()
         header_layout.addWidget(self.__search_line_edit, True)
         header_layout.addWidget(self.__skin_tone_selector)
@@ -137,38 +155,62 @@ class QEmojiPicker(QWidget):
         main_layout.addWidget(self.__accordion)
         main_layout.addLayout(content_layout)
 
-    def translateUI(self):
+    def translateUI(self) -> None:
+        """Translates the UI components."""
         self.__search_line_edit.setPlaceholderText(self.tr("Search emoji..."))
 
         for category in self.EmojiCategory:
             section = self.section(category.value)
-            section.setTitle(self.tr(category.value))
+            if section:
+                section.setTitle(self.tr(category.value))
 
     def _get_emoji_icon_size(self) -> QSize:
+        """Returns the icon size based on the emoji size.
+
+        Returns:
+            QSize: The calculated icon size.
+        """
         return self.__emoji_size * 0.8
 
-    def _set_skin_tone(self, skin_tone: str):
+    def _set_skin_tone(self, skin_tone: str) -> None:
+        """Updates the skin tone of the emojis.
+
+        Args:
+            skin_tone (str): Skin tone modifier.
+        """
         self.__model.setSkinTone(skin_tone)
         self._redraw_emoji_items(self.__model.filterEmojisItems(QEmojiDataRole.HasSkinTonesRole, True))
 
-    def __setup_connections(self):
+    def __setup_connections(self) -> None:
+        """Sets up signals and slots connections."""
         self.__search_line_edit.textChanged.connect(self.__filter_emojis)
         self.__accordion.enteredSection.connect(self.__on_entered_section)
         self.__skin_tone_selector.currentDataChanged.connect(self._set_skin_tone)
 
-    def __on_entered_section(self, section: QAccordionItem):
+    def __on_entered_section(self, section: QAccordionItem) -> None:
+        """Handles the entered section event in the accordion.
+
+        Args:
+            section (QAccordionItem): The section that was entered.
+        """
         shortcut = self.shortcuts()[self.sections().index(section)]
         if section.header().isExpanded():
             shortcut.setChecked(True)
 
-    def __filter_emojis(self):
+    def __filter_emojis(self) -> None:
+        """Filters the emojis across all categories based on the search text."""
         text = self.__search_line_edit.text()
 
         for proxy, section in zip(self.proxys(), self.sections()):
             proxy.setFilterFixedString(text)
             section.setVisible(proxy.rowCount() != 0 or not text)
 
-    def __on_hover_emoji(self, index: QModelIndex):
+    def __on_hover_emoji(self, index: QModelIndex) -> None:
+        """Updates the preview label when an emoji is hovered.
+
+        Args:
+            index (QModelIndex): Index of the hovered emoji.
+        """
         item = self.__model.itemFromProxyIndex(index)
         alias = item.data(QEmojiDataRole.AliasRole)
         metrics = QFontMetrics(self.__aliases_emoji_label.font())
@@ -177,24 +219,45 @@ class QEmojiPicker(QWidget):
         self._emoji_on_label = item.data(Qt.ItemDataRole.UserRole)
         self._redraw_alias_emoji()
 
-    def __clear_emoji_preview(self):
+    def __clear_emoji_preview(self) -> None:
+        """Clears the emoji preview area."""
         self._emoji_on_label = None
         self.__emoji_label.clear()
         self.__current_alias = ""
         self.__aliases_emoji_label.clear()
 
-    def __on_emoji_clicked(self, proxy_index: QModelIndex):
+    def __on_emoji_clicked(self, proxy_index: QModelIndex) -> None:
+        """Handles emoji selection.
+
+        Args:
+            proxy_index (QModelIndex): Index of the clicked emoji.
+        """
         item = self.__model.itemFromProxyIndex(proxy_index)
         item.setData(True, QEmojiDataRole.RecentRole)
         self.picked.emit(item.data(Qt.ItemDataRole.UserRole))
 
-    def __item_from_position(self, list_view: QEmojiGrid, position: QPoint) -> typing.Optional[QStandardItem]:
-        proxy_index = list_view.indexAt(position)
-        if not proxy_index:
+    def __item_from_position(self, grid: QEmojiGrid, position: QPoint) -> typing.Optional[QStandardItem]:
+        """Returns the source model item at the given pixel position in the grid.
+
+        Args:
+            grid (QEmojiGrid): The emoji grid.
+            position (QPoint): Pixel position.
+
+        Returns:
+            QStandardItem, optional: The item at the position, or None.
+        """
+        proxy_index = grid.indexAt(position)
+        if not proxy_index.isValid():
             return None
         return self.__model.itemFromProxyIndex(proxy_index)
 
-    def __on_context_menu(self, grid: QEmojiGrid, position: QPoint):
+    def __on_context_menu(self, grid: QEmojiGrid, position: QPoint) -> None:
+        """Handles the context menu for an emoji.
+
+        Args:
+            grid (QEmojiGrid): The grid where the event occurred.
+            position (QPoint): Pixel position.
+        """
         menu = QMenu()
         item = self.__item_from_position(grid, position)
 
@@ -207,7 +270,6 @@ class QEmojiPicker(QWidget):
             if item_favorited:
                 action = menu.addAction(self.tr("Unfavorite"))
                 action.triggered.connect(lambda: item.setData(False, QEmojiDataRole.FavoriteRole))
-                menu.addAction(action)
             else:
                 action = menu.addAction(self.tr("Favorite"))
                 action.triggered.connect(lambda: item.setData(True, QEmojiDataRole.FavoriteRole))
@@ -218,7 +280,16 @@ class QEmojiPicker(QWidget):
         menu.exec(grid.mapToGlobal(position))
 
     @staticmethod
-    def _get_emoji_skin_tones_dict(emoji: str, skin_variations: typing.Dict[str, EmojiChar]) -> typing.Dict[EmojiSkinTone, str]:
+    def _get_emoji_skin_tones_dict(emoji: str, skin_variations: typing.Dict[str, EmojiChar]) -> typing.Optional[typing.Dict[EmojiSkinTone, str]]:
+        """Maps skin tone modifiers to actual emoji strings.
+
+        Args:
+            emoji (str): Base emoji string.
+            skin_variations (Dict[str, EmojiChar]): Available skin variations.
+
+        Returns:
+            Dict[EmojiSkinTone, str], optional: Dictionary mapping skin tones to emoji strings or None.
+        """
         if skin_variations:
             skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if
                           (found_skin_tone := skin_variations.get(skin_tone))}
@@ -227,11 +298,8 @@ class QEmojiPicker(QWidget):
             return skin_tones
         return None
 
-    def __add_base_categories(self):
-        """
-        Creates categories.
-        Note: In production, load items inside grids asynchronously or lazily.
-        """
+    def __add_base_categories(self) -> None:
+        """Populates the picker with standard emoji categories."""
         categories = []
 
         for data in sorted(emoji_data, key=lambda emoji_: emoji_.sort_order):
@@ -244,13 +312,23 @@ class QEmojiPicker(QWidget):
                 skin_tones = self._get_emoji_skin_tones_dict(data.char, data.skin_variations)
                 self.__model.addEmoji(data.char, " ".join(f":{alias}:" for alias in data.short_names), data.category, skin_tones=skin_tones)
 
-    def _on_shortcut_clicked(self, section: QAccordionItem):
+    def _on_shortcut_clicked(self, section: QAccordionItem) -> None:
+        """Scrolls the accordion to the selected category section.
+
+        Args:
+            section (QAccordionItem): The section to scroll to.
+        """
         self.__accordion.collapseAll()
         section.setExpanded(True)
         QApplication.processEvents()
         self.__accordion.scrollToItem(section)
 
-    def _set_emoji_icon(self, item: QStandardItem):
+    def _set_emoji_icon(self, item: QStandardItem) -> None:
+        """Sets the pixmap icon for an emoji item.
+
+        Args:
+            item (QStandardItem): The item to update.
+        """
         if not item.icon():
             emoji_pixmap_getter = self.emojiPixmapGetter()
             emoji = item.data(Qt.ItemDataRole.UserRole)
@@ -258,7 +336,12 @@ class QEmojiPicker(QWidget):
             margin = self.emojiSize().width() * 0.2
             item.setIcon(emoji_pixmap_getter(emoji, margin, self._get_emoji_icon_size(), dpr))
 
-    def _redraw_emoji_items(self, items: typing.Optional[typing.List[QStandardItem]] = None):
+    def _redraw_emoji_items(self, items: typing.Optional[typing.List[QStandardItem]] = None) -> None:
+        """Redraws the icons for the given items.
+
+        Args:
+            items (List[QStandardItem], optional): Items to redraw. Defaults to None.
+        """
         emoji_pixmap_getter = self.emojiPixmapGetter()
 
         if items is None:
@@ -274,7 +357,8 @@ class QEmojiPicker(QWidget):
             else:
                 item.setText(item.data(Qt.ItemDataRole.UserRole))
 
-    def _redraw_skintones(self):
+    def _redraw_skintones(self) -> None:
+        """Updates the skin tone selector icons."""
         emoji_pixmap_getter = self.emojiPixmapGetter()
 
         for index, emoji in enumerate(self._skin_tone_selector_emojis.values()):
@@ -286,7 +370,8 @@ class QEmojiPicker(QWidget):
                 self.__skin_tone_selector.setItemIcon(index, None)
                 self.__skin_tone_selector.setItemText(index, emoji)
 
-    def _redraw_alias_emoji(self):
+    def _redraw_alias_emoji(self) -> None:
+        """Updates the emoji preview label pixmap."""
         if self._emoji_on_label:
             emoji_pixmap_getter = self.emojiPixmapGetter()
 
@@ -298,6 +383,11 @@ class QEmojiPicker(QWidget):
 
     @staticmethod
     def _create_search_line_edit() -> QLineEdit:
+        """Creates and configures a search line edit.
+
+        Returns:
+            QLineEdit: The configured search line edit.
+        """
         font = QFont()
         font.setPointSize(12)
         line_edit = QSearchLineEdit()
@@ -306,6 +396,11 @@ class QEmojiPicker(QWidget):
 
     @staticmethod
     def _create_emoji_label() -> QLabel:
+        """Creates and configures the emoji alias label.
+
+        Returns:
+            QLabel: The configured alias label.
+        """
         font = QFont()
         font.setBold(True)
         font.setPointSize(13)
@@ -315,6 +410,15 @@ class QEmojiPicker(QWidget):
 
     @staticmethod
     def _create_shortcut_button(text: str, icon: QIcon) -> QToolButton:
+        """Creates a shortcut button for the category bar.
+
+        Args:
+            text (str): Tooltip text.
+            icon (QIcon): Button icon.
+
+        Returns:
+            QToolButton: The configured shortcut button.
+        """
         btn = QToolButton()
         btn.setCheckable(True)
         btn.setAutoRaise(True)  # Visual flat/clean
@@ -327,21 +431,44 @@ class QEmojiPicker(QWidget):
 
     @staticmethod
     def _create_grid() -> QEmojiGrid:
+        """Creates an emoji grid.
+
+        Returns:
+            QEmojiGrid: The created grid.
+        """
         return QEmojiGrid()
 
     # --- Public API (camelCase) ---
 
-    def resetPicker(self):
-        """Resets picker state."""
+    def resetPicker(self) -> None:
+        """Resets the picker state."""
         self.__search_line_edit.clear()
         self._accordion.resetScroll()
 
     def addCategory(self, category: str, text: str, icon: QIcon) -> int:
+        """Adds a new emoji category at the end.
+
+        Args:
+            category (str): Category identifier.
+            text (str): Display text.
+            icon (QIcon): Category icon.
+
+        Returns:
+            int: The index of the added category.
+        """
         index = len(self.__categories_data)
         self.insertCategory(category, index, text, icon)
         return index
 
-    def insertCategory(self, category: str, index: int, text: str, icon: QIcon):
+    def insertCategory(self, category: str, index: int, text: str, icon: QIcon) -> None:
+        """Inserts a new emoji category at the specified index.
+
+        Args:
+            category (str): Category identifier.
+            index (int): Insertion index.
+            text (str): Display text.
+            icon (QIcon): Category icon.
+        """
         # Proxy
         proxy = QEmojiSortFilterProxyModel()
         proxy.setCategoryFilter(text)
@@ -369,7 +496,12 @@ class QEmojiPicker(QWidget):
         category_data = dict(grid=grid, shortcut=shortcut, section=section, proxy=proxy)
         self.__categories_data[category] = category_data
 
-    def removeCategory(self, category: str):
+    def removeCategory(self, category: str) -> None:
+        """Removes the specified category from the picker.
+
+        Args:
+            category (str): Category identifier.
+        """
         section, shortcut, grid = self.section(category), self.shortcut(category), self.grid(category)
 
         self.__accordion.removeAccordionItem(section)
@@ -383,39 +515,118 @@ class QEmojiPicker(QWidget):
         self.__categories_data.pop(category)
 
     def accordion(self) -> QAccordion:
+        """Returns the accordion widget.
+
+        Returns:
+            QAccordion: The accordion.
+        """
         return self.__accordion
 
     def model(self) -> QEmojiModel:
+        """Returns the base emoji model.
+
+        Returns:
+            QEmojiModel: The emoji model.
+        """
         return self.__model
 
     def category(self, category: typing.Union[str, EmojiCategory]) -> typing.Optional[dict]:
+        """Returns the data dictionary for the given category.
+
+        Args:
+            category (Union[str, EmojiCategory]): Category identifier.
+
+        Returns:
+            dict, optional: Category data or None.
+        """
         return self.__categories_data.get(str(category))
 
-    def proxy(self, category: typing.Union[str, EmojiCategory]) -> QEmojiSortFilterProxyModel:
-        return self.category(category)["proxy"]
+    def proxy(self, category: typing.Union[str, EmojiCategory]) -> typing.Optional[QEmojiSortFilterProxyModel]:
+        """Returns the proxy model for the given category.
+
+        Args:
+            category (Union[str, EmojiCategory]): Category identifier.
+
+        Returns:
+            QEmojiSortFilterProxyModel, optional: The proxy model or None.
+        """
+        data = self.category(category)
+        return data["proxy"] if data else None
 
     def proxys(self) -> typing.List[QEmojiSortFilterProxyModel]:
+        """Returns a list of all proxy models.
+
+        Returns:
+            List[QEmojiSortFilterProxyModel]: All proxy models.
+        """
         return [data["proxy"] for data in self.__categories_data.values()]
 
-    def shortcut(self, category: typing.Union[str, EmojiCategory]) -> QToolButton:
-        return self.category(category)["shortcut"]
+    def shortcut(self, category: typing.Union[str, EmojiCategory]) -> typing.Optional[QToolButton]:
+        """Returns the shortcut button for the given category.
+
+        Args:
+            category (Union[str, EmojiCategory]): Category identifier.
+
+        Returns:
+            QToolButton, optional: The shortcut button or None.
+        """
+        data = self.category(category)
+        return data["shortcut"] if data else None
 
     def shortcuts(self) -> typing.List[QToolButton]:
+        """Returns a list of all shortcut buttons.
+
+        Returns:
+            List[QToolButton]: All shortcut buttons.
+        """
         return [data["shortcut"] for data in self.__categories_data.values()]
 
-    def section(self, category: typing.Union[str, EmojiCategory]) -> QAccordionItem:
-        return self.category(category)["section"]
+    def section(self, category: typing.Union[str, EmojiCategory]) -> typing.Optional[QAccordionItem]:
+        """Returns the accordion section for the given category.
+
+        Args:
+            category (Union[str, EmojiCategory]): Category identifier.
+
+        Returns:
+            QAccordionItem, optional: The section item or None.
+        """
+        data = self.category(category)
+        return data["section"] if data else None
 
     def sections(self) -> typing.List[QAccordionItem]:
+        """Returns a list of all accordion sections.
+
+        Returns:
+            List[QAccordionItem]: All sections.
+        """
         return [data["section"] for data in self.__categories_data.values()]
 
-    def grid(self, category: typing.Union[str, EmojiCategory]) -> QEmojiGrid:
-        return self.category(category)["grid"]
+    def grid(self, category: typing.Union[str, EmojiCategory]) -> typing.Optional[QEmojiGrid]:
+        """Returns the emoji grid for the given category.
+
+        Args:
+            category (Union[str, EmojiCategory]): Category identifier.
+
+        Returns:
+            QEmojiGrid, optional: The grid or None.
+        """
+        data = self.category(category)
+        return data["grid"] if data else None
 
     def grids(self) -> typing.List[QEmojiGrid]:
+        """Returns a list of all emoji grids.
+
+        Returns:
+            List[QEmojiGrid]: All grids.
+        """
         return [data["grid"] for data in self.__categories_data.values()]
 
-    def setFavoriteCategory(self, active: bool):
+    def setFavoriteCategory(self, active: bool) -> None:
+        """Enables or disables the favorites category.
+
+        Args:
+            active (bool): True to enable, False to disable.
+        """
         favorite_category_key = self.EmojiCategory.Favorites.value
         favorite_category = self.category(favorite_category_key)
         if favorite_category is not None and not active:
@@ -427,7 +638,12 @@ class QEmojiPicker(QWidget):
             proxy.setCategoryFilter(None)
         self.__favorite_category = active
 
-    def setRecentCategory(self, active: bool):
+    def setRecentCategory(self, active: bool) -> None:
+        """Enables or disables the recents category.
+
+        Args:
+            active (bool): True to enable, False to disable.
+        """
         recent_category_key = self.EmojiCategory.Recents.value
         recent_category = self.category(recent_category_key)
         if recent_category is not None and not active:
@@ -439,13 +655,23 @@ class QEmojiPicker(QWidget):
             proxy.setCategoryFilter(None)
         self.__recent_category = active
 
-    def _get_emoji_grid_font(self):
+    def _get_emoji_grid_font(self) -> QFont:
+        """Returns the font to be used in the emoji grids.
+
+        Returns:
+            QFont: The calculated font.
+        """
         font = QFont(self.emojiFont())
         pixel_size = get_max_pixel_size("👏", font.family(), self._get_emoji_icon_size())
         font.setPixelSize(pixel_size)
         return font
 
-    def setEmojiFont(self, font_family: str):
+    def setEmojiFont(self, font_family: str) -> None:
+        """Sets the font family for the emojis.
+
+        Args:
+            font_family (str): Font family name.
+        """
         self.__emoji_font = font_family
 
         for grid in self.grids():
@@ -461,9 +687,19 @@ class QEmojiPicker(QWidget):
         self.__emoji_label.setFont(emoji_label_font)
 
     def emojiFont(self) -> str:
+        """Returns the current emoji font family.
+
+        Returns:
+            str: Font family name.
+        """
         return self.__emoji_font
 
-    def setEmojiSize(self, size: QSize):
+    def setEmojiSize(self, size: QSize) -> None:
+        """Sets the size for the emoji items.
+
+        Args:
+            size (QSize): The new size.
+        """
         if size != self.__emoji_size:
             self.__emoji_size = size
 
@@ -475,9 +711,21 @@ class QEmojiPicker(QWidget):
             self.__model.setEmojiSize(size)
 
     def emojiSize(self) -> QSize:
+        """Returns the current emoji item size.
+
+        Returns:
+            QSize: The emoji size.
+        """
         return self.__emoji_size
 
-    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Optional[typing.Callable[[str, int, QSize, float], QPixmap]]):
+    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Optional[typing.Callable[[str, int, QSize, float], QPixmap]]) -> None:
+        """Sets the function used to retrieve emoji pixmaps.
+
+        This allows for custom emoji rendering (e.g., using Twemoji images).
+
+        Args:
+            emoji_pixmap_getter (Callable, optional): Pixmap getter function.
+        """
         if emoji_pixmap_getter != self._emoji_pixmap_getter:
             self._emoji_pixmap_getter = emoji_pixmap_getter
 

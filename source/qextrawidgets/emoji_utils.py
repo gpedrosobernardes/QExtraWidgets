@@ -7,10 +7,7 @@ from emoji_data_python import unified_to_char, char_to_unified, find_by_shortnam
 
 
 class EmojiFinder:
-    """
-    Utility class for finding emojis in text using PySide6's QRegularExpression.
-    Centralizes the regex pattern logic used across the library.
-    """
+    """Utility class for finding emojis and aliases in text using QRegularExpression."""
 
     # Regex pattern for a single emoji (based on unicode.org specs)
     # Covers: Tag sequences, Keycap sequences, Regional indicator sequences, Extended Pictographic sequences
@@ -27,12 +24,20 @@ class EmojiFinder:
 
     @classmethod
     def getEmojiPattern(cls) -> str:
-        """Returns the raw regex pattern string for a single emoji."""
+        """Returns the raw regex pattern string for a single emoji.
+
+        Returns:
+            str: The regex pattern.
+        """
         return cls._EMOJI_PATTERN
 
     @classmethod
     def getRegex(cls) -> QRegularExpression:
-        """Returns a compiled QRegularExpression for finding emojis."""
+        """Returns a compiled QRegularExpression for finding emojis.
+
+        Returns:
+            QRegularExpression: The compiled regex.
+        """
         return QRegularExpression(
             cls._EMOJI_PATTERN,
             QRegularExpression.PatternOption.UseUnicodePropertiesOption
@@ -40,9 +45,13 @@ class EmojiFinder:
 
     @classmethod
     def findEmojis(cls, text: str) -> typing.Generator[QRegularExpressionMatch, None, None]:
-        """
-        Finds all emojis in the given text.
-        Returns a generator of QRegularExpressionMatch objects.
+        """Finds all Unicode emojis in the given text.
+
+        Args:
+            text (str): The text to scan.
+
+        Yields:
+            Generator[QRegularExpressionMatch]: Matches for each emoji found.
         """
         regex = cls.getRegex()
         iterator = regex.globalMatch(text)
@@ -51,9 +60,13 @@ class EmojiFinder:
 
     @classmethod
     def findEmojiAliases(cls, text: str) -> typing.Generator[typing.Tuple[EmojiChar, QRegularExpressionMatch], None, None]:
-        """
-        Finds all aliases in the given text.
-        Returns a generator of QRegularExpressionMatch objects.
+        """Finds all text aliases (e.g., :smile:) in the given text.
+
+        Args:
+            text (str): The text to scan.
+
+        Yields:
+            Generator[Tuple[EmojiChar, QRegularExpressionMatch]]: Tuples of EmojiChar data and their matches.
         """
         regex = QRegularExpression(cls._ALIAS_PATTERN)
         iterator = regex.globalMatch(text)
@@ -67,21 +80,23 @@ class EmojiFinder:
 
 
 class EmojiImageProvider:
-    """
-    Class exclusively responsible for loading, resizing, and caching
-    emoji images.
-    """
+    """Utility class for loading, resizing, and caching emoji images."""
 
     @staticmethod
     def getPixmap(emoji: str, margin: int, size: QSize, dpr: float = 1.0, source_format: str = "png") -> QPixmap:
-        """
-        Returns a QPixmap ready to be drawn.
+        """Loads and returns a colorized or processed emoji pixmap.
 
-        :param emoji: Emoji string.
-        :param size: Desired QSize (logical size).
-        :param dpr: Device Pixel Ratio (for Retina/4K screens).
-        :param margin: Margin around the emoji (in pixels).
-        :param source_format: Source image format (png, svg).
+        Uses caching to improve performance on subsequent calls.
+
+        Args:
+            emoji (str): Emoji character.
+            margin (int): Margin around the emoji in pixels.
+            size (QSize): Target logical size.
+            dpr (float, optional): Device pixel ratio. Defaults to 1.0.
+            source_format (str, optional): Image format (png or svg). Defaults to "png".
+
+        Returns:
+            QPixmap: The processed pixmap.
         """
 
         # 1. Calculate real physical size (pixels)
@@ -136,6 +151,18 @@ class EmojiImageProvider:
 
     @staticmethod
     def getUrl(alias: str, margin: int, size: QSize, dpr: float, source_format: str) -> QUrl:
+        """Generates a unique QUrl key for caching an emoji pixmap.
+
+        Args:
+            alias (str): Emoji identifier (unified code or alias).
+            margin (int): Margin size.
+            size (QSize): Logical size.
+            dpr (float): Device pixel ratio.
+            source_format (str): Image format.
+
+        Returns:
+            QUrl: The generated cache key URL.
+        """
         url = QUrl()
         url.setScheme("twemoji")
         url.setPath(alias)

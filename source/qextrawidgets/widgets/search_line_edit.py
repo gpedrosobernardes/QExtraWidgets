@@ -1,10 +1,17 @@
-from PySide6.QtWidgets import QLineEdit
+from PySide6.QtWidgets import QLineEdit, QWidget
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 
 
 class QSearchLineEdit(QLineEdit):
-    def __init__(self, parent=None):
+    """A search line edit with a magnifying glass icon and a clear button."""
+
+    def __init__(self, parent: QWidget = None) -> None:
+        """Initializes the search line edit.
+
+        Args:
+            parent (QWidget, optional): Parent widget. Defaults to None.
+        """
         super().__init__(parent)
         self.setClearButtonEnabled(True)
         self.addAction(QThemeResponsiveIcon.fromAwesome("fa6s.magnifying-glass"), QLineEdit.ActionPosition.LeadingPosition)

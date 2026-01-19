@@ -1,6 +1,6 @@
 from typing import Dict, Set, Optional
 
-from PySide6.QtCore import Qt, QRect, QAbstractItemModel
+from PySide6.QtCore import Qt, QRect, QAbstractItemModel, QModelIndex
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QTableView, QWidget
@@ -13,7 +13,14 @@ from qextrawidgets.widgets.filterable_table.filter_popup import QFilterPopup
 
 
 class QFilterableTable(QTableView):
-    def __init__(self, parent: Optional[QWidget] = None):
+    """A QTableView extension that provides Excel-style filtering and sorting on headers."""
+
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
+        """Initializes the filterable table.
+
+        Args:
+            parent (QWidget, optional): Parent widget. Defaults to None.
+        """
         super().__init__(parent)
 
         self._proxy = QMultiFilterProxy()
@@ -28,7 +35,12 @@ class QFilterableTable(QTableView):
 
     # --- Public API ---
 
-    def setModel(self, model: QAbstractItemModel):
+    def setModel(self, model: QAbstractItemModel) -> None:
+        """Sets the source model for the table and initializes filters.
+
+        Args:
+            model (QAbstractItemModel): The data model to display.
+        """
         if self._proxy.sourceModel():
             self._disconnect_model_signals(self._proxy.sourceModel())
 
@@ -40,11 +52,17 @@ class QFilterableTable(QTableView):
             self._refresh_popups()
 
     def model(self) -> QAbstractItemModel:
+        """Returns the source model (not the proxy).
+
+        Returns:
+            QAbstractItemModel: The source model.
+        """
         return self._proxy.sourceModel()
 
     # --- Popup Logic ---
 
-    def _refresh_popups(self):
+    def _refresh_popups(self) -> None:
+        """Clears and recreates filter popups for all columns."""
         for popup in self._popups.values():
             popup.deleteLater()
         self._popups.clear()
@@ -56,7 +74,12 @@ class QFilterableTable(QTableView):
         for col in range(model.columnCount()):
             self._create_popup(col)
 
-    def _create_popup(self, logical_index: int):
+    def _create_popup(self, logical_index: int) -> None:
+        """Creates a filter popup for a specific column.
+
+        Args:
+            logical_index (int): Column index.
+        """
         if logical_index in self._popups:
             return
 
@@ -71,7 +94,12 @@ class QFilterableTable(QTableView):
         self._popups[logical_index] = popup
         self._update_header_icon(logical_index)
 
-    def _on_header_clicked(self, logical_index: int):
+    def _on_header_clicked(self, logical_index: int) -> None:
+        """Handles header clicks to show the filter popup.
+
+        Args:
+            logical_index (int): Column index clicked.
+        """
         if logical_index not in self._popups:
             return
 
@@ -98,7 +126,12 @@ class QFilterableTable(QTableView):
         popup.move(global_pos.x(), global_pos.y() + header.height())
         popup.exec()
 
-    def _apply_filter(self, logical_index: int):
+    def _apply_filter(self, logical_index: int) -> None:
+        """Applies the selected filter from the popup to the proxy model.
+
+        Args:
+            logical_index (int): Column index.
+        """
         popup = self._popups.get(logical_index)
         if not popup:
             return
@@ -116,7 +149,12 @@ class QFilterableTable(QTableView):
 
         self._update_header_icon(logical_index)
 
-    def _update_header_icon(self, logical_index: int):
+    def _update_header_icon(self, logical_index: int) -> None:
+        """Updates the header icon to reflect if a filter is active.
+
+        Args:
+            logical_index (int): Column index.
+        """
         if logical_index not in self._popups:
             return
 
@@ -136,9 +174,14 @@ class QFilterableTable(QTableView):
     # --- Smart Data Logic ---
 
     def _get_unique_column_values(self, target_col: int, limit: int = 5000) -> Set[str]:
-        """
-        Returns unique values from column `target_col`,
-        CONSIDERING active filters in all OTHER columns.
+        """Returns unique values from a column, considering active filters in other columns.
+
+        Args:
+            target_col (int): Column to scan.
+            limit (int, optional): Maximum number of rows to scan. Defaults to 5000.
+
+        Returns:
+            Set[str]: A set of unique string values.
         """
         model = self.model()
         values = set()
@@ -179,12 +222,22 @@ class QFilterableTable(QTableView):
 
     # --- Model Signals ---
 
-    def _connect_model_signals(self, model: QAbstractItemModel):
+    def _connect_model_signals(self, model: QAbstractItemModel) -> None:
+        """Connects signals to react to model changes.
+
+        Args:
+            model (QAbstractItemModel): The model to connect to.
+        """
         model.columnsInserted.connect(self._on_columns_inserted)
         model.columnsRemoved.connect(self._on_columns_removed)
         model.modelReset.connect(self._refresh_popups)
 
-    def _disconnect_model_signals(self, model: QAbstractItemModel):
+    def _disconnect_model_signals(self, model: QAbstractItemModel) -> None:
+        """Disconnects signals from the model.
+
+        Args:
+            model (QAbstractItemModel): The model to disconnect from.
+        """
         try:
             model.columnsInserted.disconnect(self._on_columns_inserted)
             model.columnsRemoved.disconnect(self._on_columns_removed)
@@ -192,9 +245,23 @@ class QFilterableTable(QTableView):
         except RuntimeError:
             pass
 
-    def _on_columns_inserted(self, parent, start: int, end: int):
+    def _on_columns_inserted(self, parent: QModelIndex, start: int, end: int) -> None:
+        """Handles columns inserted in the model.
+
+        Args:
+            parent (QModelIndex): Parent index.
+            start (int): Start index.
+            end (int): End index.
+        """
         for i in range(start, end + 1):
             self._create_popup(i)
 
-    def _on_columns_removed(self, parent, start: int, end: int):
+    def _on_columns_removed(self, parent: QModelIndex, start: int, end: int) -> None:
+        """Handles columns removed from the model.
+
+        Args:
+            parent (QModelIndex): Parent index.
+            start (int): Start index.
+            end (int): End index.
+        """
         self._refresh_popups()

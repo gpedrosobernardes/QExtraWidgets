@@ -7,16 +7,30 @@ from PySide6.QtWidgets import QApplication, QStyle
 
 
 class QThemeResponsiveIconEngine(QIconEngine):
-    """
-    Dynamic icon engine that acts as a Proxy for an original QIcon.
-    Adjusts rendering based on the smallest available dimension to avoid clipping.
+    """Dynamic icon engine that acts as a proxy for an original QIcon.
+
+    Adjusts rendering based on the system theme (Black/White) and ensures
+    the icon fits within the requested dimensions without clipping.
     """
 
-    def __init__(self, icon: QIcon):
+    def __init__(self, icon: QIcon) -> None:
+        """Initializes the icon engine.
+
+        Args:
+            icon (QIcon): The source icon to be colorized.
+        """
         super().__init__()
         self._source_icon = icon
 
-    def paint(self, painter: QPainter, rect: QRect, mode: QIcon.Mode, state: QIcon.State):
+    def paint(self, painter: QPainter, rect: QRect, mode: QIcon.Mode, state: QIcon.State) -> None:
+        """Paints the icon.
+
+        Args:
+            painter (QPainter): The painter to use.
+            rect (QRect): Target rectangle.
+            mode (Mode): Icon mode.
+            state (State): Icon state.
+        """
         dpr = painter.device().devicePixelRatioF()
 
         min_side = min(rect.width(), rect.height())
@@ -29,74 +43,120 @@ class QThemeResponsiveIconEngine(QIconEngine):
             return
 
         target_rect = QStyle.alignedRect(
-            Qt.LayoutDirection.LeftToRight,  # Direção do layout (LTR)
-            Qt.AlignmentFlag.AlignCenter,  # Alinhamento desejado
-            size,  # Tamanho do objeto
-            rect  # O retângulo limite (o que veio no paint)
+            Qt.LayoutDirection.LeftToRight,  # layout direction (LTR)
+            Qt.AlignmentFlag.AlignCenter,  # desired alignment
+            size,  # object size
+            rect  # bounding rectangle
         )
 
         target_rect.adjusted(5, 5, -5, -5)
 
-        # 3. Desenhar na posição calculada
+        # 3. Draw at calculated position
         painter.drawPixmap(target_rect, pixmap)
 
     def pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
-        """Returns processed pixmap."""
+        """Returns processed pixmap.
+
+        Args:
+            size (QSize): Requested size.
+            mode (Mode): Icon mode.
+            state (State): Icon state.
+
+        Returns:
+            QPixmap: The colorized pixmap.
+        """
         return self.themePixmap(size, mode, state, QApplication.styleHints().colorScheme())
 
-    def addPixmap(self, pixmap: QPixmap, mode: QIcon.Mode, state: QIcon.State):
+    def addPixmap(self, pixmap: QPixmap, mode: QIcon.Mode, state: QIcon.State) -> None:
+        """Adds a pixmap to the source icon.
+
+        Args:
+            pixmap (QPixmap): Pixmap to add.
+            mode (Mode): Icon mode.
+            state (State): Icon state.
+        """
         self._source_icon.addPixmap(pixmap, mode, state)
 
-    def addFile(self, file_name: str, size: QSize, mode: QIcon.Mode, state: QIcon.State):
+    def addFile(self, file_name: str, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> None:
+        """Adds a file to the source icon.
+
+        Args:
+            file_name (str): Path to the icon file.
+            size (QSize): Icon size.
+            mode (Mode): Icon mode.
+            state (State): Icon state.
+        """
         self._source_icon.addFile(file_name, size, mode, state)
 
     def availableSizes(self, mode: QIcon.Mode = QIcon.Mode.Normal, state: QIcon.State = QIcon.State.Off) -> typing.List[QSize]:
+        """Returns available sizes for the icon.
+
+        Args:
+            mode (Mode, optional): Icon mode. Defaults to Normal.
+            state (State, optional): Icon state. Defaults to Off.
+
+        Returns:
+            List[QSize]: List of available sizes.
+        """
         return self._source_icon.availableSizes(mode, state)
 
     def actualSize(self, size: QSize, mode: QIcon.Mode = QIcon.Mode.Normal, state: QIcon.State = QIcon.State.Off) -> QSize:
+        """Returns the actual size of the icon for the given parameters.
+
+        Args:
+            size (QSize): Requested size.
+            mode (Mode, optional): Icon mode. Defaults to Normal.
+            state (State, optional): Icon state. Defaults to Off.
+
+        Returns:
+            QSize: The actual size.
+        """
         return self._source_icon.actualSize(size, mode, state)
 
-    def clone(self):
+    def clone(self) -> "QThemeResponsiveIconEngine":
+        """Returns a clone of this engine.
+
+        Returns:
+            QThemeResponsiveIconEngine: The cloned engine.
+        """
         return QThemeResponsiveIconEngine(self._source_icon)
 
     # --- Internal Logic ---
 
     def themePixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State, scheme: Qt.ColorScheme) -> QPixmap:
+        """Generates a colorized pixmap based on the current theme scheme.
+
+        Args:
+            size (QSize): Target size.
+            mode (Mode): Icon mode.
+            state (State): Icon state.
+            scheme (ColorScheme): System color scheme (Light/Dark).
+
+        Returns:
+            QPixmap: The themed pixmap.
+        """
         # 1. Theme Color
         target_color = Qt.GlobalColor.white if scheme == Qt.ColorScheme.Dark else Qt.GlobalColor.black
-
-        # # 2. Cache Check
-        # url = QUrl()
-        # url.setScheme("icons")
-        # url.setPath(str(id(self)))
-        #
-        # query_params = QUrlQuery()
-        # query_params.addQueryItem("size", str(size))
-        # query_params.addQueryItem("mode", str(mode.value))
-        # query_params.addQueryItem("state", str(state.value))
-        # query_params.addQueryItem("scheme", str(scheme))
-        #
-        # url.setQuery(query_params)
-        #
-        # base_pixmap = QPixmap()
-        # if QPixmapCache.find(url.toString(), base_pixmap):
-        #     return base_pixmap
 
         # 3. Get Original Pixmap
         base_pixmap = self._source_icon.pixmap(size, mode, state)
 
-        # if base_pixmap.isNull():
-        #     return QPixmap()
-
         # 4. Colorize
         colored_pixmap = self._generate_colored_pixmap(base_pixmap, target_color)
-
-        # QPixmapCache.insert(url.toString(), colored_pixmap)
 
         return colored_pixmap
 
     @staticmethod
     def _generate_colored_pixmap(base: QPixmap, color: QColor) -> QPixmap:
+        """Applies a solid color to a pixmap mask.
+
+        Args:
+            base (QPixmap): Source pixmap (used as mask).
+            color (QColor): Target color.
+
+        Returns:
+            QPixmap: Colorized pixmap.
+        """
         colored = QPixmap(base.size())
         colored.fill(Qt.GlobalColor.transparent)
         colored.setDevicePixelRatio(base.devicePixelRatio())
@@ -117,11 +177,17 @@ class QThemeResponsiveIconEngine(QIconEngine):
 
 
 class QThemeResponsiveIcon(QIcon):
+    """QIcon wrapper that applies automatic coloring based on system theme.
+
+    The icon switches between Black and White based on the current system palette.
     """
-    QIcon wrapper that applies automatic coloring based on system theme.
-    The icon adjusts to the smallest available space maintaining aspect ratio.
-    """
-    def __init__(self, source: typing.Union[str, QPixmap, QIcon] = None):
+
+    def __init__(self, source: typing.Union[str, QPixmap, QIcon] = None) -> None:
+        """Initializes the theme responsive icon.
+
+        Args:
+            source (Union[str, QPixmap, QIcon], optional): Icon source. Defaults to None.
+        """
         if isinstance(source, QIcon):
             icon = source
         elif isinstance(source, str):
@@ -137,8 +203,28 @@ class QThemeResponsiveIcon(QIcon):
         super().__init__(self._engine)
 
     @staticmethod
-    def fromAwesome(icon_name: str, **kwargs):
+    def fromAwesome(icon_name: str, **kwargs: typing.Any) -> "QThemeResponsiveIcon":
+        """Creates a theme responsive icon from a QtAwesome icon name.
+
+        Args:
+            icon_name (str): QtAwesome icon name (e.g., "fa6s.house").
+            **kwargs (Any): Additional arguments for qtawesome.icon.
+
+        Returns:
+            QThemeResponsiveIcon: The created icon.
+        """
         return QThemeResponsiveIcon(qtawesome.icon(icon_name, **kwargs))
 
     def themePixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State, scheme: Qt.ColorScheme) -> QPixmap:
+        """Returns a themed pixmap directly.
+
+        Args:
+            size (QSize): Target size.
+            mode (Mode): Icon mode.
+            state (State): Icon state.
+            scheme (ColorScheme): System color scheme.
+
+        Returns:
+            QPixmap: The themed pixmap.
+        """
         return self._engine.themePixmap(size, mode, state, scheme)

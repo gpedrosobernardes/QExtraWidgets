@@ -13,15 +13,16 @@ from qextrawidgets.emoji_utils import EmojiImageProvider
 
 
 class QStandardTwemojiDelegate(QStyledItemDelegate):
-    """
-    Delegate that renders text with Twemoji support.
+    """Delegate that renders text with inline Twemoji images support.
+
+    It automatically detects Unicode emojis in the text and replaces them with
+    high-quality Twemoji images while maintaining text alignment.
     """
 
     EmojiRegex = emoji_data_python.get_emoji_regex()
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
-        """
-        Renders the delegate using the given painter and style option.
+        """Renders the delegate using the given painter and style option.
 
         Args:
             painter (QPainter): The painter to use.
@@ -124,13 +125,12 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
 
     @classmethod
     def get_text_blocks(cls, text: str) -> typing.List[str]:
-        """
-        Splits the text into blocks of text and Emoji objects.
+        """Splits the text into blocks of plain text and individual emojis.
 
         Args:
-            text (str): The input text.
+            text (str): The input text containing mixed content.
 
         Returns:
-            typing.List[typing.Union[str, emojis.db.Emoji]]: A list of text blocks and Emoji objects.
+            List[str]: A list of strings where each element is either plain text or a single emoji.
         """
         return cls.EmojiRegex.split(text)

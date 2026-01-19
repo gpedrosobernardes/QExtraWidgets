@@ -1,17 +1,26 @@
-from PySide6.QtCore import QSize, Qt, Signal
-from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy
+from PySide6.QtCore import QSize, Qt, Signal, QEvent
+from PySide6.QtGui import QFont, QResizeEvent
+from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy, QWidget
 
 from qextrawidgets.utils import QEmojiFonts
 
 
 class QEmojiGrid(QListView):
+    """A customized QListView designed to display emojis in a grid layout.
+
+    Signals:
+        left: Emitted when the mouse cursor leaves the grid area.
+    """
+
     left = Signal()
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    def __init__(self, parent: QWidget = None) -> None:
+        """Initializes the emoji grid.
 
-        # Assuming you have the Proxy imported or defined
+        Args:
+            parent (QWidget, optional): Parent widget. Defaults to None.
+        """
+        super().__init__(parent)
 
         self.setMouseTracking(True)  # Essential for hover to work
 
@@ -35,9 +44,12 @@ class QEmojiGrid(QListView):
         self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
 
     def sizeHint(self) -> QSize:
-        """
-        Tells the parent Layout the ideal size of this widget.
-        Qt calls this automatically when the layout is invalidated.
+        """Informs the layout of the ideal size for this widget.
+
+        Calculates the height needed to display all items based on the current width.
+
+        Returns:
+            QSize: The calculated size hint.
         """
         if self.model() is None or self.model().rowCount() == 0:
             return QSize(0, 0)
@@ -65,14 +77,22 @@ class QEmojiGrid(QListView):
 
         return QSize(width, height)
 
-    def leaveEvent(self, event):
+    def leaveEvent(self, event: QEvent) -> None:
+        """Handles the mouse leave event.
+
+        Args:
+            event (QEvent): The leave event.
+        """
         super().leaveEvent(event)
         self.left.emit()
 
-    def resizeEvent(self, event):
-        """
-        When width changes, the number of rows changes.
-        We need to notify the layout to read sizeHint() again.
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """Handles the resize event.
+
+        Triggers a geometry update to recalculate the size hint.
+
+        Args:
+            event (QResizeEvent): The resize event.
         """
         super().resizeEvent(event)
         self.updateGeometry()
