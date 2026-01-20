@@ -1,14 +1,14 @@
 import typing
 from enum import Enum
 
-from PySide6.QtCore import QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt, QSizeF
+from PySide6.QtCore import QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt
 from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
                                QWidget, QApplication, QButtonGroup, QMenu, QToolButton)
 from emoji_data_python import emoji_data, EmojiChar
 
 from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.utils import QEmojiFonts, get_max_pixel_size
+from qextrawidgets.utils import QEmojiFonts
 from qextrawidgets.widgets.accordion import QAccordion
 from qextrawidgets.widgets.accordion_item import QAccordionItem
 from qextrawidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
@@ -45,7 +45,8 @@ class QEmojiPicker(QWidget):
         Recents = QT_TR_NOOP("Recents")
 
     def __init__(self, favorite_category: bool = True, recent_category: bool = True,
-                 emoji_size: int = 40, emoji_font: typing.Optional[str] = None) -> None:
+                 emoji_size: int = 40, emoji_font: typing.Optional[str] = None,
+                 emoji_margin: float = 0.1) -> None:
         """Initializes the emoji picker.
 
         Args:
@@ -80,18 +81,18 @@ class QEmojiPicker(QWidget):
         }
 
         # Private variables
+        if emoji_font is None:
+            emoji_font = QEmojiFonts.loadTwemojiFont()
+
+        self.__emoji_font = emoji_font
+
         self.__favorite_category = None
         self.__recent_category = None
         self._emoji_pixmap_getter = None
         self._emoji_on_label = None
+        self._emoji_margin_porcentage = emoji_margin
         self.__categories_data = {}  # Stores references to grids and layouts
-        # Layout inside the scroll area where grids are located
-
-        self.__emoji_size = None
-        if emoji_font is None:
-            emoji_font = QEmojiFonts.loadTwemojiFont()
-        self.__emoji_font = emoji_font
-        self.__emoji_delegate = None
+        self.__emoji_size = emoji_size
 
         self.__model = QEmojiModel()
         self.__accordion = QAccordion()
@@ -130,8 +131,9 @@ class QEmojiPicker(QWidget):
 
         self.__accordion.expandAll()
 
-        self.setEmojiSize(emoji_size)
-        self.setEmojiFont(emoji_font)
+        self.updateEmojiSize()
+        self.updateEmojiFont()
+        self.updateEmojiMarginPorcentage()
 
         self.__setup_layout()
         self.translateUI()
@@ -161,14 +163,6 @@ class QEmojiPicker(QWidget):
             section = self.section(category.value)
             if section:
                 section.setTitle(self.tr(category.value))
-
-    def _get_emoji_icon_size(self) -> int:
-        """Returns the icon size based on the emoji size.
-
-        Returns:
-            int: The calculated icon size.
-        """
-        return self.__emoji_size * 0.8
 
     def _set_skin_tone(self, skin_tone: str) -> None:
         """Updates the skin tone of the emojis.
@@ -409,7 +403,7 @@ class QEmojiPicker(QWidget):
         Returns:
             QEmojiGrid: The created grid.
         """
-        return QEmojiGrid(self)
+        return QEmojiGrid(self, self.emojiSize(), self.emojiMarginPorcentage(), self.emojiFont())
 
     # --- Public API (camelCase) ---
 
@@ -442,14 +436,13 @@ class QEmojiPicker(QWidget):
             text (str): Display text.
             icon (QIcon): Category icon.
         """
-        # Proxy
-        proxy = QEmojiSortFilterProxyModel(self)
-        proxy.setCategoryFilter(text)
-        proxy.setSourceModel(self.__model)
-
         # Grid
         grid = self._create_grid()
-        grid.setModel(proxy)
+
+        # Proxy
+        proxy = grid.model()
+        proxy.setCategoryFilter(text)
+        proxy.setSourceModel(self.model())
 
         # Category Section
         section = self.__accordion.insertSection(text, grid, index)
@@ -633,28 +626,21 @@ class QEmojiPicker(QWidget):
             proxy.setCategoryFilter(None)
         self.__recent_category = active
 
-    def _get_emoji_grid_font(self) -> QFont:
-        """Returns the font to be used in the emoji grids.
-
-        Returns:
-            QFont: The calculated font.
-        """
-        font = QFont(self.emojiFont())
-        size = self._get_emoji_icon_size()
-        pixel_size = get_max_pixel_size("👏", font.family(), QSizeF(size, size))
-        font.setPixelSize(pixel_size)
-        return font
-
     def setEmojiFont(self, font_family: str) -> None:
         """Sets the font family for the emojis.
 
         Args:
             font_family (str): Font family name.
         """
-        self.__emoji_font = font_family
+        if font_family != self.__emoji_font:
+            self.__emoji_font = font_family
+            self.updateEmojiFont()
 
+    def updateEmojiFont(self) -> None:
+        """Updates the emoji font based on the current settings."""
+        font_family = self.emojiFont()
         for grid in self.grids():
-            grid.setFont(self._get_emoji_grid_font())
+            grid.setEmojiFont(font_family)
 
         for index, emoji in enumerate(self._skin_tone_selector_emojis.values()):
             skin_tone_selector_font = QFont(font_family)
@@ -681,14 +667,13 @@ class QEmojiPicker(QWidget):
         """
         if size != self.__emoji_size:
             self.__emoji_size = size
-            qsize = QSize(size, size)
+            self.updateEmojiSize()
 
-            for grid in self.grids():
-                grid.setGridSize(qsize)
-                grid.setIconSize(qsize)
-                grid.setFont(self._get_emoji_grid_font())
-
-            self.updateEmojiPixmapGetter()
+    def updateEmojiSize(self) -> None:
+        """Updates the emoji size and refreshes the grid size."""
+        size = self.emojiSize()
+        for grid in self.grids():
+            grid.setEmojiSize(size)
 
     def emojiSize(self) -> int:
         """Returns the current emoji item size.
@@ -708,30 +693,41 @@ class QEmojiPicker(QWidget):
         """
         if emoji_pixmap_getter != self._emoji_pixmap_getter:
             self._emoji_pixmap_getter = emoji_pixmap_getter
-            self.updateEmojiPixmapGetter()
 
+            self.updateEmojiPixmapGetter()
             self._redraw_alias_emoji()
             self._redraw_skintones()
 
     def updateEmojiPixmapGetter(self) -> None:
         """Updates the pixmap getter for all proxy models."""
         emoji_pixmap_getter = self.emojiPixmapGetter()
-        if emoji_pixmap_getter:
-            margin = self.emojiSize() * 0.2
-            size = self._get_emoji_icon_size()
-            dpr = self.devicePixelRatio()
-
-            for proxy in self.proxys():
-                # Fix: Use a factory or default argument to capture the current state
-                # to avoid issues with lambda late binding or references
-                def make_getter(getter, m, s, d):
-                    return lambda emoji: getter(emoji, m, s, d)
-
-                proxy.setEmojiPixmapGetter(make_getter(emoji_pixmap_getter, margin, size, dpr))
-        else:
-            for proxy in self.proxys():
-                proxy.setEmojiPixmapGetter(None)
+        for grid in self.grids():
+            grid.setEmojiPixmapGetter(emoji_pixmap_getter)
 
     def emojiPixmapGetter(self) -> typing.Optional[typing.Callable[[str, int, int, float], QPixmap]]:
         """Returns the current emoji pixmap getter function."""
         return self._emoji_pixmap_getter
+
+    def setEmojiMarginPorcentage(self, porcentage: float) -> None:
+        """Sets the margin percentage around emojis in the grid.
+
+        Args:
+            porcentage (float): Margin percentage (0.1 to 0.5).
+        """
+        if porcentage != self._emoji_margin_porcentage:
+            self._emoji_margin_porcentage = porcentage
+            self.updateEmojiMarginPorcentage()
+
+    def updateEmojiMarginPorcentage(self) -> None:
+        """Updates the margin percentage for all emoji grids."""
+        porcentage = self.emojiMarginPorcentage()
+        for grid in self.grids():
+            grid.setEmojiMarginPorcentage(porcentage)
+
+    def emojiMarginPorcentage(self) -> float:
+        """Returns the current margin percentage around emojis in the grid.
+
+        Returns:
+            float: Margin percentage.
+        """
+        return self._emoji_margin_porcentage

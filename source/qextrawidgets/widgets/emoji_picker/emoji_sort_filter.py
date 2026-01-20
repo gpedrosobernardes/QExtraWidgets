@@ -1,3 +1,4 @@
+import traceback
 import typing
 
 from PySide6.QtCore import QSortFilterProxyModel, QModelIndex
@@ -112,22 +113,27 @@ class QEmojiSortFilterProxyModel(QSortFilterProxyModel):
             if not emoji_pixmap_getter:
                 return QIcon()
 
-            source_index = self.mapToSource(index)
-            if not source_index.isValid():
-                return QIcon()
+            try:
+                source_index = self.mapToSource(index)
+                if not source_index.isValid():
+                    return QIcon()
 
-            emoji = source_index.data(Qt.ItemDataRole.EditRole)
-            if emoji is None:
-                return QIcon()
+                emoji = source_index.data(Qt.ItemDataRole.EditRole)
+                if emoji is None:
+                    return QIcon()
 
-            result = emoji_pixmap_getter(emoji)
-            # Accepts QPixmap or QIcon; convert QPixmap to QIcon to avoid native integration issues
-            if isinstance(result, QIcon):
-                return result
-            if isinstance(result, QPixmap):
-                return QIcon(result)
-            # If the getter returns an invalid value, return an empty QIcon
-            return QIcon()
+                result = emoji_pixmap_getter(emoji)
+                # Accepts QPixmap or QIcon; convert QPixmap to QIcon to avoid native integration issues
+                if isinstance(result, QIcon):
+                    return result
+                if isinstance(result, QPixmap):
+                    return QIcon(result)
+                # If the getter returns an invalid value, return an empty QIcon
+                return QIcon()
+            except Exception:
+                # Evita crash no C++ propagando exceções; log para debug
+                traceback.print_exc()
+                return QPixmap()
 
         elif role == int(Qt.ItemDataRole.DisplayRole):
             source_index = self.mapToSource(index)
