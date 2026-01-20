@@ -126,6 +126,12 @@ class QEmojiGrid(QListView):
         if not (0.0 <= percentage <= 0.5):
             raise ValueError("Margin percentage must be between 0.0 and 0.5")
         self._emoji_margin_porcentage = percentage
+        self.updateEmojiMarginPorcentage()
+
+    def updateEmojiMarginPorcentage(self):
+        """Updates the emoji margin percentage and refreshes the pixmap getter."""
+        self.updateEmojiPixmapGetter()
+        self.updateEmojiFont()
 
     def emojiMarginPorcentage(self) -> float:
         """Returns the current emoji margin percentage.

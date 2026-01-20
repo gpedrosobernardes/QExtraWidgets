@@ -1,10 +1,11 @@
 import sys
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QVBoxLayout, 
                                QLineEdit, QHBoxLayout, QFormLayout, QSpinBox, 
-                               QCheckBox, QGroupBox, QPushButton, QComboBox)
+                               QCheckBox, QGroupBox, QPushButton, QComboBox,
+                               QDoubleSpinBox)
 
 from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.icons import QThemeResponsiveIcon
@@ -39,6 +40,15 @@ class MainWindow(QMainWindow):
         self.emoji_size_spin.setValue(40)
         self.emoji_size_spin.valueChanged.connect(self._on_emoji_size_changed)
         config_form.addRow("Emoji Size:", self.emoji_size_spin)
+
+        # Emoji margin control (percentage: 0.10 - 0.50)
+        self.emoji_margin_spin = QDoubleSpinBox()
+        self.emoji_margin_spin.setRange(0.10, 0.50)
+        self.emoji_margin_spin.setSingleStep(0.01)
+        self.emoji_margin_spin.setDecimals(2)
+        self.emoji_margin_spin.setValue(0.10)
+        self.emoji_margin_spin.valueChanged.connect(self._on_emoji_margin_changed)
+        config_form.addRow("Emoji Margin:", self.emoji_margin_spin)
 
         self.favorite_check = QCheckBox()
         self.favorite_check.setChecked(True)
@@ -90,7 +100,9 @@ class MainWindow(QMainWindow):
         # Right side: Emoji Picker
         self.emoji_picker = QEmojiPicker()
         self.emoji_picker.picked.connect(self._on_emoji_picked)
-        
+        # Ensure the picker's margin matches the UI initial value
+        self.emoji_picker.setEmojiMarginPorcentage(self.emoji_margin_spin.value())
+
         # Setup initial state based on configuration
         self._on_use_pixmaps_changed(self.use_pixmaps_check.checkState().value)
 
@@ -101,6 +113,15 @@ class MainWindow(QMainWindow):
 
     def _on_emoji_size_changed(self, value: int) -> None:
         self.emoji_picker.setEmojiSize(value)
+
+    def _on_emoji_margin_changed(self, value: float) -> None:
+        """Handle emoji margin changes from the UI.
+
+        Args:
+            value (float): Margin percentage value between 0.10 and 0.50.
+        """
+        # Forward the percentage value to the picker
+        self.emoji_picker.setEmojiMarginPorcentage(value)
 
     def _on_favorite_changed(self, state: int) -> None:
         self.emoji_picker.setFavoriteCategory(state == Qt.CheckState.Checked.value)
