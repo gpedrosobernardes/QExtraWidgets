@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
-        self.setWindowTitle("QEmojiPicker Advanced Demo")
+        self.setWindowTitle("QEmojiPicker Demo")
         self.resize(800, 600)
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
 
