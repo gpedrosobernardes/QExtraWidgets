@@ -1,7 +1,7 @@
 from typing import Dict, Set, Optional
 
 from PySide6.QtCore import Qt, QRect, QAbstractItemModel, QModelIndex
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import (
     QTableView, QWidget
 )
@@ -159,17 +159,14 @@ class QFilterableTable(QTableView):
             return
 
         popup = self._popups[logical_index]
-        model = self.model()
 
-        if isinstance(model, QStandardItemModel):
-            item = model.horizontalHeaderItem(logical_index)
-            if not item:
-                item = QStandardItem(str(logical_index))
-                model.setHorizontalHeaderItem(logical_index, item)
+        # The icon reflects if there is an ACTIVE filter in the popup
+        icon_name = "fa6s.filter" if popup.isFiltering() else "fa6s.angle-down"
+        icon = QThemeResponsiveIcon.fromAwesome(icon_name)
 
-            # The icon reflects if there is an ACTIVE filter in the popup
-            icon_name = "fa6s.filter" if popup.isFiltering() else "fa6s.angle-down"
-            item.setIcon(QThemeResponsiveIcon.fromAwesome(icon_name))
+        # Use the proxy to set the header data. This works for QSqlTableModel and others
+        # that might not support setting header icons directly or easily.
+        self._proxy.setHeaderData(logical_index, Qt.Orientation.Horizontal, icon, Qt.ItemDataRole.DecorationRole)
 
     # --- Smart Data Logic ---
 
@@ -197,7 +194,6 @@ class QFilterableTable(QTableView):
             if popup.isFiltering():
                 active_filters[col_idx] = popup.getSelectedData()
 
-        # 2. Scans source model checking row validity
         rows_to_scan = min(model.rowCount(), limit)
 
         for row in range(rows_to_scan):

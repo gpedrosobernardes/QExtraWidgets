@@ -1,6 +1,6 @@
 import typing
 
-from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QObject
+from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QObject, Qt
 
 
 class QMultiFilterProxy(QSortFilterProxyModel):
@@ -14,6 +14,7 @@ class QMultiFilterProxy(QSortFilterProxyModel):
         """
         super().__init__(parent)
         self._filters = {}
+        self._header_icons = {}
 
     def setFilter(self, col: int, text_list: typing.Optional[typing.Iterable[str]]) -> None:
         """Sets the list of allowed values for a specific column.
@@ -39,9 +40,33 @@ class QMultiFilterProxy(QSortFilterProxyModel):
             bool: True if the row matches all filters, False otherwise.
         """
         model = self.sourceModel()
+        if not model:
+            return True
+
         for col, text_list in self._filters.items():
             index = model.index(source_row, col, source_parent)
             value = str(model.data(index))
             if not any(text == value for text in text_list):
                 return False
         return True
+
+    def setHeaderData(self, section: int, orientation: Qt.Orientation, value: typing.Any, role: int = Qt.ItemDataRole.EditRole) -> bool:
+        """Sets the header data for the given section and orientation.
+
+        Overrides to support DecorationRole for filter icons.
+        """
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DecorationRole:
+            self._header_icons[section] = value
+            self.headerDataChanged.emit(orientation, section, section)
+            return True
+        return super().setHeaderData(section, orientation, value, role)
+
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> typing.Any:
+        """Returns the header data for the given section and orientation.
+
+        Overrides to support DecorationRole for filter icons.
+        """
+        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DecorationRole:
+            if section in self._header_icons:
+                return self._header_icons[section]
+        return super().headerData(section, orientation, role)
