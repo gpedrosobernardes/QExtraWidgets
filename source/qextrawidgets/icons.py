@@ -37,10 +37,16 @@ class QThemeResponsiveIconEngine(QIconEngine):
         size = QSize(min_side, min_side)
 
         pixmap = self.themePixmap(size * dpr, mode, state, QApplication.styleHints().colorScheme())
-        pixmap.setDevicePixelRatio(dpr)
 
         if pixmap.isNull():
             return
+
+        # Fix: Calculate exact device pixel ratio to avoid scaling artifacts due to rounding
+        if size.width() > 0:
+            physical_width = pixmap.width() * pixmap.devicePixelRatio()
+            pixmap.setDevicePixelRatio(physical_width / size.width())
+        else:
+            pixmap.setDevicePixelRatio(dpr)
 
         target_rect = QStyle.alignedRect(
             Qt.LayoutDirection.LeftToRight,  # layout direction (LTR)
@@ -49,10 +55,10 @@ class QThemeResponsiveIconEngine(QIconEngine):
             rect  # bounding rectangle
         )
 
-        target_rect.adjusted(5, 5, -5, -5)
-
-        # 3. Draw at calculated position
+        painter.save()
+        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         painter.drawPixmap(target_rect, pixmap)
+        painter.restore()
 
     def pixmap(self, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> QPixmap:
         """Returns processed pixmap.
