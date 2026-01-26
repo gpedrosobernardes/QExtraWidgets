@@ -54,6 +54,7 @@ class QEmojiPicker(QWidget):
             recent_category (bool, optional): Whether to show the recents category. Defaults to True.
             emoji_size (int, optional): Size of individual emoji items. Defaults to 40.
             emoji_font (str, optional): Font family to use for emojis. If None, Twemoji is loaded. Defaults to None.
+            emoji_margin (float, optional): Margin percentage around emojis in the grid. Defaults to 0.1.
         """
         super().__init__()
 
@@ -234,7 +235,7 @@ class QEmojiPicker(QWidget):
         item = self.__model.itemFromProxyIndex(proxy_index)
         if not item:
             return
-        item.setData(True, QEmojiDataRole.RecentRole)
+        self.__model.setRecentEmoji(item, True)
         self.picked.emit(item.data(Qt.ItemDataRole.EditRole))
 
     def __item_from_position(self, grid: QEmojiGrid, position: QPoint) -> typing.Optional[QStandardItem]:
@@ -271,10 +272,10 @@ class QEmojiPicker(QWidget):
 
             if item_favorited:
                 action = menu.addAction(self.tr("Unfavorite"))
-                action.triggered.connect(lambda: item.setData(False, QEmojiDataRole.FavoriteRole))
+                action.triggered.connect(lambda: self.__model.setFavoriteEmoji(item, False))
             else:
                 action = menu.addAction(self.tr("Favorite"))
-                action.triggered.connect(lambda: item.setData(True, QEmojiDataRole.FavoriteRole))
+                action.triggered.connect(lambda: self.__model.setFavoriteEmoji(item, True))
 
         copy_alias_action = menu.addAction(self.tr("Copy alias"))
         copy_alias_action.triggered.connect(lambda: QApplication.clipboard().setText(item.data(QEmojiDataRole.AliasRole)))

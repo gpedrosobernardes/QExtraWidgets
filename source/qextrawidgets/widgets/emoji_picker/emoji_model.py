@@ -1,15 +1,24 @@
 import typing
 
-from PySide6.QtCore import QSize, QModelIndex
+from PySide6.QtCore import QSize, QModelIndex, Signal
 from PySide6.QtGui import QStandardItemModel, QStandardItem, Qt, QIcon
 from PySide6.QtWidgets import QWidget
 
+from qextrawidgets.widgets.emoji_picker.emoji_item import QEmojiItem
 from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel
 from qextrawidgets.widgets.emoji_picker.enums import QEmojiDataRole, EmojiSkinTone
 
 
 class QEmojiModel(QStandardItemModel):
-    """A standard item model specialized for storing and managing emoji data."""
+    """A standard item model specialized for storing and managing emoji data.
+
+    Signals:
+        favoriteChanged (str, bool): Emitted when an emoji's favorite status changes.
+        recentChanged (str, bool): Emitted when an emoji's recent status changes.
+    """
+
+    favoriteChanged = Signal(str, bool)
+    recentChanged = Signal(str, bool)
 
     def __init__(self, parent: QWidget = None) -> None:
         """Initializes the emoji model.
@@ -20,7 +29,7 @@ class QEmojiModel(QStandardItemModel):
         super().__init__(parent)
         self._emoji_size_hint = None
 
-    def itemFromProxyIndex(self, proxy_index: QModelIndex) -> typing.Optional[QStandardItem]:
+    def itemFromProxyIndex(self, proxy_index: QModelIndex) -> typing.Optional[QEmojiItem]:
         """Returns the source model item corresponding to the given proxy index.
 
         Args:
@@ -45,14 +54,7 @@ class QEmojiModel(QStandardItemModel):
             favorite (bool, optional): Whether the emoji is a favorite. Defaults to False.
             skin_tones (Dict[EmojiSkinTone, str], optional): Dictionary mapping skin tones to emoji variations. Defaults to None.
         """
-        item = QStandardItem(emoji)
-        item.setData(emoji, Qt.ItemDataRole.EditRole)
-        item.setData(alias, QEmojiDataRole.AliasRole)
-        item.setData(category, QEmojiDataRole.CategoryRole)
-        item.setData(recent, QEmojiDataRole.RecentRole)
-        item.setData(favorite, QEmojiDataRole.FavoriteRole)
-        item.setData(skin_tones, QEmojiDataRole.SkinTonesRole)
-        item.setData(bool(skin_tones), QEmojiDataRole.HasSkinTonesRole)
+        item = QEmojiItem(emoji, alias, category, recent, favorite, skin_tones)
         self.appendRow(item)
 
     def setSkinTone(self, skin_tone: str) -> None:
@@ -67,7 +69,7 @@ class QEmojiModel(QStandardItemModel):
             if skin_tones:
                 item.setData(skin_tones[skin_tone], Qt.ItemDataRole.EditRole)
 
-    def emojiItem(self, emoji: str) -> typing.Optional[QStandardItem]:
+    def emojiItem(self, emoji: str) -> typing.Optional[QEmojiItem]:
         """Finds and returns the item for a specific emoji character.
 
         Args:
@@ -101,37 +103,48 @@ class QEmojiModel(QStandardItemModel):
         """
         return [self.item(row) for row in range(self.rowCount())]
 
-    def removeEmoji(self, emoji: str) -> None:
+    def removeEmoji(self, emoji: typing.Union[QEmojiItem, str]) -> None:
         """Removes an emoji from the model.
 
         Args:
             emoji (str): The emoji character to remove.
         """
-        item = self.emojiItem(emoji)
+        if isinstance(emoji, QEmojiItem):
+            item = emoji
+        else:
+            item = self.emojiItem(emoji)
         if item:
             self.removeRow(item.row())
 
-    def setFavoriteEmoji(self, emoji: str, favorite: bool) -> None:
+    def setFavoriteEmoji(self, emoji: typing.Union[QEmojiItem, str], favorite: bool) -> None:
         """Sets the favorite status of an emoji.
 
         Args:
             emoji (str): The emoji character.
             favorite (bool): The new favorite status.
         """
-        item = self.emojiItem(emoji)
+        if isinstance(emoji, QEmojiItem):
+            item = emoji
+        else:
+            item = self.emojiItem(emoji)
         if item:
             item.setData(favorite, QEmojiDataRole.FavoriteRole)
+            self.favoriteChanged.emit(item.emoji(), favorite)
 
-    def setRecentEmoji(self, emoji: str, recent: bool) -> None:
+    def setRecentEmoji(self, emoji: typing.Union[QEmojiItem, str], recent: bool) -> None:
         """Sets the recent status of an emoji.
 
         Args:
             emoji (str): The emoji character.
             recent (bool): The new recent status.
         """
-        item = self.emojiItem(emoji)
+        if isinstance(emoji, QEmojiItem):
+            item = emoji
+        else:
+            item = self.emojiItem(emoji)
         if item:
             item.setData(recent, QEmojiDataRole.RecentRole)
+            self.recentChanged.emit(item.emoji(), recent)
 
     def clearEmojis(self) -> None:
         """Clears icons and text for all emoji items in the model."""

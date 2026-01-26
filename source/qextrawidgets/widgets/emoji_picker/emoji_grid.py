@@ -22,6 +22,9 @@ class QEmojiGrid(QListView):
 
         Args:
             parent (QWidget, optional): Parent widget. Defaults to None.
+            emoji_size (int, optional): Size of individual emoji items. Defaults to 40.
+            emoji_margin (float, optional): Margin percentage around emojis in the grid. Defaults to 0.1.
+            emoji_font (str, optional): Font family to use for emojis. If None, Twemoji is loaded. Defaults to None.
         """
         super().__init__(parent)
 
