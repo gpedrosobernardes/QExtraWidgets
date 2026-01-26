@@ -63,6 +63,8 @@ class QFilterableTable(QTableView):
 
     def _refresh_popups(self) -> None:
         """Clears and recreates filter popups for all columns."""
+        self._proxy.reset()
+
         for popup in self._popups.values():
             popup.deleteLater()
         self._popups.clear()

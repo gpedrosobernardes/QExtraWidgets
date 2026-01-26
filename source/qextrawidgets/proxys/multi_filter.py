@@ -70,3 +70,9 @@ class QMultiFilterProxy(QSortFilterProxyModel):
             if section in self._header_icons:
                 return self._header_icons[section]
         return super().headerData(section, orientation, role)
+
+    def reset(self):
+        """Resets the filters and header icons."""
+        self._filters = {}
+        self._header_icons = {}
+        self.invalidateFilter()
