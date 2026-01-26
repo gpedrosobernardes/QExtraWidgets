@@ -1,7 +1,7 @@
 import typing
 from enum import Enum
 
-from PySide6.QtCore import QSize, QT_TR_NOOP, QModelIndex, Signal, QPoint, Qt
+from PySide6.QtCore import QSize, QT_TRANSLATE_NOOP, QModelIndex, Signal, QPoint, Qt
 from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
                                QWidget, QApplication, QButtonGroup, QMenu, QToolButton)
@@ -32,17 +32,17 @@ class QEmojiPicker(QWidget):
 
     class EmojiCategory(Enum):
         """Standard emoji categories."""
-        Activities = QT_TR_NOOP("Activities")
-        FoodAndDrink = QT_TR_NOOP("Food & Drink")
-        AnimalsAndNature = QT_TR_NOOP("Animals & Nature")
-        PeopleAndBody = QT_TR_NOOP("People & Body")
-        Symbols = QT_TR_NOOP("Symbols")
-        Flags = QT_TR_NOOP("Flags")
-        TravelAndPlaces = QT_TR_NOOP("Travel & Places")
-        Objects = QT_TR_NOOP("Objects")
-        SmileysAndEmotion = QT_TR_NOOP("Smileys & Emotion")
-        Favorites = QT_TR_NOOP("Favorites")
-        Recents = QT_TR_NOOP("Recents")
+        Activities = QT_TRANSLATE_NOOP("EmojiCategory", "Activities")
+        FoodAndDrink = QT_TRANSLATE_NOOP("EmojiCategory", "Food & Drink")
+        AnimalsAndNature = QT_TRANSLATE_NOOP("EmojiCategory", "Animals & Nature")
+        PeopleAndBody = QT_TRANSLATE_NOOP("EmojiCategory", "People & Body")
+        Symbols = QT_TRANSLATE_NOOP("EmojiCategory", "Symbols")
+        Flags = QT_TRANSLATE_NOOP("EmojiCategory", "Flags")
+        TravelAndPlaces = QT_TRANSLATE_NOOP("EmojiCategory", "Travel & Places")
+        Objects = QT_TRANSLATE_NOOP("EmojiCategory", "Objects")
+        SmileysAndEmotion = QT_TRANSLATE_NOOP("EmojiCategory", "Smileys & Emotion")
+        Favorites = QT_TRANSLATE_NOOP("EmojiCategory", "Favorites")
+        Recents = QT_TRANSLATE_NOOP("EmojiCategory", "Recents")
 
     def __init__(self, favorite_category: bool = True, recent_category: bool = True,
                  emoji_size: int = 40, emoji_font: typing.Optional[str] = None,
@@ -163,7 +163,7 @@ class QEmojiPicker(QWidget):
         for category in self.EmojiCategory:
             section = self.section(category.value)
             if section:
-                section.setTitle(self.tr(category.value))
+                section.setTitle(QApplication.translate("EmojiCategory", category.value))
 
     def _set_skin_tone(self, skin_tone: str) -> None:
         """Updates the skin tone of the emojis.
