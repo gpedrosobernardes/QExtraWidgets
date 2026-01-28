@@ -4,12 +4,13 @@ from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, Q
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.widgets.color_button import QColorButton
+from qextrawidgets.widgets.color_tool_button import QColorToolButton
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.resize(300, 300)
+        self.resize(300, 500)
 
         self.setWindowTitle("QColorButton Demo")
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
@@ -43,6 +44,18 @@ class MainWindow(QMainWindow):
         self.toggle_btn.toggled.connect(self.on_toggle)
         
         layout.addWidget(self.toggle_btn)
+
+        layout.addSpacing(20)
+
+        # 3. Tool Buttons
+        layout.addWidget(QLabel("Tool Buttons:"))
+        color_tool_button_1 = QColorToolButton("#0077B6", "Tool Button 1 (Blue)")
+        color_tool_button_2 = QColorToolButton("#CC2936", "Tool Button 2 (Red)")
+        color_tool_button_3 = QColorToolButton("#C5D86D", "Tool Button 3 (Custom Text)", "#000000")
+
+        layout.addWidget(color_tool_button_1)
+        layout.addWidget(color_tool_button_2)
+        layout.addWidget(color_tool_button_3)
 
         widget.setLayout(layout)
         self.setCentralWidget(widget)
