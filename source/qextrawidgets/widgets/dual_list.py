@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QListWidget, QAbstractItemView, QPushButt
     QVBoxLayout, QHBoxLayout
 from typing import List
 
-from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons.theme_responsive_icon import QThemeResponsiveIcon
 
 
 class QDualList(QWidget):

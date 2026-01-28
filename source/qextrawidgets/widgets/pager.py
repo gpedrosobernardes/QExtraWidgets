@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (QWidget, QHBoxLayout, QPushButton,
                                QButtonGroup, QSpinBox)
 
-from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons.theme_responsive_icon import QThemeResponsiveIcon
 
 
 class QPager(QWidget):

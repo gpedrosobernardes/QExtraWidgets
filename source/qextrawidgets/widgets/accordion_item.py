@@ -1,10 +1,10 @@
 from enum import IntEnum, auto
 
-from PySide6.QtCore import Signal, QSize, QPropertyAnimation, QEasingCurve, QAbstractAnimation, Property
+from PySide6.QtCore import Signal, QPropertyAnimation, QEasingCurve, QAbstractAnimation
 from PySide6.QtGui import Qt, QMouseEvent
-from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame, QSizePolicy, QVBoxLayout, QToolButton, QLineEdit, QApplication
+from PySide6.QtWidgets import QWidget, QLabel, QHBoxLayout, QFrame, QSizePolicy, QVBoxLayout, QLineEdit
 
-from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons.theme_responsive_icon import QThemeResponsiveIcon
 from qextrawidgets.widgets.theme_responsive_label import QThemeResponsiveLabel
 
 

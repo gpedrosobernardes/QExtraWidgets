@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QTableView, QWidget
 )
 
-from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons.theme_responsive_icon import QThemeResponsiveIcon
 from qextrawidgets.proxys.multi_filter import QMultiFilterProxy
 from qextrawidgets.widgets.filterable_table.filter_header import QFilterHeader
 from qextrawidgets.widgets.filterable_table.filter_popup import QFilterPopup

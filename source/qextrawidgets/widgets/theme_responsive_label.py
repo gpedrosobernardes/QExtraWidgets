@@ -1,10 +1,10 @@
 from typing import Optional
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QResizeEvent
 from PySide6.QtWidgets import QLabel, QApplication, QWidget
 
-from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.icons.theme_responsive_icon import QThemeResponsiveIcon
 
 
 class QThemeResponsiveLabel(QLabel):
