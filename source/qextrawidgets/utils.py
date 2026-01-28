@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QFont, QFontDatabase, QFontMetrics
+from PySide6.QtGui import QFont, QFontDatabase, QFontMetrics, QColor, QColorConstants
 from PySide6.QtWidgets import QApplication
 
 
@@ -61,6 +61,35 @@ def get_max_pixel_size(text: str, font_name: str, target_size: QSize) -> int:
 
     # Optional: Safety lock to not return 0
     return max(1, new_pixel_size)
+
+
+class QColorUtils:
+    """Utility class for color-related operations."""
+
+    @staticmethod
+    def getContrastingTextColor(bg_color: QColor) -> QColor:
+        """Returns Qt.black or Qt.white depending on the background color luminance.
+
+        Formula based on human perception (NTSC conversion formula).
+
+        Args:
+            bg_color (QColor): Background color to calculate contrast against.
+
+        Returns:
+            QColor: Contrasting text color (Black or White).
+        """
+        r = bg_color.red()
+        g = bg_color.green()
+        b = bg_color.blue()
+
+        # Calculate weighted brightness
+        # 0.299R + 0.587G + 0.114B
+        luminance = (0.299 * r) + (0.587 * g) + (0.114 * b)
+
+        # Common threshold is 128 (half of 255).
+        # If brighter than 128, background is light -> Black Text
+        # If darker, background is dark -> White Text
+        return QColorConstants.Black if luminance > 128 else QColorConstants.White
 
 
 class QEmojiFonts:

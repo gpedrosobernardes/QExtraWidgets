@@ -1,17 +1,17 @@
 import typing
 
 from PySide6.QtGui import QPalette, QColor
-from PySide6.QtWidgets import QPushButton, QStyleOptionButton, QStyle, QWidget
+from PySide6.QtWidgets import QToolButton, QStyleOptionToolButton, QStyle, QWidget
 
 from qextrawidgets.utils import QColorUtils
 
 
-class QColorButton(QPushButton):
-    """A button that displays a specific color and automatically adjusts its text color for contrast."""
+class QColorToolButton(QToolButton):
+    """A tool button that displays a specific color and automatically adjusts its text color for contrast."""
 
     def __init__(self, color: QColor, text: str = "", text_color: QColor = None, checked_color: QColor = None,
                  parent: QWidget = None) -> None:
-        """Initializes the color button.
+        """Initializes the color tool button.
 
         Args:
             color (QColor): Background color of the button.
@@ -20,7 +20,8 @@ class QColorButton(QPushButton):
             checked_color (QColor, optional): Color when the button is in checked state. Defaults to None.
             parent (QWidget, optional): Parent widget. Defaults to None.
         """
-        super().__init__(text, parent)
+        super().__init__(parent)
+        self.setText(text)
 
         # We store colors as class attributes
         self._color = None
@@ -31,19 +32,16 @@ class QColorButton(QPushButton):
         self.setTextColor(text_color)
         self.setCheckedColor(checked_color)
 
-        # Initial visual configuration
-        # Removed setAutoFillBackground(True) to avoid square background artifacts on rounded buttons
-
-    def initStyleOption(self, option: QStyleOptionButton) -> None:
+    def initStyleOption(self, option: QStyleOptionToolButton) -> None:
         """Method called automatically by Qt before drawing the button.
 
         Here we intercept the style option and change the palette color
         based on the current state (Hover, Pressed, etc).
 
         Args:
-            option (QStyleOptionButton): The style option to initialize.
+            option (QStyleOptionToolButton): The style option to initialize.
         """
-        # 1. Let QPushButton fill the option with the default state
+        # 1. Let QToolButton fill the option with the default state
         super().initStyleOption(option)
 
         state: QStyle.StateFlag = getattr(option, 'state')
@@ -58,7 +56,6 @@ class QColorButton(QPushButton):
         if state & QStyle.StateFlag.State_Sunken:  # Pressed
             pressed_color = base_color.darker(115)  # 15% darker
             palette.setColor(QPalette.ColorRole.Button, pressed_color)
-            # Removed Window role setting as it's not needed for button face and causes artifacts
 
         elif state & QStyle.StateFlag.State_MouseOver:  # Mouse over
             hover_color = base_color.lighter(115)  # 15% lighter
