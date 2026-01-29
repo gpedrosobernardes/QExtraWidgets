@@ -1,3 +1,6 @@
+import typing
+from typing import Optional
+
 from PySide6.QtCore import Qt, Signal, QEasingCurve, Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFrame, QSpacerItem, QSizePolicy
 
@@ -104,17 +107,18 @@ class QAccordion(QWidget):
         """
         self._items[index].setTitle(title)
 
-    def addSection(self, title: str, widget: QWidget) -> QAccordionItem:
+    def addSection(self, title: str, widget: QWidget, name: str = None) -> QAccordionItem:
         """Creates and adds a new accordion section at the end.
 
         Args:
             title (str): Section title.
             widget (QWidget): Content widget.
+            name (str, optional): Unique name for the section. Defaults to None.
 
         Returns:
             QAccordionItem: The created accordion item.
         """
-        return self.insertSection(title, widget)
+        return self.insertSection(title, widget, name=name)
 
     def addAccordionItem(self, item: QAccordionItem) -> None:
         """Adds an existing accordion item at the end.
@@ -124,7 +128,7 @@ class QAccordion(QWidget):
         """
         self.insertAccordionItem(item)
 
-    def insertSection(self, title: str, widget: QWidget, position: int = -1, expanded: bool = False) -> QAccordionItem:
+    def insertSection(self, title: str, widget: QWidget, position: int = -1, expanded: bool = False, name: str = None) -> QAccordionItem:
         """Creates and inserts a new accordion section.
 
         Args:
@@ -132,11 +136,15 @@ class QAccordion(QWidget):
             widget (QWidget): Content widget.
             position (int, optional): Insert position (-1 for end). Defaults to -1.
             expanded (bool, optional): Whether the section is expanded. Defaults to False.
+            name (str, optional): Unique name for the section. Defaults to None.
 
         Returns:
             QAccordionItem: The created accordion item.
         """
         item = QAccordionItem(title, widget, self._scroll_content, expanded, self._items_flat, self._items_icon_style, self._items_icon_position, self._animation_enabled, self._animation_duration, self._animation_easing)
+
+        if name:
+            item.setObjectName(name)
 
         self.insertAccordionItem(item, position)
         return item
@@ -162,6 +170,24 @@ class QAccordion(QWidget):
         """
         self._scroll_layout.removeWidget(item)
         self._items.remove(item)
+
+    def item(self, name: str) -> Optional[QAccordionItem]:
+        """Retrieves an accordion item by its name.
+
+        Args:
+            name (str): The name of the item to retrieve.
+
+        Returns:
+            Optional[QAccordionItem]: The item with the matching name, or None if not found.
+        """
+        for item in self._items:
+            if item.objectName() == name:
+                return item
+        return None
+
+    def items(self) -> typing.List[QAccordionItem]:
+        """"""
+        return self._items
 
     # --- Style Settings (Applied to ALL items) ---
 

@@ -1,5 +1,6 @@
 from enum import Enum
 
+from PySide6.QtCore import QT_TRANSLATE_NOOP
 from PySide6.QtGui import Qt
 
 
@@ -53,3 +54,18 @@ class EmojiSkinTone(str, Enum):
 
     # Type 6: Dark Skin
     Dark = "1F3FF"  # 🏿
+
+
+class EmojiCategory(str, Enum):
+    """Standard emoji categories."""
+    Activities = QT_TRANSLATE_NOOP("EmojiCategory", "Activities")
+    FoodAndDrink = QT_TRANSLATE_NOOP("EmojiCategory", "Food & Drink")
+    AnimalsAndNature = QT_TRANSLATE_NOOP("EmojiCategory", "Animals & Nature")
+    PeopleAndBody = QT_TRANSLATE_NOOP("EmojiCategory", "People & Body")
+    Symbols = QT_TRANSLATE_NOOP("EmojiCategory", "Symbols")
+    Flags = QT_TRANSLATE_NOOP("EmojiCategory", "Flags")
+    TravelAndPlaces = QT_TRANSLATE_NOOP("EmojiCategory", "Travel & Places")
+    Objects = QT_TRANSLATE_NOOP("EmojiCategory", "Objects")
+    SmileysAndEmotion = QT_TRANSLATE_NOOP("EmojiCategory", "Smileys & Emotion")
+    Favorites = QT_TRANSLATE_NOOP("EmojiCategory", "Favorites")
+    Recents = QT_TRANSLATE_NOOP("EmojiCategory", "Recents")

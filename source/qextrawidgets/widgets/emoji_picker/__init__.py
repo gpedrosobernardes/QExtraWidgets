@@ -5,4 +5,6 @@ from .emoji_item import QEmojiItem
 from .emoji_model import QEmojiModel
 from .emoji_picker import QEmojiPicker
 from .emoji_sort_filter import QEmojiSortFilterProxyModel
-from .enums import QEmojiDataRole, EmojiSkinTone
+from .enums import QEmojiDataRole, EmojiSkinTone, EmojiCategory
+from .category_item import QEmojiCategoryItem
+from .category_model import QEmojiCategoryModel
