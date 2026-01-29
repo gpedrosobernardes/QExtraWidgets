@@ -5,7 +5,6 @@ from PySide6.QtCore import QSize, QT_TRANSLATE_NOOP, QModelIndex, Signal, QPoint
 from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
                                QWidget, QApplication, QButtonGroup, QMenu, QToolButton)
-from emoji_data_python import emoji_data, EmojiChar
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts
@@ -30,7 +29,7 @@ class QEmojiPicker(QWidget):
 
     picked = Signal(str)
 
-    class EmojiCategory(Enum):
+    class EmojiCategory(str, Enum):
         """Standard emoji categories."""
         Activities = QT_TRANSLATE_NOOP("EmojiCategory", "Activities")
         FoodAndDrink = QT_TRANSLATE_NOOP("EmojiCategory", "Food & Drink")
@@ -59,17 +58,17 @@ class QEmojiPicker(QWidget):
         super().__init__()
 
         self._icons = {
-            self.EmojiCategory.Activities.value: QThemeResponsiveIcon.fromAwesome("fa6s.gamepad", options=[{"scale_factor": 0.9}]),
-            self.EmojiCategory.FoodAndDrink.value: QThemeResponsiveIcon.fromAwesome("fa6s.bowl-food"),
-            self.EmojiCategory.AnimalsAndNature.value: QThemeResponsiveIcon.fromAwesome("fa6s.leaf"),
-            self.EmojiCategory.PeopleAndBody.value: QThemeResponsiveIcon.fromAwesome("fa6s.user"),
-            self.EmojiCategory.Symbols.value: QThemeResponsiveIcon.fromAwesome("fa6s.heart"),
-            self.EmojiCategory.Flags.value: QThemeResponsiveIcon.fromAwesome("fa6s.flag"),
-            self.EmojiCategory.TravelAndPlaces.value: QThemeResponsiveIcon.fromAwesome("fa6s.bicycle", options=[{"scale_factor": 0.9}]),
-            self.EmojiCategory.Objects.value: QThemeResponsiveIcon.fromAwesome("fa6s.lightbulb"),
-            self.EmojiCategory.SmileysAndEmotion.value: QThemeResponsiveIcon.fromAwesome("fa6s.face-smile"),
-            self.EmojiCategory.Favorites.value: QThemeResponsiveIcon.fromAwesome("fa6s.star"),
-            self.EmojiCategory.Recents.value: QThemeResponsiveIcon.fromAwesome("fa6s.clock-rotate-left")
+            self.EmojiCategory.Activities: QThemeResponsiveIcon.fromAwesome("fa6s.gamepad", options=[{"scale_factor": 0.9}]),
+            self.EmojiCategory.FoodAndDrink: QThemeResponsiveIcon.fromAwesome("fa6s.bowl-food"),
+            self.EmojiCategory.AnimalsAndNature: QThemeResponsiveIcon.fromAwesome("fa6s.leaf"),
+            self.EmojiCategory.PeopleAndBody: QThemeResponsiveIcon.fromAwesome("fa6s.user"),
+            self.EmojiCategory.Symbols: QThemeResponsiveIcon.fromAwesome("fa6s.heart"),
+            self.EmojiCategory.Flags: QThemeResponsiveIcon.fromAwesome("fa6s.flag"),
+            self.EmojiCategory.TravelAndPlaces: QThemeResponsiveIcon.fromAwesome("fa6s.bicycle", options=[{"scale_factor": 0.9}]),
+            self.EmojiCategory.Objects: QThemeResponsiveIcon.fromAwesome("fa6s.lightbulb"),
+            self.EmojiCategory.SmileysAndEmotion: QThemeResponsiveIcon.fromAwesome("fa6s.face-smile"),
+            self.EmojiCategory.Favorites: QThemeResponsiveIcon.fromAwesome("fa6s.star"),
+            self.EmojiCategory.Recents: QThemeResponsiveIcon.fromAwesome("fa6s.clock-rotate-left")
         }
 
         self._skin_tone_selector_emojis = {
@@ -87,8 +86,6 @@ class QEmojiPicker(QWidget):
 
         self.__emoji_font = emoji_font
 
-        self.__favorite_category = None
-        self.__recent_category = None
         self._emoji_pixmap_getter = None
         self._emoji_on_label = None
         self._emoji_margin_porcentage = emoji_margin
@@ -96,6 +93,7 @@ class QEmojiPicker(QWidget):
         self.__emoji_size = emoji_size
 
         self.__model = QEmojiModel()
+        self.__model.populate()
         self.__accordion = QAccordion()
 
         # 1. Search Bar
@@ -103,7 +101,7 @@ class QEmojiPicker(QWidget):
         self.__skin_tone_selector = QIconComboBox()
 
         for skin_tone, emoji in self._skin_tone_selector_emojis.items():
-            self.__skin_tone_selector.addItem(text=emoji, data=skin_tone.value, font=QFont(emoji_font))
+            self.__skin_tone_selector.addItem(text=emoji, data=skin_tone, font=QFont(emoji_font))
 
         self._shortcuts_container = QWidget()
         self._shortcuts_container.setFixedHeight(40)  # Fixed height for the bar
@@ -161,9 +159,9 @@ class QEmojiPicker(QWidget):
         self.__search_line_edit.setPlaceholderText(self.tr("Search emoji..."))
 
         for category in self.EmojiCategory:
-            section = self.section(category.value)
+            section = self.section(category)
             if section:
-                section.setTitle(QApplication.translate("EmojiCategory", category.value))
+                section.setTitle(QApplication.translate("EmojiCategory", category))
 
     def _set_skin_tone(self, skin_tone: str) -> None:
         """Updates the skin tone of the emojis.
@@ -267,7 +265,7 @@ class QEmojiPicker(QWidget):
 
         menu = QMenu(grid)
 
-        if self.__favorite_category:
+        if self.category(self.EmojiCategory.Favorites):
             item_favorited = item.data(QEmojiDataRole.FavoriteRole)
 
             if item_favorited:
@@ -278,42 +276,15 @@ class QEmojiPicker(QWidget):
                 action.triggered.connect(lambda: self.__model.setFavoriteEmoji(item, True))
 
         copy_alias_action = menu.addAction(self.tr("Copy alias"))
-        copy_alias_action.triggered.connect(lambda: QApplication.clipboard().setText(item.data(QEmojiDataRole.AliasRole)))
+        copy_alias_action.triggered.connect(lambda: QApplication.clipboard().setText(item.alias()))
 
         menu.exec(grid.mapToGlobal(position))
 
-    @staticmethod
-    def _get_emoji_skin_tones_dict(emoji: str, skin_variations: typing.Dict[str, EmojiChar]) -> typing.Optional[typing.Dict[EmojiSkinTone, str]]:
-        """Maps skin tone modifiers to actual emoji strings.
-
-        Args:
-            emoji (str): Base emoji string.
-            skin_variations (Dict[str, EmojiChar]): Available skin variations.
-
-        Returns:
-            Dict[EmojiSkinTone, str], optional: Dictionary mapping skin tones to emoji strings or None.
-        """
-        if skin_variations:
-            skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if
-                          (found_skin_tone := skin_variations.get(skin_tone))}
-            if skin_tones:
-                skin_tones[EmojiSkinTone.Default] = emoji
-            return skin_tones
-        return None
-
     def __add_base_categories(self) -> None:
         """Populates the picker with standard emoji categories."""
-        categories = []
-
-        for data in sorted(emoji_data, key=lambda emoji_: emoji_.sort_order):
-            if data.has_img_twitter and data.category != "Component":
-
-                if data.category not in categories:
-                    categories.append(data.category)
-                    self.addCategory(data.category, data.category, self._icons[data.category])
-
-                skin_tones = self._get_emoji_skin_tones_dict(data.char, data.skin_variations)
-                self.__model.addEmoji(data.char, " ".join(f":{alias}:" for alias in data.short_names), data.category, skin_tones=skin_tones)
+        for category in self.EmojiCategory:
+            if category not in (self.EmojiCategory.Favorites, self.EmojiCategory.Recents):
+                self.addCategory(category, category, self._icons[category])
 
     def _on_shortcut_clicked(self, section: QAccordionItem) -> None:
         """Scrolls the accordion to the selected category section.
@@ -511,7 +482,7 @@ class QEmojiPicker(QWidget):
         Returns:
             dict, optional: Category data or None.
         """
-        return self.__categories_data.get(str(category))
+        return self.__categories_data.get(category)
 
     def proxy(self, category: typing.Union[str, EmojiCategory]) -> typing.Optional[QEmojiSortFilterProxyModel]:
         """Returns the proxy model for the given category.
@@ -599,7 +570,7 @@ class QEmojiPicker(QWidget):
         Args:
             active (bool): True to enable, False to disable.
         """
-        favorite_category_key = self.EmojiCategory.Favorites.value
+        favorite_category_key = self.EmojiCategory.Favorites
         favorite_category = self.category(favorite_category_key)
         if favorite_category is not None and not active:
             self.removeCategory(favorite_category_key)
@@ -608,7 +579,6 @@ class QEmojiPicker(QWidget):
             proxy = self.proxy(favorite_category_key)
             proxy.setFavoriteFilter(True)
             proxy.setCategoryFilter(None)
-        self.__favorite_category = active
 
     def setRecentCategory(self, active: bool) -> None:
         """Enables or disables the recents category.
@@ -616,7 +586,7 @@ class QEmojiPicker(QWidget):
         Args:
             active (bool): True to enable, False to disable.
         """
-        recent_category_key = self.EmojiCategory.Recents.value
+        recent_category_key = self.EmojiCategory.Recents
         recent_category = self.category(recent_category_key)
         if recent_category is not None and not active:
             self.removeCategory(recent_category_key)
@@ -625,7 +595,6 @@ class QEmojiPicker(QWidget):
             proxy = self.proxy(recent_category_key)
             proxy.setRecentFilter(True)
             proxy.setCategoryFilter(None)
-        self.__recent_category = active
 
     def setEmojiFont(self, font_family: str) -> None:
         """Sets the font family for the emojis.

@@ -36,3 +36,11 @@ class QEmojiItem(QStandardItem):
             str: The emoji character.
         """
         return self.data(Qt.ItemDataRole.EditRole)
+
+    def alias(self) -> str:
+        """Returns the text alias.
+
+        Returns:
+            str: The text alias.
+        """
+        return self.data(QEmojiDataRole.AliasRole)

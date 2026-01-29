@@ -3,6 +3,7 @@ import typing
 from PySide6.QtCore import QSize, QModelIndex, Signal
 from PySide6.QtGui import QStandardItemModel, QStandardItem, Qt, QIcon
 from PySide6.QtWidgets import QWidget
+from emoji_data_python import EmojiChar, emoji_data
 
 from qextrawidgets.widgets.emoji_picker.emoji_item import QEmojiItem
 from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel
@@ -152,3 +153,30 @@ class QEmojiModel(QStandardItemModel):
             item = self.item(row)
             item.setIcon(QIcon())
             item.setText("")
+
+    def populate(self) -> None:
+        """Populates the picker with standard emoji categories."""
+        for data in sorted(emoji_data, key=lambda emoji_: emoji_.sort_order):
+            if data.has_img_twitter and data.category != "Component":
+                skin_tones = self._get_emoji_skin_tones_dict(data.char, data.skin_variations)
+                alias = " ".join(f":{alias}:" for alias in data.short_names)
+                self.addEmoji(data.char, alias, data.category, skin_tones=skin_tones)
+
+    @staticmethod
+    def _get_emoji_skin_tones_dict(emoji: str, skin_variations: typing.Dict[str, EmojiChar]) -> typing.Optional[typing.Dict[EmojiSkinTone, str]]:
+        """Maps skin tone modifiers to actual emoji strings.
+
+        Args:
+            emoji (str): Base emoji string.
+            skin_variations (Dict[str, EmojiChar]): Available skin variations.
+
+        Returns:
+            Dict[EmojiSkinTone, str], optional: Dictionary mapping skin tones to emoji strings or None.
+        """
+        if skin_variations:
+            skin_tones = {skin_tone: found_skin_tone.char for skin_tone in list(EmojiSkinTone) if
+                          (found_skin_tone := skin_variations.get(skin_tone))}
+            if skin_tones:
+                skin_tones[EmojiSkinTone.Default] = emoji
+            return skin_tones
+        return None
