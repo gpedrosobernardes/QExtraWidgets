@@ -10,7 +10,7 @@ from emoji_data_python import emoji_data, EmojiChar
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts
 from qextrawidgets.widgets.accordion import QAccordion
-from qextrawidgets.widgets.accordion_item import QAccordionItem
+from qextrawidgets.widgets.accordion.accordion_item import QAccordionItem
 from qextrawidgets.widgets.emoji_picker.emoji_grid import QEmojiGrid
 from qextrawidgets.widgets.emoji_picker.emoji_model import QEmojiModel
 from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel

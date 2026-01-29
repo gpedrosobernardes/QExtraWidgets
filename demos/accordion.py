@@ -8,7 +8,7 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets.accordion_item import QAccordionHeader
+from qextrawidgets.widgets.accordion.accordion_header import QAccordionHeader
 from qextrawidgets.widgets.accordion import QAccordion
 
 
@@ -97,6 +97,30 @@ class MainWindow(QMainWindow):
         v_pos.addWidget(rb_right)
         grp_pos.setLayout(v_pos)
         layout.addWidget(grp_pos)
+
+        # --- Group: Content Alignment ---
+        grp_align = QGroupBox("Content Alignment (setContentAlignment)")
+        v_align = QVBoxLayout()
+        bg_align = QButtonGroup(self)
+
+        rb_top = QRadioButton("Top")
+        rb_top.setChecked(True)
+        rb_top.toggled.connect(lambda: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignTop))
+
+        rb_center = QRadioButton("Center")
+        rb_center.toggled.connect(lambda: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignVCenter))
+
+        rb_bottom = QRadioButton("Bottom")
+        rb_bottom.toggled.connect(lambda: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignBottom))
+
+        bg_align.addButton(rb_top)
+        bg_align.addButton(rb_center)
+        bg_align.addButton(rb_bottom)
+        v_align.addWidget(rb_top)
+        v_align.addWidget(rb_center)
+        v_align.addWidget(rb_bottom)
+        grp_align.setLayout(v_align)
+        layout.addWidget(grp_align)
 
         # --- Group: Appearance ---
         grp_look = QGroupBox("Appearance")

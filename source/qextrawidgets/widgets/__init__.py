@@ -4,7 +4,7 @@ from .accordion import QAccordion
 from .dual_list import QDualList
 from .color_button import QColorButton
 from .color_tool_button import QColorToolButton
-from .accordion_item import QAccordionItem
+from qextrawidgets.widgets.accordion.accordion_item import QAccordionItem
 from .extra_text_edit import QExtraTextEdit
 from .search_line_edit import QSearchLineEdit
 

@@ -1,13 +1,17 @@
 from PySide6.QtCore import Qt, Signal, QEasingCurve
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFrame
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFrame, QSpacerItem, QSizePolicy
 
-from qextrawidgets.widgets.accordion_item import QAccordionItem, QAccordionHeader
+from qextrawidgets.widgets.accordion.accordion_item import QAccordionItem
+from qextrawidgets.widgets.accordion.accordion_header import QAccordionHeader
 
 
 class QAccordion(QWidget):
     """Accordion widget with optional smooth animations.
 
-    Supports multiple accordion items with expand/collapse animations.
+    A container that organizes content into collapsible sections.
+    Supports multiple accordion items with expand/collapse animations,
+    customizable styling (flat/raised, icon style, icon position),
+    and vertical alignment control.
 
     Signals:
         enteredSection (QAccordionItem): Emitted when a section is scrolled into view.
@@ -17,11 +21,28 @@ class QAccordion(QWidget):
     enteredSection = Signal(QAccordionItem)
     leftSection = Signal(QAccordionItem)
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(
+            self,
+            parent: QWidget = None,
+            items_alignment: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignTop,
+            items_flat: bool = False,
+            items_icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
+            items_icon_position: QAccordionHeader.IconPosition = QAccordionHeader.IconPosition.LeadingPosition,
+            animation_enabled: bool = False,
+            animation_duration: int = 200,
+            animation_easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuart
+    ) -> None:
         """Initializes the accordion widget.
 
         Args:
             parent (QWidget, optional): Parent widget. Defaults to None.
+            items_alignment (Qt.AlignmentFlag, optional): Vertical alignment of items. Defaults to AlignTop.
+            items_flat (bool, optional): Whether items are flat. Defaults to False.
+            items_icon_style (QAccordionHeader.IndicatorStyle, optional): Icon style. Defaults to Arrow.
+            items_icon_position (QAccordionHeader.IconPosition, optional): Icon position. Defaults to LeadingPosition.
+            animation_enabled (bool, optional): Whether animations are enabled. Defaults to False.
+            animation_duration (int, optional): Animation duration in ms. Defaults to 200.
+            animation_easing (QEasingCurve.Type, optional): Animation easing curve. Defaults to InOutQuart.
         """
         super().__init__(parent)
         self._main_layout = QVBoxLayout(self)
@@ -33,7 +54,6 @@ class QAccordion(QWidget):
 
         self._scroll_content = QWidget()
         self._scroll_layout = QVBoxLayout(self._scroll_content)
-        self._scroll_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self._scroll.setWidget(self._scroll_content)
         self._main_layout.addWidget(self._scroll)
@@ -42,9 +62,14 @@ class QAccordion(QWidget):
         self._items = []
 
         # Animation settings (applied to new items)
-        self._default_animation_enabled = True
-        self._default_animation_duration = 200
-        self._default_animation_easing = QEasingCurve.Type.InOutQuart
+        self._animation_enabled = animation_enabled
+        self._animation_duration = animation_duration
+        self._animation_easing = animation_easing
+
+        self._items_alignment = items_alignment
+        self._items_flat = items_flat
+        self._items_icon_style = items_icon_style
+        self._items_icon_position = items_icon_position
 
         self._setup_connections()
 
@@ -65,15 +90,6 @@ class QAccordion(QWidget):
                     self.leftSection.emit(item)
                 self._active_section = item
                 break
-
-    def _on_item_expanded(self, position: int, expanded: bool) -> None:
-        """Called when an item is expanded.
-
-        Args:
-            position (int): Position of the item.
-            expanded (bool): Whether the item is expanded.
-        """
-        self._scroll_layout.setStretch(position, expanded)
 
     # --- Item Management ---
 
@@ -119,9 +135,12 @@ class QAccordion(QWidget):
         """
         item = QAccordionItem(title, widget)
         # Apply default animation settings
-        item.setAnimationEnabled(self._default_animation_enabled)
-        item.setAnimationDuration(self._default_animation_duration)
-        item.setAnimationEasing(self._default_animation_easing)
+        item.setAnimationEnabled(self._animation_enabled)
+        item.setAnimationDuration(self._animation_duration)
+        item.setAnimationEasing(self._animation_easing)
+        item.setFlat(self._items_flat)
+        item.setIconStyle(self._items_icon_style)
+        item.setIconPosition(self._items_icon_position)
 
         self.insertAccordionItem(item, position)
         return item
@@ -133,8 +152,7 @@ class QAccordion(QWidget):
             item (QAccordionItem): Accordion item to insert.
             position (int, optional): Insert position (-1 for end). Defaults to -1.
         """
-        self._scroll_layout.insertWidget(position, item)
-        item.expandedChanged.connect(lambda expanded: self._on_item_expanded(self._items.index(item), expanded))
+        self._scroll_layout.insertWidget(position, item, alignment=self._items_alignment)
         if position == -1:
             self._items.append(item)
         else:
@@ -157,6 +175,7 @@ class QAccordion(QWidget):
         Args:
             position (QAccordionHeader.IconPosition): New icon position.
         """
+        self._items_icon_position = position
         for item in self._items:
             item.setIconPosition(position)
 
@@ -166,6 +185,7 @@ class QAccordion(QWidget):
         Args:
             style (QAccordionHeader.IndicatorStyle): New icon style.
         """
+        self._items_icon_style = style
         for item in self._items:
             item.setIconStyle(style)
 
@@ -175,8 +195,27 @@ class QAccordion(QWidget):
         Args:
             flat (bool): True for flat headers, False for raised.
         """
+        self._items_flat = flat
         for item in self._items:
             item.setFlat(flat)
+
+    def setItemsAlignment(self, alignment: Qt.AlignmentFlag) -> None:
+        """Sets the vertical alignment of the accordion items.
+
+        Args:
+            alignment (Qt.AlignmentFlag): The alignment (AlignTop, AlignVCenter, AlignBottom).
+        """
+        self._items_alignment = alignment
+        for item in self._items:
+            self._scroll_layout.setAlignment(item, alignment)
+
+    def itemsAlignment(self) -> Qt.AlignmentFlag:
+        """Returns the current vertical alignment of the accordion items.
+
+        Returns:
+            Qt.AlignmentFlag: The current alignment.
+        """
+        return self._items_alignment
 
     # --- Animation Settings (Applied to ALL items) ---
 
@@ -186,7 +225,7 @@ class QAccordion(QWidget):
         Args:
             enabled (bool): True to enable animations, False to disable.
         """
-        self._default_animation_enabled = enabled
+        self._animation_enabled = enabled
         for item in self._items:
             item.setAnimationEnabled(enabled)
 
@@ -196,7 +235,7 @@ class QAccordion(QWidget):
         Returns:
             bool: True if animations are enabled, False otherwise.
         """
-        return self._default_animation_enabled
+        return self._animation_enabled
 
     def setAnimationDuration(self, duration: int) -> None:
         """Sets the animation duration in milliseconds for all items.
@@ -204,7 +243,7 @@ class QAccordion(QWidget):
         Args:
             duration (int): Duration in milliseconds (typical: 100-500).
         """
-        self._default_animation_duration = duration
+        self._animation_duration = duration
         for item in self._items:
             item.setAnimationDuration(duration)
 
@@ -214,7 +253,7 @@ class QAccordion(QWidget):
         Returns:
             int: Animation duration in milliseconds.
         """
-        return self._default_animation_duration
+        return self._animation_duration
 
     def setAnimationEasing(self, easing: QEasingCurve.Type) -> None:
         """Sets the animation easing curve for all items.
@@ -222,7 +261,7 @@ class QAccordion(QWidget):
         Args:
             easing (QEasingCurve.Type): The easing curve type.
         """
-        self._default_animation_easing = easing
+        self._animation_easing = easing
         for item in self._items:
             item.setAnimationEasing(easing)
 
@@ -232,7 +271,7 @@ class QAccordion(QWidget):
         Returns:
             QEasingCurve.Type: The easing curve type.
         """
-        return self._default_animation_easing
+        return self._animation_easing
 
     # --- Expand/Collapse Operations ---
 
