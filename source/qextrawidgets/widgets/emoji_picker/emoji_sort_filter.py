@@ -99,7 +99,7 @@ class QEmojiSortFilterProxyModel(QSortFilterProxyModel):
         """
         if emoji_pixmap_getter != self._emoji_pixmap_getter:
             self._emoji_pixmap_getter = emoji_pixmap_getter
-            self.emoji_icon_getter.cache_clear()
+            self._emoji_icon_getter.cache_clear()
 
     def emojiPixmapGetter(self) -> typing.Optional[typing.Callable[[str], QPixmap]]:
         """Returns the current emoji pixmap getter function."""
@@ -125,7 +125,7 @@ class QEmojiSortFilterProxyModel(QSortFilterProxyModel):
                 if emoji is None:
                     return QPixmap()
 
-                return self.emoji_icon_getter(emoji)
+                return self._emoji_icon_getter(emoji)
             except Exception:
                 # Evita crash no C++ propagando exceções; log para debug
                 traceback.print_exc()
@@ -145,6 +145,6 @@ class QEmojiSortFilterProxyModel(QSortFilterProxyModel):
         return super().data(index, role)
 
     @lru_cache(maxsize=5120)
-    def emoji_icon_getter(self, emoji: str):
+    def _emoji_icon_getter(self, emoji: str):
         emoji_pixmap_getter = self.emojiPixmapGetter()
         return QIcon(emoji_pixmap_getter(emoji))

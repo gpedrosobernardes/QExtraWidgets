@@ -89,7 +89,7 @@ class QEmojiPicker(QWidget):
         self._emoji_pixmap_getter = None
         self._emoji_on_label = None
         self._emoji_margin_porcentage = emoji_margin
-        self.__categories_data = {}  # Stores references to grids and layouts
+        self.__categories_data = {}
         self.__emoji_size = emoji_size
 
         self.__model = QEmojiModel()

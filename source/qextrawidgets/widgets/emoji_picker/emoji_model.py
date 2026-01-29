@@ -84,7 +84,7 @@ class QEmojiModel(QStandardItemModel):
             return items[0]
         return None
 
-    def filterEmojisItems(self, role: typing.Union[QEmojiDataRole, Qt.ItemDataRole], value: typing.Any) -> typing.List[QStandardItem]:
+    def filterEmojisItems(self, role: typing.Union[QEmojiDataRole, Qt.ItemDataRole], value: typing.Any) -> typing.List[QEmojiItem]:
         """Filters model items based on a specific role and value.
 
         Args:
@@ -96,7 +96,7 @@ class QEmojiModel(QStandardItemModel):
         """
         return [self.itemFromIndex(index) for index in self.match(self.index(0, 0), role, value, -1, Qt.MatchFlag.MatchExactly)]
 
-    def getEmojiItems(self) -> typing.List[QStandardItem]:
+    def getEmojiItems(self) -> typing.List[QEmojiItem]:
         """Returns a list of all emoji items in the model.
 
         Returns:
