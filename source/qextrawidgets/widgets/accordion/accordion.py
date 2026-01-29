@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt, Signal, QEasingCurve
+from PySide6.QtCore import Qt, Signal, QEasingCurve, Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFrame, QSpacerItem, QSizePolicy
 
 from qextrawidgets.widgets.accordion.accordion_item import QAccordionItem
@@ -77,6 +77,7 @@ class QAccordion(QWidget):
         """Sets up signals and slots connections."""
         self._scroll.verticalScrollBar().valueChanged.connect(self._on_scroll)
 
+    @Slot(int)
     def _on_scroll(self, value: int) -> None:
         """Handles scroll value changes.
 
@@ -85,10 +86,10 @@ class QAccordion(QWidget):
         """
         for item in self._items:
             if item.y() <= value <= item.y() + item.height() and item != self._active_section:
-                self.enteredSection.emit(item)
-                if self._active_section is not None:
+                if self._active_section:
                     self.leftSection.emit(item)
                 self._active_section = item
+                self.enteredSection.emit(item)
                 break
 
     # --- Item Management ---
@@ -122,25 +123,19 @@ class QAccordion(QWidget):
         """
         self.insertAccordionItem(item)
 
-    def insertSection(self, title: str, widget: QWidget, position: int = -1) -> QAccordionItem:
+    def insertSection(self, title: str, widget: QWidget, position: int = -1, expanded: bool = False) -> QAccordionItem:
         """Creates and inserts a new accordion section.
 
         Args:
             title (str): Section title.
             widget (QWidget): Content widget.
             position (int, optional): Insert position (-1 for end). Defaults to -1.
+            expanded (bool, optional): Whether the section is expanded. Defaults to False.
 
         Returns:
             QAccordionItem: The created accordion item.
         """
-        item = QAccordionItem(title, widget)
-        # Apply default animation settings
-        item.setAnimationEnabled(self._animation_enabled)
-        item.setAnimationDuration(self._animation_duration)
-        item.setAnimationEasing(self._animation_easing)
-        item.setFlat(self._items_flat)
-        item.setIconStyle(self._items_icon_style)
-        item.setIconPosition(self._items_icon_position)
+        item = QAccordionItem(title, widget, self, expanded, self._items_flat, self._items_icon_style, self._items_icon_position, self._animation_enabled, self._animation_duration, self._animation_easing)
 
         self.insertAccordionItem(item, position)
         return item

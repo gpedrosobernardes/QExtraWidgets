@@ -24,12 +24,22 @@ class QAccordionHeader(QFrame):
         Arrow = auto()  # Arrow (> v)
         PlusMinus = auto()  # Plus/Minus (+ -)
 
-    def __init__(self, title: str = "", parent: QWidget = None) -> None:
+    def __init__(
+            self,
+            title: str = "",
+            parent: QWidget = None,
+            flat: bool = False,
+            icon_style: IndicatorStyle = IndicatorStyle.Arrow,
+            icon_position: IconPosition = IconPosition.LeadingPosition
+    ) -> None:
         """Initializes the accordion header.
 
         Args:
             title (str, optional): Header title. Defaults to "".
             parent (QWidget, optional): Parent widget. Defaults to None.
+            flat (bool, optional): Whether the header is flat. Defaults to False.
+            icon_style (IndicatorStyle, optional): Icon style. Defaults to Arrow.
+            icon_position (IconPosition, optional): Icon position. Defaults to LeadingPosition.
         """
         super().__init__(parent)
 
@@ -39,8 +49,8 @@ class QAccordionHeader(QFrame):
 
         # States
         self._is_expanded = False
-        self._icon_position = QAccordionHeader.IconPosition.LeadingPosition
-        self._icon_style = QAccordionHeader.IndicatorStyle.Arrow
+        self._icon_position = icon_position
+        self._icon_style = icon_style
 
         # Widgets
         self._label_title = QLabel(title)
@@ -58,7 +68,7 @@ class QAccordionHeader(QFrame):
         # Initialization
         self.updateIcon()
         self.refreshLayout()
-        self.setFlat(False)
+        self.setFlat(flat)
 
     def closeEvent(self, event) -> None:
         """Disconnects signals to prevent crashes on destruction."""

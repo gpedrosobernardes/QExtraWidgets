@@ -1,4 +1,4 @@
-from PySide6.QtCore import Signal, QPropertyAnimation, QEasingCurve, QAbstractAnimation
+from PySide6.QtCore import Signal, QPropertyAnimation, QEasingCurve, QAbstractAnimation, Slot
 from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
@@ -14,31 +14,48 @@ class QAccordionItem(QWidget):
 
     expandedChanged = Signal(bool)
 
-    def __init__(self, title: str, content_widget: QWidget, parent: QWidget = None) -> None:
+    def __init__(
+            self,
+            title: str,
+            content_widget: QWidget,
+            parent: QWidget = None,
+            expanded: bool = False,
+            flat: bool = False,
+            icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
+            icon_position: QAccordionHeader.IconPosition = QAccordionHeader.IconPosition.LeadingPosition,
+            animation_enabled: bool = False,
+            animation_duration: int = 200,
+            animation_easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuart
+    ) -> None:
         """Initializes the accordion item.
 
         Args:
             title (str): Section title.
             content_widget (QWidget): Content widget to be shown/hidden.
             parent (QWidget, optional): Parent widget. Defaults to None.
+            expanded (bool, optional): Initial expansion state. Defaults to False.
+            flat (bool, optional): Whether the header is flat. Defaults to False.
+            icon_style (QAccordionHeader.IndicatorStyle, optional): Icon style. Defaults to Arrow.
+            icon_position (QAccordionHeader.IconPosition, optional): Icon position. Defaults to LeadingPosition.
+            animation_enabled (bool, optional): Whether animations are enabled. Defaults to True.
+            animation_duration (int, optional): Animation duration in ms. Defaults to 200.
+            animation_easing (QEasingCurve.Type, optional): Animation easing curve. Defaults to InOutQuart.
         """
         super().__init__(parent)
         self._layout = QVBoxLayout(self)
         self._layout.setContentsMargins(0, 0, 0, 0)
         self._layout.setSpacing(0)
 
-        self._header = QAccordionHeader(title)
+        self._header = QAccordionHeader(title, self, flat, icon_style, icon_position)
         self._content = content_widget
 
         # Animation setup
-        self._animation_enabled = True
-        self._animation_duration = 200  # milliseconds
-        self._animation_easing = QEasingCurve.Type.InOutQuart
+        self._animation_enabled = animation_enabled
 
         # Animation object
         self._animation = QPropertyAnimation(self._content, b"maximumHeight")
-        self._animation.setDuration(self._animation_duration)
-        self._animation.setEasingCurve(self._animation_easing)
+        self._animation.setDuration(animation_duration)
+        self._animation.setEasingCurve(animation_easing)
 
         # Initial state
         self._content.setMinimumHeight(0)
@@ -48,6 +65,10 @@ class QAccordionItem(QWidget):
         self._layout.addWidget(self._content, stretch=True, alignment=Qt.AlignmentFlag.AlignTop)
 
         self._header.clicked.connect(self.toggle)
+
+        # Apply initial settings
+        if expanded:
+            self.setExpanded(True, animated=False)
 
     def toggle(self) -> None:
         """Toggles the expanded state."""
@@ -105,6 +126,7 @@ class QAccordionItem(QWidget):
                 self._content.setVisible(False)
         self.expandedChanged.emit(expanded)
 
+    @Slot()
     def _on_collapse_finished(self) -> None:
         """Called when collapse animation finishes."""
         self._animation.finished.disconnect(self._on_collapse_finished)
@@ -142,7 +164,6 @@ class QAccordionItem(QWidget):
         Args:
             duration (int): Duration in milliseconds (typical range: 100-500).
         """
-        self._animation_duration = duration
         self._animation.setDuration(duration)
 
     def animationDuration(self) -> int:
@@ -151,7 +172,7 @@ class QAccordionItem(QWidget):
         Returns:
             int: Animation duration.
         """
-        return self._animation_duration
+        return self._animation.duration()
 
     def setAnimationEasing(self, easing: QEasingCurve.Type) -> None:
         """Sets the animation easing curve.
@@ -159,7 +180,6 @@ class QAccordionItem(QWidget):
         Args:
             easing (QEasingCurve.Type): QEasingCurve.Type (e.g., InOutQuart, OutCubic, Linear).
         """
-        self._animation_easing = easing
         self._animation.setEasingCurve(easing)
 
     def animationEasing(self) -> QEasingCurve.Type:
@@ -168,7 +188,7 @@ class QAccordionItem(QWidget):
         Returns:
             QEasingCurve.Type: The easing curve.
         """
-        return self._animation_easing
+        return self._animation.easingCurve()
 
     # --- Style Settings ---
 
