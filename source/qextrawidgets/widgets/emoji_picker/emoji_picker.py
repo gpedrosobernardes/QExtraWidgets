@@ -2,7 +2,7 @@ import typing
 from enum import Enum
 
 from PySide6.QtCore import QSize, QT_TRANSLATE_NOOP, QModelIndex, Signal, QPoint, Qt, QTimer
-from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
+from PySide6.QtGui import QFont, QIcon, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
                                QWidget, QApplication, QButtonGroup, QMenu, QToolButton)
 
@@ -242,21 +242,6 @@ class QEmojiPicker(QWidget):
         self.__model.setRecentEmoji(item, True)
         self.picked.emit(item.data(Qt.ItemDataRole.EditRole))
 
-    def __item_from_position(self, grid: QEmojiGrid, position: QPoint) -> typing.Optional[QStandardItem]:
-        """Returns the source model item at the given pixel position in the grid.
-
-        Args:
-            grid (QEmojiGrid): The emoji grid.
-            position (QPoint): Pixel position.
-
-        Returns:
-            QStandardItem, optional: The item at the position, or None.
-        """
-        proxy_index = grid.indexAt(position)
-        if not proxy_index.isValid():
-            return None
-        return self.__model.itemFromProxyIndex(proxy_index)
-
     def __on_context_menu(self, grid: QEmojiGrid, position: QPoint) -> None:
         """Handles the context menu for an emoji.
 
@@ -264,7 +249,8 @@ class QEmojiPicker(QWidget):
             grid (QEmojiGrid): The grid where the event occurred.
             position (QPoint): Pixel position.
         """
-        item = self.__item_from_position(grid, position)
+        proxy_index = grid.indexAt(position)
+        item = self.__model.itemFromProxyIndex(proxy_index)
 
         if not item:
             return
@@ -288,7 +274,7 @@ class QEmojiPicker(QWidget):
 
     def __add_base_categories(self) -> None:
         """Populates the picker with standard emoji categories."""
-        for category in self.EmojiCategory:
+        for category in sorted(self.EmojiCategory):
             if category not in (self.EmojiCategory.Favorites, self.EmojiCategory.Recents):
                 self.addCategory(category, category, self._icons[category])
 

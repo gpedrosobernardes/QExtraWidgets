@@ -1,9 +1,11 @@
 import traceback
 import typing
+from functools import lru_cache
 
 from PySide6.QtCore import QSortFilterProxyModel, QModelIndex
 from PySide6.QtGui import QPixmap, Qt, QIcon
 from PySide6.QtWidgets import QWidget
+
 from qextrawidgets.widgets.emoji_picker.enums import QEmojiDataRole
 
 """Module providing QEmojiSortFilterProxyModel.
@@ -97,6 +99,7 @@ class QEmojiSortFilterProxyModel(QSortFilterProxyModel):
         """
         if emoji_pixmap_getter != self._emoji_pixmap_getter:
             self._emoji_pixmap_getter = emoji_pixmap_getter
+            self.emoji_icon_getter.cache_clear()
 
     def emojiPixmapGetter(self) -> typing.Optional[typing.Callable[[str], QPixmap]]:
         """Returns the current emoji pixmap getter function."""
@@ -111,25 +114,18 @@ class QEmojiSortFilterProxyModel(QSortFilterProxyModel):
         # DecorationRole uses an int; comparing with int is more robust in PySide
         if role == int(Qt.ItemDataRole.DecorationRole):
             if not emoji_pixmap_getter:
-                return QIcon()
+                return QPixmap()
 
             try:
                 source_index = self.mapToSource(index)
                 if not source_index.isValid():
-                    return QIcon()
+                    return QPixmap()
 
                 emoji = source_index.data(Qt.ItemDataRole.EditRole)
                 if emoji is None:
-                    return QIcon()
+                    return QPixmap()
 
-                result = emoji_pixmap_getter(emoji)
-                # Accepts QPixmap or QIcon; convert QPixmap to QIcon to avoid native integration issues
-                if isinstance(result, QIcon):
-                    return result
-                if isinstance(result, QPixmap):
-                    return QIcon(result)
-                # If the getter returns an invalid value, return an empty QIcon
-                return QIcon()
+                return self.emoji_icon_getter(emoji)
             except Exception:
                 # Evita crash no C++ propagando exceções; log para debug
                 traceback.print_exc()
@@ -147,3 +143,8 @@ class QEmojiSortFilterProxyModel(QSortFilterProxyModel):
             return source_index.data(Qt.ItemDataRole.DisplayRole)
 
         return super().data(index, role)
+
+    @lru_cache(maxsize=5120)
+    def emoji_icon_getter(self, emoji: str):
+        emoji_pixmap_getter = self.emojiPixmapGetter()
+        return QIcon(emoji_pixmap_getter(emoji))
