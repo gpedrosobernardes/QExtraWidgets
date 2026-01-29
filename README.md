@@ -1,5 +1,10 @@
 # QExtraWidgets
 
+[![PyPI version](https://badge.fury.io/py/qextrawidgets.svg)](https://badge.fury.io/py/qextrawidgets)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Versions](https://img.shields.io/pypi/pyversions/qextrawidgets.svg)](https://pypi.org/project/qextrawidgets/)
+[![Documentation Status](https://img.shields.io/badge/docs-stable-blue.svg)](https://gpedrosobernardes.github.io/QExtraWidgets/)
+
 **QExtraWidgets** is a comprehensive library of modern, responsive, and feature-rich widgets for **PySide6** applications. It aims to fill the gaps in standard Qt widgets by providing high-level components like Excel-style filterable tables, emoji pickers, accordion menus, and theme-aware icons.
 
 ---
@@ -107,7 +112,8 @@ view.setItemDelegate(delegate)
 |-----------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | **QPasswordLineEdit** | A line edit with a built-in eye icon to toggle password visibility.  | ![QPasswordLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPasswordLineEdit.png) |
 | **QPager**            | A classic pagination control for navigating large datasets.          | ![QPager](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPager.png)                       |
-| **QColorButton**      | A button that displays a selected color and opens a dialog on click. | ![QColorButton](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QColorButton.png)           |
+| **QColorButton**      | A button that allows setting custom background colors for different states (Normal, Hover, Pressed, Checked). | ![QColorButton](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QColorButton.png)           |
+| **QColorToolButton**  | A tool button that allows setting custom background colors for different states (Normal, Hover, Pressed, Checked). |                                                                                                                                  |
 | **QDualList**         | Two lists side-by-side for moving items (Select/Deselect).           | ![QDualList](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png)                 |
 | **QSearchLineEdit**   | A search input field with a clear button and search icon.            | ![QSearchLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png)     |
 | **QIconComboBox**     | A ToolButton-style combo box optimized for icons or short text.      |                                                                                                                                  |
