@@ -54,6 +54,7 @@ class QAccordion(QWidget):
 
         self._scroll_content = QWidget()
         self._scroll_layout = QVBoxLayout(self._scroll_content)
+        self._scroll_layout.setAlignment(items_alignment)
 
         self._scroll.setWidget(self._scroll_content)
         self._main_layout.addWidget(self._scroll)
@@ -135,7 +136,7 @@ class QAccordion(QWidget):
         Returns:
             QAccordionItem: The created accordion item.
         """
-        item = QAccordionItem(title, widget, self, expanded, self._items_flat, self._items_icon_style, self._items_icon_position, self._animation_enabled, self._animation_duration, self._animation_easing)
+        item = QAccordionItem(title, widget, self._scroll_content, expanded, self._items_flat, self._items_icon_style, self._items_icon_position, self._animation_enabled, self._animation_duration, self._animation_easing)
 
         self.insertAccordionItem(item, position)
         return item
@@ -201,6 +202,7 @@ class QAccordion(QWidget):
             alignment (Qt.AlignmentFlag): The alignment (AlignTop, AlignVCenter, AlignBottom).
         """
         self._items_alignment = alignment
+        self._scroll_layout.setAlignment(alignment)
         for item in self._items:
             self._scroll_layout.setAlignment(item, alignment)
 
