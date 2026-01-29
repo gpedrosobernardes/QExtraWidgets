@@ -156,11 +156,13 @@ class QEmojiModel(QStandardItemModel):
 
     def populate(self) -> None:
         """Populates the picker with standard emoji categories."""
+        self.beginResetModel()
         for data in sorted(emoji_data, key=lambda emoji_: emoji_.sort_order):
             if data.has_img_twitter and data.category != "Component":
                 skin_tones = self._get_emoji_skin_tones_dict(data.char, data.skin_variations)
                 alias = " ".join(f":{alias}:" for alias in data.short_names)
                 self.addEmoji(data.char, alias, data.category, skin_tones=skin_tones)
+        self.endResetModel()
 
     @staticmethod
     def _get_emoji_skin_tones_dict(emoji: str, skin_variations: typing.Dict[str, EmojiChar]) -> typing.Optional[typing.Dict[EmojiSkinTone, str]]:

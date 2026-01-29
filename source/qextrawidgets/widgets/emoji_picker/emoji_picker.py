@@ -1,7 +1,7 @@
 import typing
 from enum import Enum
 
-from PySide6.QtCore import QSize, QT_TRANSLATE_NOOP, QModelIndex, Signal, QPoint, Qt
+from PySide6.QtCore import QSize, QT_TRANSLATE_NOOP, QModelIndex, Signal, QPoint, Qt, QTimer
 from PySide6.QtGui import QFont, QIcon, QStandardItem, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
                                QWidget, QApplication, QButtonGroup, QMenu, QToolButton)
@@ -98,6 +98,12 @@ class QEmojiPicker(QWidget):
 
         # 1. Search Bar
         self.__search_line_edit = self._create_search_line_edit()
+
+        self.__search_timer = QTimer(self)
+        self.__search_timer.setSingleShot(True)
+        self.__search_timer.setInterval(200)
+        self.__search_timer.timeout.connect(self.__filter_emojis)
+
         self.__skin_tone_selector = QIconComboBox()
 
         for skin_tone, emoji in self._skin_tone_selector_emojis.items():
@@ -173,7 +179,7 @@ class QEmojiPicker(QWidget):
 
     def __setup_connections(self) -> None:
         """Sets up signals and slots connections."""
-        self.__search_line_edit.textChanged.connect(self.__filter_emojis)
+        self.__search_line_edit.textChanged.connect(lambda: self.__search_timer.start())
         self.__accordion.enteredSection.connect(self.__on_entered_section)
         self.__skin_tone_selector.currentDataChanged.connect(self._set_skin_tone)
 
