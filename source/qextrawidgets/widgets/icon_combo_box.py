@@ -70,6 +70,8 @@ class QIconComboBox(QToolButton):
 
         if font:
             btn_item.setFont(font)
+        else:
+            btn_item.setFont(self.font())
 
         if icon:
             if isinstance(icon, str):

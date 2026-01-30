@@ -39,6 +39,8 @@ class QEmojiModel(QStandardItemModel):
         Returns:
             QStandardItem, optional: The corresponding item in the source model, or None.
         """
+        if not proxy_index.isValid():
+            return None
         proxy: QEmojiSortFilterProxyModel = proxy_index.model()
         model_index = proxy.mapToSource(proxy_index)
         return self.itemFromIndex(model_index)

@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         self.emoji_picker = QEmojiPicker()
         self.emoji_picker.picked.connect(self._on_emoji_picked)
         # Ensure the picker's margin matches the UI initial value
-        self.emoji_picker.setEmojiMarginPorcentage(self.emoji_margin_spin.value())
+        self.emoji_picker.delegate().setEmojiMarginPercentage(self.emoji_margin_spin.value())
 
         # Setup initial state based on configuration
         self._on_use_pixmaps_changed(self.use_pixmaps_check.checkState().value)
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         self.line_edit.insert(emoji)
 
     def _on_emoji_size_changed(self, value: int) -> None:
-        self.emoji_picker.setEmojiSize(value)
+        self.emoji_picker.delegate().setEmojiSize(value)
 
     def _on_emoji_margin_changed(self, value: float) -> None:
         """Handle emoji margin changes from the UI.
@@ -121,33 +121,34 @@ class MainWindow(QMainWindow):
             value (float): Margin percentage value between 0.10 and 0.50.
         """
         # Forward the percentage value to the picker
-        self.emoji_picker.setEmojiMarginPorcentage(value)
+        self.emoji_picker.delegate().setEmojiMarginPercentage(value)
 
     def _on_favorite_changed(self, state: int) -> None:
-        self.emoji_picker.setFavoriteCategory(state == Qt.CheckState.Checked.value)
+        self.emoji_picker.categoryModel().setFavoriteCategory(state == Qt.CheckState.Checked.value)
 
     def _on_recent_changed(self, state: int) -> None:
-        self.emoji_picker.setRecentCategory(state == Qt.CheckState.Checked.value)
+        self.emoji_picker.categoryModel().setRecentCategory(state == Qt.CheckState.Checked.value)
 
     def _on_font_combo_changed(self, font_family: str) -> None:
         font = QFont(font_family)
-        self.emoji_picker.setEmojiFont(font_family)
+        self.emoji_picker.delegate().setEmojiFont(font_family)
         self.line_edit.setFont(font)
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
+        delegate = self.emoji_picker.delegate()
         if state == Qt.CheckState.Checked.value:
-            self.emoji_picker.setEmojiPixmapGetter(EmojiImageProvider.getPixmap)
+            delegate.setEmojiPixmapGetter(EmojiImageProvider.getPixmap)
         else:
-            self.emoji_picker.setEmojiPixmapGetter(None)
+            delegate.setEmojiPixmapGetter(None)
 
     def _add_custom_category(self) -> None:
         icon = QThemeResponsiveIcon.fromAwesome("fa6s.rocket")
-        self.emoji_picker.addCategory("Custom", "My Custom Category", icon)
+        self.emoji_picker.categoryModel().addCategory("Custom", "My Custom Category", icon)
         self.add_cat_btn.setEnabled(False)
         self.remove_cat_btn.setEnabled(True)
 
     def _remove_custom_category(self) -> None:
-        self.emoji_picker.removeCategory("Custom")
+        self.emoji_picker.categoryModel().removeCategory("Custom")
         self.add_cat_btn.setEnabled(True)
         self.remove_cat_btn.setEnabled(False)
 
