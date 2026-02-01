@@ -58,12 +58,11 @@ class QEmojiPickerModel(QStandardItemModel):
                     emoji_grouped_by_category[emoji_char.category] = []
                 emoji_grouped_by_category[emoji_char.category].append(item)
 
-        for category, emoji_items in emoji_grouped_by_category.items():
-            icon = QThemeResponsiveIcon.fromAwesome(icons[category])
-            category_item = QEmojiCategoryItem(category, icon)
-            self.appendRow(category_item)
-            category_item.appendRows(emoji_items)
-            self.categoryInserted.emit(category_item)
+        if self._recent_category:
+            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Recents])
+            recent_category_item = QEmojiCategoryItem(EmojiCategory.Recents, icon)
+            self.appendRow(recent_category_item)
+            self.categoryInserted.emit(recent_category_item)
 
         if self._favorite_category:
             icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Favorites])
@@ -71,11 +70,12 @@ class QEmojiPickerModel(QStandardItemModel):
             self.appendRow(favorite_category_item)
             self.categoryInserted.emit(favorite_category_item)
 
-        if self._recent_category:
-            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Recents])
-            recent_category_item = QEmojiCategoryItem(EmojiCategory.Recents, icon)
-            self.appendRow(recent_category_item)
-            self.categoryInserted.emit(recent_category_item)
+        for category, emoji_items in emoji_grouped_by_category.items():
+            icon = QThemeResponsiveIcon.fromAwesome(icons[category])
+            category_item = QEmojiCategoryItem(category, icon)
+            self.appendRow(category_item)
+            category_item.appendRows(emoji_items)
+            self.categoryInserted.emit(category_item)
 
     def setExpanded(self, value: bool):
         for row in range(self.rowCount()):

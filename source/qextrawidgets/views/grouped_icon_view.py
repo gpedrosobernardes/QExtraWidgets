@@ -33,6 +33,7 @@ class QGroupedIconView(QAbstractItemView):
 
     itemEntered = Signal(QModelIndex)
     itemExited = Signal(QModelIndex)
+    itemClicked = Signal(QModelIndex)
 
     # Custom Role to store the expansion state in the model items
     ExpansionStateRole = Qt.ItemDataRole.UserRole + 100
@@ -231,12 +232,14 @@ class QGroupedIconView(QAbstractItemView):
 
         index = self.indexAt(event.position().toPoint())
 
-        if index.isValid() and event.button() == Qt.MouseButton.LeftButton:
-            if self._is_category(index):
+        if index.isValid():
+            if self._is_category(index) and event.button() == Qt.MouseButton.LeftButton:
                 current_state = bool(index.data(self.ExpansionStateRole))
                 self.model().setData(index, not current_state, self.ExpansionStateRole)
                 event.accept()
                 return
+            elif self._is_item(index):
+                self.itemClicked.emit(index)
 
         super().mousePressEvent(event)
 

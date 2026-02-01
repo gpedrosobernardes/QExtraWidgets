@@ -129,11 +129,27 @@ class QEmojiPicker(QWidget):
         self._search_line_edit.textChanged.connect(lambda: self._search_timer.start())
 
         self._model.categoryInserted.connect(self._on_categories_inserted)
-        self._grouped_icon_view.itemEntered.connect(self._on_emoji_hover)
-        self._grouped_icon_view.itemExited.connect(self._on_clear_emoji_preview)
+        self._grouped_icon_view.itemEntered.connect(self._on_mouse_entered_emoji)
+        self._grouped_icon_view.itemExited.connect(self._on_mouse_exited_emoji)
+        self._grouped_icon_view.itemClicked.connect(self._on_item_clicked)
         self._grouped_icon_view.customContextMenuRequested.connect(self._on_context_menu)
+
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
+
+    @Slot(QModelIndex)
+    def _on_item_clicked(self, proxy_index: QModelIndex):
+        source_index = self._proxy.mapToSource(proxy_index)
+        item: QEmojiItem = self._model.itemFromIndex(source_index)
+        self.picked.emit(item.emoji())
+
+        recent_category_index = self._model.findCategory(EmojiCategory.Recents)
+        if recent_category_index:
+            recent_item_index = self._model.findEmojiInCategory(recent_category_index, item.emoji())
+            if not recent_item_index:
+                clone_item = item.clone()
+                clone_item.setData(EmojiCategory.Recents, role=QEmojiDataRole.CategoryRole)
+                self._model.itemFromIndex(recent_category_index).appendRow(clone_item)
 
     @Slot(QPoint)
     def _on_context_menu(self, position: QPoint) -> None:
@@ -222,7 +238,7 @@ class QEmojiPicker(QWidget):
     #         proxy.deleteLater()
 
     @Slot(QModelIndex)
-    def _on_emoji_hover(self, index: QModelIndex) -> None:
+    def _on_mouse_entered_emoji(self, index: QModelIndex) -> None:
         source_index = self._proxy.mapToSource(index)
         item: QEmojiItem = self._model.itemFromIndex(source_index)
         if isinstance(item, QEmojiItem):
@@ -250,7 +266,7 @@ class QEmojiPicker(QWidget):
         self._proxy.setFilterFixedString(text)
 
     @Slot()
-    def _on_clear_emoji_preview(self) -> None:
+    def _on_mouse_exited_emoji(self) -> None:
         """Clears the emoji preview area."""
         self._emoji_label.clear()
         self._aliases_emoji_label.clear()
