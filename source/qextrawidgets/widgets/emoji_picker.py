@@ -148,6 +148,8 @@ class QEmojiPicker(QWidget):
 
         shortcut = self._create_shortcut_button(category, icon)
         shortcut.setObjectName(category)
+        shortcut.clicked.connect(lambda: self._on_shortcut_clicked(category_item.index()))
+
         self._shortcuts_layout.addWidget(shortcut)
         self._shortcuts_group.addButton(shortcut)
 
@@ -187,15 +189,16 @@ class QEmojiPicker(QWidget):
             elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self._aliases_emoji_label.width())
             self._aliases_emoji_label.setText(elided_alias)
 
-    @Slot(QAccordionItem)
-    def _on_shortcut_clicked(self, section: QAccordionItem) -> None:
+    @Slot(QModelIndex)
+    def _on_shortcut_clicked(self, source_index: QModelIndex) -> None:
         """Scrolls the accordion to the selected category section.
 
         Args:
             section (QAccordionItem): The section to scroll to.
         """
-        pass
-        
+        proxy_index = self._proxy.mapFromSource(source_index)
+        self._grouped_icon_view.scrollTo(proxy_index)
+
     @Slot()
     def _on_filter_emojis(self) -> None:
         """Filters the emojis across all categories based on the search text."""
