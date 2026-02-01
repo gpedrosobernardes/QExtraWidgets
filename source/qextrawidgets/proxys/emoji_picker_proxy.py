@@ -85,9 +85,7 @@ class QEmojiPickerProxyModel(QSortFilterProxyModel):
         search_term = pattern.lower() if self.filterCaseSensitivity() == Qt.CaseSensitivity.CaseInsensitive else pattern
 
         for alias in aliases:
-            # Strip colons for cleaner searching if user types "smile" instead of ":smile:"
-            clean_alias = alias.replace(":", "")
-            alias_to_check = clean_alias.lower() if self.filterCaseSensitivity() == Qt.CaseSensitivity.CaseInsensitive else clean_alias
+            alias_to_check = alias.lower() if self.filterCaseSensitivity() == Qt.CaseSensitivity.CaseInsensitive else alias
 
             if search_term in alias_to_check:
                 return True
