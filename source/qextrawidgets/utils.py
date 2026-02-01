@@ -63,6 +63,56 @@ def get_max_pixel_size(text: str, font_name: str, target_size: QSize) -> int:
     return max(1, new_pixel_size)
 
 
+from PySide6.QtGui import QPixmap, QPainter, QFont, QColor, QFontMetrics
+from PySide6.QtCore import Qt, QSize
+
+
+def char_to_pixmap(char: str, font: QFont, color: QColor = Qt.GlobalColor.black) -> QPixmap:
+    """
+    Renders a single character from a specific font into a QPixmap.
+
+    Args:
+        char (str): The character to render.
+        font (QFont): The font configuration.
+        color (QColor): The color of the text.
+
+    Returns:
+        QPixmap: A transparent image containing the rendered character.
+    """
+    # 1. Calculate the exact bounding box of the character
+    metrics = QFontMetrics(font)
+    rect = metrics.boundingRect(char)
+
+    # 2. Create a Pixmap with the size of the character
+    # We add a small padding to avoid anti-aliasing clipping
+    width = rect.width()
+    height = rect.height()
+
+    if width == 0 or height == 0:
+        return QPixmap()
+
+    pixmap = QPixmap(width, height)
+    pixmap.fill(Qt.GlobalColor.transparent)
+
+    # 3. Paint the character
+    painter = QPainter(pixmap)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+    painter.setFont(font)
+    painter.setPen(color)
+
+    # 4. Draw text
+    # The rect.left() and rect.top() might be negative (e.g. for 'j' or 'Á'),
+    # so we subtract them to shift the drawing into the visible area (0,0).
+    x_pos = -rect.left()
+    y_pos = -rect.top()
+
+    painter.drawText(x_pos, y_pos, char)
+    painter.end()
+
+    return pixmap
+
+
 class QColorUtils:
     """Utility class for color-related operations."""
 

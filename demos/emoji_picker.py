@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QVBoxLayout,
 from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts
-from qextrawidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
+from qextrawidgets.widgets.emoji_picker import QEmojiPicker
 
 
 class MainWindow(QMainWindow):

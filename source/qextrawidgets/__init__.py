@@ -11,6 +11,6 @@ from .widgets import (
     QSearchLineEdit
 )
 from .documents import QTwemojiTextDocument
-from .proxys import QMultiFilterProxy, EmojiSortFilterProxyModel
+from .proxys import QMultiFilterProxy
 from .validators import QEmojiValidator
 from .delegates import QStandardTwemojiDelegate

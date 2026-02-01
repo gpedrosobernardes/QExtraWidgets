@@ -1,14 +1,12 @@
-import typing
-
 from PySide6.QtCore import QSize, Qt, Signal, QEvent
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy, QWidget
 
 from qextrawidgets.widgets.emoji_picker.emoji_delegate import QEmojiDelegate
-from qextrawidgets.widgets.emoji_picker.emoji_sort_filter import QEmojiSortFilterProxyModel
+from qextrawidgets.proxys.emoji_sort_filter import QEmojiSortFilterProxyModel
 
 
-class QEmojiGrid(QListView):
+class QEmojiGridView(QListView):
     """A customized QListView designed to display emojis in a grid layout.
 
     Signals:
