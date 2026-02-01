@@ -47,6 +47,9 @@ class QEmojiItem(QStandardItem):
         """
         return self.data(QEmojiDataRole.CategoryRole)
 
+    def clone(self, /):
+        return QEmojiItem(self.emoji(), self.alias(), self.category())
+
 
 class QEmojiDataRole(int, Enum):
     """Custom item data roles for emoji-related data in models.

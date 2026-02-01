@@ -1,12 +1,13 @@
 from enum import Enum
 
 from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal
-from PySide6.QtGui import QStandardItemModel
+from PySide6.QtGui import QStandardItemModel, Qt
 from emoji_data_python import emoji_data
 
+from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
-from qextrawidgets.items.emoji_item import QEmojiItem
+from qextrawidgets.items.emoji_item import QEmojiItem, QEmojiDataRole
 from qextrawidgets.views.grouped_icon_view import QGroupedIconView
 
 
@@ -28,7 +29,7 @@ class EmojiCategory(str, Enum):
 class QEmojiPickerModel(QStandardItemModel):
     categoryInserted = Signal(QEmojiCategoryItem)
 
-    def __init__(self, favorite_category: bool = False, recent_category: bool = False):
+    def __init__(self, favorite_category: bool = True, recent_category: bool = True):
         super().__init__()
         self._favorite_category = favorite_category
         self._recent_category = recent_category
@@ -64,6 +65,49 @@ class QEmojiPickerModel(QStandardItemModel):
             category_item.appendRows(emoji_items)
             self.categoryInserted.emit(category_item)
 
+        if self._favorite_category:
+            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Favorites])
+            favorite_category_item = QEmojiCategoryItem(EmojiCategory.Favorites, icon)
+            self.appendRow(favorite_category_item)
+            self.categoryInserted.emit(favorite_category_item)
+
+        if self._recent_category:
+            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Recents])
+            recent_category_item = QEmojiCategoryItem(EmojiCategory.Recents, icon)
+            self.appendRow(recent_category_item)
+            self.categoryInserted.emit(recent_category_item)
+
     def setExpanded(self, value: bool):
         for row in range(self.rowCount()):
             self.setData(self.index(row, 0), value, role=QGroupedIconView.ExpansionStateRole)
+
+    def findEmojiInCategory(self, category_index, emoji):
+        # match(start_index, role, value, hits, flags)
+        # Procuramos a partir do primeiro filho da categoria
+        start_index = self.index(0, 0, category_index)
+
+        # Qt.MatchRecursive permite buscar em toda a profundidade,
+        # mas aqui queremos apenas nos filhos diretos, então não usamos essa flag se não precisarmos.
+        matches = self.match(
+            start_index,
+            Qt.ItemDataRole.EditRole,  # Ou Qt.ItemDataRole.EditRole para o emoji
+            emoji,
+            1,  # Número de resultados (1 para parar no primeiro)
+            Qt.MatchFlag.MatchExactly
+        )
+
+        if matches:
+            return matches[0]  # Retorna o QModelIndex encontrado
+        return None
+
+    def findCategory(self, category: str):
+        start_index = self.index(0, 0)
+        matches = self.match(
+            start_index,
+            QEmojiDataRole.CategoryRole,
+            category,
+            1,
+            Qt.MatchFlag.MatchExactly)
+        if matches:
+            return matches[0]
+        return None
