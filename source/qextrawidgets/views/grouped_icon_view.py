@@ -1,13 +1,14 @@
 from PySide6.QtCore import (
     QModelIndex,
-    QPersistentModelIndex,  # [ADDED] Essential for safety
+    QPersistentModelIndex,
     QSize,
     Qt,
     QRect,
     QPoint,
     QEvent,
     Signal,
-    QAbstractItemModel
+    QAbstractItemModel,
+    QTimer  # [ADDED] Required for debouncing
 )
 from PySide6.QtGui import QCursor, QPainter, QMouseEvent
 from PySide6.QtWidgets import (
@@ -26,8 +27,7 @@ class QGroupedIconView(QAbstractItemView):
     A custom item view that displays categories as headers (accordion style)
     and children items in a grid layout using icons.
 
-    Uses QPersistentModelIndex for internal caching to prevent 0xC0000005 crashes
-    during Proxy Model filtering operations.
+    Uses QPersistentModelIndex for internal caching and QTimer for layout debouncing.
     """
 
     itemEntered = Signal(QModelIndex)
@@ -42,13 +42,18 @@ class QGroupedIconView(QAbstractItemView):
     ):
         super().__init__(parent)
 
-        # [CHANGED] Key is now QPersistentModelIndex to prevent dangling pointers
+        # Cache using Persistent Indices
         self._item_rects: dict[QPersistentModelIndex, QRect] = {}
+
+        # Debounce Timer for Layout Updates
+        # This prevents the view from recalculating layout 1000 times when filtering
+        self._layout_timer = QTimer(self)
+        self._layout_timer.setSingleShot(True)
+        self._layout_timer.setInterval(0)
+        self._layout_timer.timeout.connect(self._execute_delayed_layout)
 
         # View State
         self._expanded_categories: set[str] = set()
-
-        # [CHANGED] Store hover as persistent to avoid holding dead indices
         self._hover_index: QPersistentModelIndex = QPersistentModelIndex()
 
         # Layout Configuration
@@ -75,15 +80,13 @@ class QGroupedIconView(QAbstractItemView):
 
     def setIconSize(self, size: QSize) -> None:
         super().setIconSize(size)
-        self.updateGeometries()
-        self.viewport().update()
+        self._schedule_layout()
 
     def setMargin(self, margin: int) -> None:
         if self._margin == margin:
             return
         self._margin = margin
-        self.updateGeometries()
-        self.viewport().update()
+        self._schedule_layout()
 
     def margin(self) -> int:
         return self._margin
@@ -92,8 +95,7 @@ class QGroupedIconView(QAbstractItemView):
         if self._header_height == height:
             return
         self._header_height = height
-        self.updateGeometries()
-        self.viewport().update()
+        self._schedule_layout()
 
     def headerHeight(self) -> int:
         return self._header_height
@@ -136,17 +138,14 @@ class QGroupedIconView(QAbstractItemView):
         else:
             new_index_temp = QModelIndex()
 
-        # Convert to Persistent for storage comparison
         new_persistent = QPersistentModelIndex(new_index_temp)
 
         if new_persistent != self._hover_index:
-            # Emit exited for previous
             if self._hover_index.isValid():
                 self.itemExited.emit(QModelIndex(self._hover_index))
 
             self._hover_index = new_persistent
 
-            # Emit entered for new
             if self._hover_index.isValid():
                 self.itemEntered.emit(QModelIndex(self._hover_index))
 
@@ -154,12 +153,32 @@ class QGroupedIconView(QAbstractItemView):
                 self.viewport().update()
 
     # -------------------------------------------------------------------------
-    # Safe Cache Management
+    # Layout Scheduling & Cache Management (Optimized)
     # -------------------------------------------------------------------------
 
+    def _schedule_layout(self) -> None:
+        """
+        Schedules a layout update for the next event loop iteration.
+        If called multiple times (e.g. 1000 rowsRemoved), it only triggers once.
+        """
+        if not self._layout_timer.isActive():
+            self._layout_timer.start()
+
+    def _execute_delayed_layout(self) -> None:
+        """
+        Actually performs the heavy layout calculation.
+        """
+        self.updateGeometries()
+        self.viewport().update()
+
     def _clear_cache(self, *args) -> None:
+        """
+        Clears cache immediately for safety, but does NOT trigger a rebuild.
+        Rebuild happens via the scheduled timer or explicit signals.
+        """
         self._item_rects.clear()
-        self._hover_index = QPersistentModelIndex()  # Reset to invalid
+        self._hover_index = QPersistentModelIndex()
+        # Just schedule a repaint (fast), don't recalculate layout here
         self.viewport().update()
 
     def setModel(self, model: Optional[QAbstractItemModel]) -> None:
@@ -182,29 +201,28 @@ class QGroupedIconView(QAbstractItemView):
         super().setModel(model)
 
         if model:
+            # Clear cache immediately on structure change warnings
             model.layoutAboutToBeChanged.connect(self._clear_cache)
             model.rowsAboutToBeRemoved.connect(self._clear_cache)
 
+            # Schedule rebuild on structure change completion
             model.layoutChanged.connect(self._on_layout_changed)
             model.modelReset.connect(self._on_model_reset)
             model.rowsInserted.connect(self._on_rows_inserted)
             model.rowsRemoved.connect(self._on_rows_removed)
 
     def _on_layout_changed(self, *args, **kwargs) -> None:
-        self.updateGeometries()
-        self.viewport().update()
+        self._schedule_layout()
 
     def _on_model_reset(self) -> None:
-        self.updateGeometries()
-        self.viewport().update()
+        self._schedule_layout()
 
     def _on_rows_inserted(self, parent, start, end):
-        self.updateGeometries()
-        self.viewport().update()
+        self._schedule_layout()
 
     def _on_rows_removed(self, parent, start, end):
-        self.updateGeometries()
-        self.viewport().update()
+        # [OPTIMIZED] Now calls schedule instead of immediate update
+        self._schedule_layout()
 
     # -------------------------------------------------------------------------
     # Event Handlers
@@ -223,6 +241,7 @@ class QGroupedIconView(QAbstractItemView):
                 else:
                     self._expanded_categories.add(category_name)
 
+                # Expansion toggle is a user action, immediate feedback is better
                 self.updateGeometries()
                 self.viewport().update()
                 event.accept()
@@ -245,6 +264,7 @@ class QGroupedIconView(QAbstractItemView):
         super().leaveEvent(event)
 
     def paintEvent(self, event: QEvent) -> None:
+        # If cache is empty (e.g. during debounce period), skip painting
         if not self._item_rects:
             return
 
@@ -255,13 +275,11 @@ class QGroupedIconView(QAbstractItemView):
         option = QStyleOptionViewItem()
         option.initFrom(self)
 
-        # Iterate over Persistent Indices
         for p_index, rect in self._item_rects.items():
-            # Check validity securely
             if not p_index.isValid():
                 continue
 
-            # Convert to standard temporary index for painting
+            # Convert to temporary index for delegate
             index = QModelIndex(p_index)
             if not index.isValid():
                 continue
@@ -279,7 +297,6 @@ class QGroupedIconView(QAbstractItemView):
             if self.selectionModel().isSelected(index):
                 option.state |= QStyle.State.State_Selected
 
-            # Compare persistent indices for hover check
             if p_index == self._hover_index:
                 option.state |= QStyle.State.State_MouseOver
 
@@ -315,7 +332,6 @@ class QGroupedIconView(QAbstractItemView):
             cat_name = str(cat_index.data(Qt.ItemDataRole.DisplayRole))
             is_expanded = cat_name in self._expanded_categories
 
-            # [CHANGED] Store as Persistent Index
             self._item_rects[QPersistentModelIndex(cat_index)] = QRect(0, y, width, self._header_height)
             y += self._header_height
 
@@ -331,7 +347,6 @@ class QGroupedIconView(QAbstractItemView):
                             continue
 
                         px = self._margin + (col_current * (item_w + self._margin))
-                        # [CHANGED] Store as Persistent Index
                         self._item_rects[QPersistentModelIndex(child)] = QRect(px, y, item_w, item_h)
 
                         col_current += 1
@@ -352,7 +367,6 @@ class QGroupedIconView(QAbstractItemView):
         super().updateGeometries()
 
     def visualRect(self, index: QModelIndex) -> QRect:
-        # Convert search key to persistent
         p_index = QPersistentModelIndex(index)
         rect = self._item_rects.get(p_index)
         if rect:
@@ -366,7 +380,6 @@ class QGroupedIconView(QAbstractItemView):
         real_point = point + QPoint(0, self.verticalScrollBar().value())
         for p_index, rect in self._item_rects.items():
             if rect.contains(real_point):
-                # Return standard index
                 return QModelIndex(p_index)
         return QModelIndex()
 
