@@ -64,6 +64,7 @@ class QEmojiPicker(QWidget):
         self._search_line_edit = self._create_search_line_edit()
 
         self._grouped_icon_view = QGroupedIconView(self, QSize(40, 40), 5)
+        self._grouped_icon_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self._grouped_icon_view.setModel(self._proxy)
 
         self._search_timer = QTimer(self)
@@ -130,8 +131,58 @@ class QEmojiPicker(QWidget):
         self._model.categoryInserted.connect(self._on_categories_inserted)
         self._grouped_icon_view.itemEntered.connect(self._on_emoji_hover)
         self._grouped_icon_view.itemExited.connect(self._on_clear_emoji_preview)
+        self._grouped_icon_view.customContextMenuRequested.connect(self._on_context_menu)
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
+
+    @Slot(QPoint)
+    def _on_context_menu(self, position: QPoint) -> None:
+        """Handles the context menu for an emoji.
+
+        Args:
+            grid (QEmojiGrid): The grid where the event occurred.
+            position (QPoint): Pixel position.
+        """
+        proxy_index = self._grouped_icon_view.indexAt(position)
+        source_index = self._proxy.mapToSource(proxy_index)
+        item = self._model.itemFromIndex(source_index)
+
+        menu = QMenu(self._grouped_icon_view)
+
+        if isinstance(item, QEmojiCategoryItem):
+            collapse_all_action = menu.addAction(self.tr("Collapse all"))
+            collapse_all_action.triggered.connect(lambda: self._model.setExpanded(False))
+            expand_all_action = menu.addAction(self.tr("Expand all"))
+            expand_all_action.triggered.connect(lambda: self._model.setExpanded(True))
+        else:
+            return
+
+        menu.exec(self._grouped_icon_view.mapToGlobal(position))
+
+        # proxy_index = self._grouped_icon_view.indexAt(position)
+        # source_index = self._proxy.mapToSource(proxy_index)
+        # item: QEmojiItem = self._model.itemFromIndex(source_index)
+        #
+        #
+        #
+        #
+        # if not item:
+        #     return
+
+        # if self.categoryModel().categoryItem(EmojiCategory.Favorites):
+        #     item_favorited = item.data(QEmojiDataRole.FavoriteRole)
+        #
+        #     if item_favorited:
+        #         action = menu.addAction(self.tr("Unfavorite"))
+        #         action.triggered.connect(lambda: self._model.setFavoriteEmoji(item, False))
+        #     else:
+        #         action = menu.addAction(self.tr("Favorite"))
+        #         action.triggered.connect(lambda: self._model.setFavoriteEmoji(item, True))
+        #
+        # copy_alias_action = menu.addAction(self.tr("Copy alias"))
+        # copy_alias_action.triggered.connect(lambda: QApplication.clipboard().setText(item.alias()))
+        #
+        # menu.exec(grid.mapToGlobal(position))
 
     @Slot(QPersistentModelIndex)
     def _on_request_image(self, persistent_index: QPersistentModelIndex):
