@@ -11,6 +11,7 @@ from qextrawidgets.delegates.grouped_icon_delegate import QGroupedIconDelegate
 from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
 from qextrawidgets.models.emoji_picker_model import EmojiCategory, QEmojiPickerModel
+from qextrawidgets.proxys.emoji_picker_proxy import QEmojiPickerProxyModel
 from qextrawidgets.utils import get_max_pixel_size, QEmojiFonts, char_to_pixmap
 from qextrawidgets.views.grouped_icon_view import QGroupedIconView
 from qextrawidgets.widgets.accordion.accordion_item import QAccordionItem
@@ -52,11 +53,13 @@ class QEmojiPicker(QWidget):
             EmojiSkinTone.Dark: "👏🏿"
         }
 
-
         if model:
             self._model = model
         else:
             self._model = QEmojiPickerModel()
+
+        self._proxy = QEmojiPickerProxyModel()
+        self._proxy.setSourceModel(self._model)
 
         self._emoji_pixmap_getter = None
         self.setEmojiPixmapGetter(emoji_pixmap_getter)
@@ -64,7 +67,7 @@ class QEmojiPicker(QWidget):
         self._search_line_edit = self._create_search_line_edit()
 
         self._grouped_icon_view = QGroupedIconView(self, QSize(40, 40), 5)
-        self._grouped_icon_view.setModel(self._model)
+        self._grouped_icon_view.setModel(self._proxy)
 
         self._search_timer = QTimer(self)
         self._search_timer.setSingleShot(True)
@@ -87,7 +90,6 @@ class QEmojiPicker(QWidget):
         self._emoji_label.setScaledContents(True)
 
         self._aliases_emoji_label = self._create_emoji_label()
-        self._emoji_on_label = None
 
         self._setup_layout()
         self._setup_connections()
@@ -124,12 +126,15 @@ class QEmojiPicker(QWidget):
         self._search_line_edit.textChanged.connect(lambda: self._search_timer.start())
 
         self._model.categoryInserted.connect(self._on_categories_inserted)
+        self._grouped_icon_view.itemEntered.connect(self._on_emoji_hover)
+        self._grouped_icon_view.itemExited.connect(self._on_clear_emoji_preview)
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
 
     @Slot(QPersistentModelIndex)
     def _on_request_image(self, persistent_index: QPersistentModelIndex):
-        item: QEmojiItem = self._model.itemFromIndex(persistent_index)
+        source_index = self._proxy.mapToSource(persistent_index)
+        item: QEmojiItem = self._model.itemFromIndex(source_index)
         pixmap = self.emojiPixmapGetter()(item.emoji())
         item.setIcon(pixmap)
 
@@ -168,6 +173,17 @@ class QEmojiPicker(QWidget):
     #         shortcut.deleteLater()
     #         proxy.deleteLater()
 
+    @Slot(QModelIndex)
+    def _on_emoji_hover(self, index: QModelIndex) -> None:
+        source_index = self._proxy.mapToSource(index)
+        item: QEmojiItem = self._model.itemFromIndex(source_index)
+        if isinstance(item, QEmojiItem):
+            pixmap = self.emojiPixmapGetter()(item.emoji())
+            self._emoji_label.setPixmap(pixmap)
+            metrics = QFontMetrics(self._aliases_emoji_label.font())
+            alias = " ".join(f":{a}:" for a in item.alias())
+            elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self._aliases_emoji_label.width())
+            self._aliases_emoji_label.setText(elided_alias)
 
     @Slot(QAccordionItem)
     def _on_shortcut_clicked(self, section: QAccordionItem) -> None:
@@ -182,13 +198,12 @@ class QEmojiPicker(QWidget):
     def _on_filter_emojis(self) -> None:
         """Filters the emojis across all categories based on the search text."""
         text = self._search_line_edit.text()
+        self._proxy.setFilterFixedString(text)
 
     @Slot()
     def _on_clear_emoji_preview(self) -> None:
         """Clears the emoji preview area."""
-        self._emoji_on_label = None
         self._emoji_label.clear()
-        self.__current_alias = ""
         self._aliases_emoji_label.clear()
 
     @staticmethod

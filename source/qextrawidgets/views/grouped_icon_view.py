@@ -1,4 +1,12 @@
-from PySide6.QtCore import QModelIndex, QSize, Qt, QRect, QPoint, QEvent
+from PySide6.QtCore import (
+    QModelIndex,
+    QSize,
+    Qt,
+    QRect,
+    QPoint,
+    QEvent,
+    Signal  # [CHANGED] Added Signal import
+)
 from PySide6.QtGui import QCursor, QPainter, QMouseEvent
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -17,12 +25,18 @@ class QGroupedIconView(QAbstractItemView):
     and children items in a grid layout using icons.
 
     Attributes:
+        itemEntered (Signal): Emitted when the mouse enters an item (QModelIndex).
+        itemExited (Signal): Emitted when the mouse leaves an item (QModelIndex).
         _item_rects (dict): Cache of visual rectangles for indices.
         _expanded_rows (set): Set of row numbers (categories) that are currently expanded.
         _hover_index (QModelIndex): The index currently under the mouse cursor.
         _margin (int): Margin between items.
         _header_height (int): Height of the category headers.
     """
+
+    # [CHANGED] Signal Definitions
+    itemEntered = Signal(QModelIndex)
+    itemExited = Signal(QModelIndex)
 
     def __init__(
             self,
@@ -70,13 +84,6 @@ class QGroupedIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
     # Public API (Getters & Setters)
     # -------------------------------------------------------------------------
-
-    # Note: setIconSize() and iconSize() are already inherited from QAbstractItemView.
-    # We override them only if we need to trigger specific updates,
-    # but QAbstractItemView usually handles the signal emission.
-    # For safety with our custom layout, we can hook into the change if needed,
-    # but usually calling updateGeometries() manually after setting is enough
-    # if the parent class doesn't trigger a layout change automatically for custom views.
 
     def setIconSize(self, size: QSize) -> None:
         """
@@ -171,8 +178,18 @@ class QGroupedIconView(QAbstractItemView):
         else:
             new_index = QModelIndex()
 
+        # [CHANGED] Signal emission logic
         if new_index != self._hover_index:
+            # Emit exited for the previous valid item
+            if self._hover_index.isValid():
+                self.itemExited.emit(self._hover_index)
+
             self._hover_index = new_index
+
+            # Emit entered for the new valid item
+            if self._hover_index.isValid():
+                self.itemEntered.emit(self._hover_index)
+
             if not self.verticalScrollBar().isSliderDown():
                 self.viewport().update()
 
@@ -215,6 +232,10 @@ class QGroupedIconView(QAbstractItemView):
         super().mouseMoveEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
+        # [CHANGED] Emit exit signal when mouse leaves the widget entirely
+        if self._hover_index.isValid():
+            self.itemExited.emit(self._hover_index)
+
         self._hover_index = QModelIndex()
         self.viewport().update()
         super().leaveEvent(event)

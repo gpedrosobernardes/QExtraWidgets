@@ -1,7 +1,7 @@
 from enum import Enum
 
 from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal
-from PySide6.QtGui import QStandardItemModel, QIcon
+from PySide6.QtGui import QStandardItemModel
 from emoji_data_python import emoji_data
 
 from qextrawidgets.icons import QThemeResponsiveIcon
