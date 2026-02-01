@@ -231,14 +231,11 @@ class QGroupedIconView(QAbstractItemView):
 
         index = self.indexAt(event.position().toPoint())
 
-        if index.isValid():
+        if index.isValid() and event.button() == Qt.MouseButton.LeftButton:
             if self._is_category(index):
                 current_state = bool(index.data(self.ExpansionStateRole))
                 self.model().setData(index, not current_state, self.ExpansionStateRole)
                 event.accept()
-                return
-            elif self._is_item(index):
-                super().mousePressEvent(event)
                 return
 
         super().mousePressEvent(event)
