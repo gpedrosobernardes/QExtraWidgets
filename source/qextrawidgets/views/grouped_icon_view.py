@@ -8,7 +8,7 @@ from PySide6.QtCore import (
     QEvent,
     Signal,
     QAbstractItemModel,
-    QTimer  # [ADDED] Required for debouncing
+    QTimer
 )
 from PySide6.QtGui import QCursor, QPainter, QMouseEvent
 from PySide6.QtWidgets import (
@@ -28,10 +28,14 @@ class QGroupedIconView(QAbstractItemView):
     and children items in a grid layout using icons.
 
     Uses QPersistentModelIndex for internal caching and QTimer for layout debouncing.
+    The expansion state is stored in the model using ExpansionStateRole.
     """
 
     itemEntered = Signal(QModelIndex)
     itemExited = Signal(QModelIndex)
+
+    # Custom Role to store the expansion state in the model items
+    ExpansionStateRole = Qt.ItemDataRole.UserRole + 100
 
     def __init__(
             self,
@@ -46,14 +50,12 @@ class QGroupedIconView(QAbstractItemView):
         self._item_rects: dict[QPersistentModelIndex, QRect] = {}
 
         # Debounce Timer for Layout Updates
-        # This prevents the view from recalculating layout 1000 times when filtering
         self._layout_timer = QTimer(self)
         self._layout_timer.setSingleShot(True)
         self._layout_timer.setInterval(0)
         self._layout_timer.timeout.connect(self._execute_delayed_layout)
 
         # View State
-        self._expanded_categories: set[str] = set()
         self._hover_index: QPersistentModelIndex = QPersistentModelIndex()
 
         # Layout Configuration
@@ -67,6 +69,9 @@ class QGroupedIconView(QAbstractItemView):
         self.viewport().setMouseTracking(True)
         self.viewport().setAttribute(Qt.WidgetAttribute.WA_Hover)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+
+        # Disable default AutoScroll to prevent unintentional scrolling on click-drag
+        self.setAutoScroll(False)
 
         # Connect Scroll Signals
         self.verticalScrollBar().valueChanged.connect(self._on_scroll_value_changed)
@@ -101,6 +106,9 @@ class QGroupedIconView(QAbstractItemView):
         return self._header_height
 
     def isRowExpanded(self, row: int) -> bool:
+        """
+        Checks if a specific category row is expanded by querying the model.
+        """
         if not self._item_rects or not self.model():
             return False
 
@@ -109,8 +117,7 @@ class QGroupedIconView(QAbstractItemView):
             return False
 
         index = self.model().index(row, 0, root)
-        category_name = str(index.data(Qt.ItemDataRole.DisplayRole))
-        return category_name in self._expanded_categories
+        return bool(index.data(self.ExpansionStateRole))
 
     # -------------------------------------------------------------------------
     # Internal Logic Helpers
@@ -153,32 +160,20 @@ class QGroupedIconView(QAbstractItemView):
                 self.viewport().update()
 
     # -------------------------------------------------------------------------
-    # Layout Scheduling & Cache Management (Optimized)
+    # Layout Scheduling & Cache Management
     # -------------------------------------------------------------------------
 
     def _schedule_layout(self) -> None:
-        """
-        Schedules a layout update for the next event loop iteration.
-        If called multiple times (e.g. 1000 rowsRemoved), it only triggers once.
-        """
         if not self._layout_timer.isActive():
             self._layout_timer.start()
 
     def _execute_delayed_layout(self) -> None:
-        """
-        Actually performs the heavy layout calculation.
-        """
         self.updateGeometries()
         self.viewport().update()
 
     def _clear_cache(self, *args) -> None:
-        """
-        Clears cache immediately for safety, but does NOT trigger a rebuild.
-        Rebuild happens via the scheduled timer or explicit signals.
-        """
         self._item_rects.clear()
         self._hover_index = QPersistentModelIndex()
-        # Just schedule a repaint (fast), don't recalculate layout here
         self.viewport().update()
 
     def setModel(self, model: Optional[QAbstractItemModel]) -> None:
@@ -192,6 +187,7 @@ class QGroupedIconView(QAbstractItemView):
                 current_model.modelReset.disconnect(self._on_model_reset)
                 current_model.rowsInserted.disconnect(self._on_rows_inserted)
                 current_model.rowsRemoved.disconnect(self._on_rows_removed)
+                current_model.dataChanged.disconnect(self._on_data_changed)
 
                 current_model.layoutAboutToBeChanged.disconnect(self._clear_cache)
                 current_model.rowsAboutToBeRemoved.disconnect(self._clear_cache)
@@ -201,15 +197,14 @@ class QGroupedIconView(QAbstractItemView):
         super().setModel(model)
 
         if model:
-            # Clear cache immediately on structure change warnings
             model.layoutAboutToBeChanged.connect(self._clear_cache)
             model.rowsAboutToBeRemoved.connect(self._clear_cache)
 
-            # Schedule rebuild on structure change completion
             model.layoutChanged.connect(self._on_layout_changed)
             model.modelReset.connect(self._on_model_reset)
             model.rowsInserted.connect(self._on_rows_inserted)
             model.rowsRemoved.connect(self._on_rows_removed)
+            model.dataChanged.connect(self._on_data_changed)
 
     def _on_layout_changed(self, *args, **kwargs) -> None:
         self._schedule_layout()
@@ -221,8 +216,11 @@ class QGroupedIconView(QAbstractItemView):
         self._schedule_layout()
 
     def _on_rows_removed(self, parent, start, end):
-        # [OPTIMIZED] Now calls schedule instead of immediate update
         self._schedule_layout()
+
+    def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int] = []) -> None:
+        if not roles or self.ExpansionStateRole in roles:
+            self._schedule_layout()
 
     # -------------------------------------------------------------------------
     # Event Handlers
@@ -235,15 +233,8 @@ class QGroupedIconView(QAbstractItemView):
 
         if index.isValid():
             if self._is_category(index):
-                category_name = str(index.data(Qt.ItemDataRole.DisplayRole))
-                if category_name in self._expanded_categories:
-                    self._expanded_categories.remove(category_name)
-                else:
-                    self._expanded_categories.add(category_name)
-
-                # Expansion toggle is a user action, immediate feedback is better
-                self.updateGeometries()
-                self.viewport().update()
+                current_state = bool(index.data(self.ExpansionStateRole))
+                self.model().setData(index, not current_state, self.ExpansionStateRole)
                 event.accept()
                 return
             elif self._is_item(index):
@@ -264,7 +255,6 @@ class QGroupedIconView(QAbstractItemView):
         super().leaveEvent(event)
 
     def paintEvent(self, event: QEvent) -> None:
-        # If cache is empty (e.g. during debounce period), skip painting
         if not self._item_rects:
             return
 
@@ -279,7 +269,6 @@ class QGroupedIconView(QAbstractItemView):
             if not p_index.isValid():
                 continue
 
-            # Convert to temporary index for delegate
             index = QModelIndex(p_index)
             if not index.isValid():
                 continue
@@ -329,8 +318,7 @@ class QGroupedIconView(QAbstractItemView):
             if not cat_index.isValid():
                 continue
 
-            cat_name = str(cat_index.data(Qt.ItemDataRole.DisplayRole))
-            is_expanded = cat_name in self._expanded_categories
+            is_expanded = bool(cat_index.data(self.ExpansionStateRole))
 
             self._item_rects[QPersistentModelIndex(cat_index)] = QRect(0, y, width, self._header_height)
             y += self._header_height
@@ -386,8 +374,37 @@ class QGroupedIconView(QAbstractItemView):
     def scrollTo(self, index: QModelIndex, hint=QAbstractItemView.ScrollHint.EnsureVisible) -> None:
         p_index = QPersistentModelIndex(index)
         rect = self._item_rects.get(p_index)
-        if rect:
+        if not rect:
+            return
+
+        # [CHANGED] Hybrid Behavior:
+        # 1. Categories: Always force scroll to top (Classic Behavior).
+        if self._is_category(index):
             self.verticalScrollBar().setValue(rect.y())
+            return
+
+        # 2. Items: Smart scroll (New Behavior) - Only scroll if needed.
+        scroll_val = self.verticalScrollBar().value()
+        viewport_height = self.viewport().height()
+
+        item_top = rect.y()
+        item_bottom = rect.bottom()
+
+        if hint == QAbstractItemView.ScrollHint.EnsureVisible:
+            if item_top < scroll_val:
+                self.verticalScrollBar().setValue(item_top)
+            elif item_bottom > scroll_val + viewport_height:
+                self.verticalScrollBar().setValue(item_bottom - viewport_height)
+
+        elif hint == QAbstractItemView.ScrollHint.PositionAtTop:
+            self.verticalScrollBar().setValue(item_top)
+
+        elif hint == QAbstractItemView.ScrollHint.PositionAtBottom:
+            self.verticalScrollBar().setValue(item_bottom - viewport_height)
+
+        elif hint == QAbstractItemView.ScrollHint.PositionAtCenter:
+            center_target = item_top - (viewport_height / 2) + (rect.height() / 2)
+            self.verticalScrollBar().setValue(center_target)
 
     # -------------------------------------------------------------------------
     # Abstract Stubs

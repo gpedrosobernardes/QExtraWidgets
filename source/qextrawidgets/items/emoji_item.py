@@ -21,6 +21,7 @@ class QEmojiItem(QStandardItem):
         self.setData(alias, QEmojiDataRole.AliasRole)
         if category:
             self.setData(category, QEmojiDataRole.CategoryRole)
+        self.setEditable(False)
 
     def emoji(self) -> str:
         """Returns the emoji character.

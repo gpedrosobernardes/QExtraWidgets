@@ -7,6 +7,7 @@ from emoji_data_python import emoji_data
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
 from qextrawidgets.items.emoji_item import QEmojiItem
+from qextrawidgets.views.grouped_icon_view import QGroupedIconView
 
 
 class EmojiCategory(str, Enum):
@@ -62,3 +63,7 @@ class QEmojiPickerModel(QStandardItemModel):
             self.appendRow(category_item)
             category_item.appendRows(emoji_items)
             self.categoryInserted.emit(category_item)
+
+    def setExpanded(self, value: bool):
+        for row in range(self.rowCount()):
+            self.setData(self.index(row, 0), value, role=QGroupedIconView.ExpansionStateRole)
