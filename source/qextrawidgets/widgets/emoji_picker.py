@@ -61,9 +61,6 @@ class QEmojiPicker(QWidget):
         self._proxy = QEmojiPickerProxyModel()
         self._proxy.setSourceModel(self._model)
 
-        self._emoji_pixmap_getter = None
-        self.setEmojiPixmapGetter(emoji_pixmap_getter)
-
         self._search_line_edit = self._create_search_line_edit()
 
         self._grouped_icon_view = QGroupedIconView(self, QSize(40, 40), 5)
@@ -84,6 +81,8 @@ class QEmojiPicker(QWidget):
         self._shortcuts_group = QButtonGroup(self)
         self._shortcuts_group.setExclusive(True)
 
+        self._emoji_on_label = None
+
         self._emoji_label = QLabel()
         self._emoji_label.setFixedSize(emoji_label_size)
         self._emoji_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -96,6 +95,9 @@ class QEmojiPicker(QWidget):
 
         if model is None:
             self._model.populate()
+
+        self._emoji_pixmap_getter = None
+        self.setEmojiPixmapGetter(emoji_pixmap_getter)
 
         self.translateUI()
 
@@ -178,8 +180,8 @@ class QEmojiPicker(QWidget):
         source_index = self._proxy.mapToSource(index)
         item: QEmojiItem = self._model.itemFromIndex(source_index)
         if isinstance(item, QEmojiItem):
-            pixmap = self.emojiPixmapGetter()(item.emoji())
-            self._emoji_label.setPixmap(pixmap)
+            self._emoji_on_label = item.emoji()
+            self._paint_emoji_on_label()
             metrics = QFontMetrics(self._aliases_emoji_label.font())
             alias = " ".join(f":{a}:" for a in item.alias())
             elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self._aliases_emoji_label.width())
@@ -205,6 +207,7 @@ class QEmojiPicker(QWidget):
         """Clears the emoji preview area."""
         self._emoji_label.clear()
         self._aliases_emoji_label.clear()
+        self._emoji_on_label = None
 
     @staticmethod
     def _create_search_line_edit() -> QLineEdit:
@@ -254,6 +257,16 @@ class QEmojiPicker(QWidget):
         btn.setIcon(icon)
         return btn
 
+    def _paint_emoji_on_label(self):
+        if self._emoji_on_label:
+            pixmap = self.emojiPixmapGetter()(self._emoji_on_label)
+            self._emoji_label.setPixmap(pixmap)
+
+    def _paint_skintones(self):
+        emoji_pixmap_getter = self.emojiPixmapGetter()
+        for index, emoji in enumerate(self._skin_tone_selector_emojis.values()):
+            self._skin_tone_selector.setItemIcon(index, emoji_pixmap_getter(emoji))
+
     # --- Public API (camelCase) ---
 
     def translateUI(self) -> None:
@@ -279,6 +292,9 @@ class QEmojiPicker(QWidget):
             self._emoji_pixmap_getter = partial(char_to_pixmap, font=emoji_font)
         else:
             self._emoji_pixmap_getter = emoji_pixmap_getter
+
+        self._paint_emoji_on_label()
+        self._paint_skintones()
 
     def emojiPixmapGetter(self):
         return self._emoji_pixmap_getter
