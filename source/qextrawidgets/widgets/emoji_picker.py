@@ -168,35 +168,14 @@ class QEmojiPicker(QWidget):
                     clone_item = item.clone()
                     clone_item.setData(EmojiCategory.Favorites, role=QEmojiDataRole.CategoryRole)
                     action.triggered.connect(lambda: favorite_category_item.appendRow(clone_item))
+
+            copy_alias_action = menu.addAction(self.tr("Copy alias"))
+            clipboard = QApplication.clipboard()
+            copy_alias_action.triggered.connect(lambda: clipboard.setText(item.firstAlias()))
         else:
             return
 
         menu.exec(self._grouped_icon_view.mapToGlobal(position))
-
-        # proxy_index = self._grouped_icon_view.indexAt(position)
-        # source_index = self._proxy.mapToSource(proxy_index)
-        # item: QEmojiItem = self._model.itemFromIndex(source_index)
-        #
-        #
-        #
-        #
-        # if not item:
-        #     return
-
-        # if self.categoryModel().categoryItem(EmojiCategory.Favorites):
-        #     item_favorited = item.data(QEmojiDataRole.FavoriteRole)
-        #
-        #     if item_favorited:
-        #         action = menu.addAction(self.tr("Unfavorite"))
-        #         action.triggered.connect(lambda: self._model.setFavoriteEmoji(item, False))
-        #     else:
-        #         action = menu.addAction(self.tr("Favorite"))
-        #         action.triggered.connect(lambda: self._model.setFavoriteEmoji(item, True))
-        #
-        # copy_alias_action = menu.addAction(self.tr("Copy alias"))
-        # copy_alias_action.triggered.connect(lambda: QApplication.clipboard().setText(item.alias()))
-        #
-        # menu.exec(grid.mapToGlobal(position))
 
     @Slot(QPersistentModelIndex)
     def _on_request_image(self, persistent_index: QPersistentModelIndex):
@@ -250,8 +229,8 @@ class QEmojiPicker(QWidget):
             self._emoji_on_label = item.emoji()
             self._paint_emoji_on_label()
             metrics = QFontMetrics(self._aliases_emoji_label.font())
-            alias = " ".join(f":{a}:" for a in item.alias())
-            elided_alias = metrics.elidedText(alias, Qt.TextElideMode.ElideRight, self._aliases_emoji_label.width())
+            aliases_text = item.aliasesText()
+            elided_alias = metrics.elidedText(aliases_text, Qt.TextElideMode.ElideRight, self._aliases_emoji_label.width())
             self._aliases_emoji_label.setText(elided_alias)
 
     @Slot(QModelIndex)

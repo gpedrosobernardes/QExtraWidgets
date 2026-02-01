@@ -31,13 +31,19 @@ class QEmojiItem(QStandardItem):
         """
         return self.data(Qt.ItemDataRole.EditRole)
 
-    def alias(self) -> typing.List[str]:
+    def rawAlias(self) -> typing.List[str]:
         """Returns the text alias.
 
         Returns:
             str: The text alias.
         """
         return self.data(QEmojiDataRole.AliasRole)
+
+    def aliasesText(self) -> str:
+        return " ".join(f":{a}:" for a in self.rawAlias())
+
+    def firstAlias(self) -> str:
+        return self.rawAlias()[0]
 
     def category(self) -> typing.Optional[str]:
         """Returns the category.
@@ -48,7 +54,7 @@ class QEmojiItem(QStandardItem):
         return self.data(QEmojiDataRole.CategoryRole)
 
     def clone(self, /):
-        return QEmojiItem(self.emoji(), self.alias(), self.category())
+        return QEmojiItem(self.emoji(), self.rawAlias(), self.category())
 
 
 class QEmojiDataRole(int, Enum):
