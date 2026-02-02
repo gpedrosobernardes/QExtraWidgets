@@ -47,6 +47,11 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         """
         self._requested_indices.clear()
 
+    def forceReload(self, index: QModelIndex):
+        persistent_index = QPersistentModelIndex(index)
+        if persistent_index in self._requested_indices:
+            self._requested_indices.remove(persistent_index)
+
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         painter.save()
 

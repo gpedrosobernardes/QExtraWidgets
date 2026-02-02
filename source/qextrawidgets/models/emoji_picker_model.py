@@ -1,13 +1,13 @@
+import typing
 from enum import Enum
 
-from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal
+from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal, QModelIndex
 from PySide6.QtGui import QStandardItemModel, Qt
-from emoji_data_python import emoji_data
+from emoji_data_python import emoji_data, EmojiChar
 
-from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
-from qextrawidgets.items.emoji_item import QEmojiItem, QEmojiDataRole
+from qextrawidgets.items.emoji_item import QEmojiItem, QEmojiDataRole, EmojiSkinTone
 from qextrawidgets.views.grouped_icon_view import QGroupedIconView
 
 
@@ -28,6 +28,8 @@ class EmojiCategory(str, Enum):
 
 class QEmojiPickerModel(QStandardItemModel):
     categoryInserted = Signal(QEmojiCategoryItem)
+    skinToneChanged = Signal(QModelIndex)
+    _emojis_skin_modifier_compatible = {}
 
     def __init__(self, favorite_category: bool = True, recent_category: bool = True):
         super().__init__()
@@ -35,6 +37,8 @@ class QEmojiPickerModel(QStandardItemModel):
         self._recent_category = recent_category
 
     def populate(self):
+        self._emojis_skin_modifier_compatible.clear()
+
         icons = {
             EmojiCategory.Activities: "fa6s.gamepad",
             EmojiCategory.FoodAndDrink: "fa6s.bowl-food",
@@ -53,10 +57,15 @@ class QEmojiPickerModel(QStandardItemModel):
 
         for emoji_char in sorted(emoji_data, key=lambda e: e.sort_order):
             if emoji_char.category != "Component":
-                item = QEmojiItem(emoji_char.char, emoji_char.short_names)
+                item = QEmojiItem(emoji_char)
                 if emoji_char.category not in emoji_grouped_by_category:
                     emoji_grouped_by_category[emoji_char.category] = []
                 emoji_grouped_by_category[emoji_char.category].append(item)
+                support_skin_modifiers = QEmojiItem.skinToneCompatible(emoji_char)
+                if support_skin_modifiers:
+                    if emoji_char.category not in self._emojis_skin_modifier_compatible:
+                        self._emojis_skin_modifier_compatible[emoji_char.category] = []
+                    self._emojis_skin_modifier_compatible[emoji_char.category].append(emoji_char.char)
 
         if self._recent_category:
             icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Recents])
@@ -90,7 +99,7 @@ class QEmojiPickerModel(QStandardItemModel):
         # mas aqui queremos apenas nos filhos diretos, então não usamos essa flag se não precisarmos.
         matches = self.match(
             start_index,
-            Qt.ItemDataRole.EditRole,  # Ou Qt.ItemDataRole.EditRole para o emoji
+            QEmojiDataRole.EmojiRole,  # Ou Qt.ItemDataRole.EditRole para o emoji
             emoji,
             1,  # Número de resultados (1 para parar no primeiro)
             Qt.MatchFlag.MatchExactly
@@ -111,3 +120,18 @@ class QEmojiPickerModel(QStandardItemModel):
         if matches:
             return matches[0]
         return None
+
+    def setSkinTone(self, skin_tone: str):
+        for category, emojis_with_skin_modifier in self._emojis_skin_modifier_compatible.items():
+            category_index = self.findCategory(category)
+            if not category_index:
+                return
+
+            for emoji in emojis_with_skin_modifier:
+                emoji_index = self.findEmojiInCategory(category_index, emoji)
+                if not emoji_index:
+                    continue
+
+                emoji_item = self.itemFromIndex(emoji_index)
+                emoji_item.setData(skin_tone, QEmojiDataRole.SkinToneRole)
+                self.skinToneChanged.emit(emoji_index)

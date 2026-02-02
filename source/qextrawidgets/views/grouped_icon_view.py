@@ -220,8 +220,12 @@ class QGroupedIconView(QAbstractItemView):
         self._schedule_layout()
 
     def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int] = []) -> None:
+        # Se for uma mudança estrutural ou de expansão, recalcula o layout
         if not roles or self.ExpansionStateRole in roles:
             self._schedule_layout()
+        # [CRUCIAL] Se for uma mudança de dados (como o ícone chegando), força a repintura!
+        else:
+            self.viewport().update()
 
     # -------------------------------------------------------------------------
     # Event Handlers

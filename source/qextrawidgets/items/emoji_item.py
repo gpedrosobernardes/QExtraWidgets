@@ -1,27 +1,64 @@
-import typing
 from enum import Enum
 
 from PySide6.QtGui import QStandardItem, Qt
 from emoji_data_python import EmojiChar
 
 
+class EmojiSkinTone(str, Enum):
+    """Skin tone modifiers (Fitzpatrick scale) supported by Unicode.
+
+    Inherits from 'str' to facilitate direct concatenation with base emojis.
+
+    Attributes:
+        Default: Default skin tone (usually yellow/neutral). No modifier.
+        Light: Type 1-2: Light skin tone.
+        MediumLight: Type 3: Medium-light skin tone.
+        Medium: Type 4: Medium skin tone.
+        MediumDark: Type 5: Medium-dark skin tone.
+        Dark: Type 6: Dark skin tone.
+    """
+
+    # Default (Generally Yellow/Neutral) - Adds no code
+    Default = ""
+
+    # Type 1-2: Light Skin
+    Light = "1F3FB"  # 🏻
+
+    # Type 3: Medium-Light Skin
+    MediumLight = "1F3FC"  # 🏼
+
+    # Type 4: Medium Skin
+    Medium = "1F3FD"  # 🏽
+
+    # Type 5: Medium-Dark Skin
+    MediumDark = "1F3FE"  # 🏾
+
+    # Type 6: Dark Skin
+    Dark = "1F3FF"  # 🏿
+
+
 class QEmojiItem(QStandardItem):
     """A standard item representing a single emoji in the model."""
 
-    def __init__(self, emoji: str, alias: typing.List[str], category: typing.Optional[str] = None):
-        """Initializes the emoji item.
-
-        Args:
-            emoji (str): The emoji character.
-            alias (str): The text alias (e.g., ":smile:").
-            category (str): The category the emoji belongs to.
-        """
-        super().__init__(emoji)
-        self.setData(emoji, Qt.ItemDataRole.EditRole)
-        self.setData(alias, QEmojiDataRole.AliasRole)
-        if category:
-            self.setData(category, QEmojiDataRole.CategoryRole)
+    def __init__(self, emoji_char: EmojiChar, skin_tone: str = ""):
+        super().__init__()
+        self.setData(emoji_char, Qt.ItemDataRole.UserRole)
+        self.setData(skin_tone, QEmojiDataRole.SkinToneRole)
         self.setEditable(False)
+
+    def emojiChar(self) -> EmojiChar:
+        return self.data(Qt.ItemDataRole.UserRole)
+
+    def coloredEmojiChar(self) -> EmojiChar:
+        emoji_char = self.emojiChar()
+        skin_tone = self.skinTone()
+        if skin_tone and self.skinToneCompatible(emoji_char) and skin_tone in emoji_char.skin_variations:
+            return emoji_char.skin_variations[skin_tone]
+        return emoji_char
+
+    @staticmethod
+    def skinToneCompatible(emoji_char: EmojiChar) -> bool:
+        return any(skin_tone in emoji_char.skin_variations for skin_tone in EmojiSkinTone)
 
     def emoji(self) -> str:
         """Returns the emoji character.
@@ -29,40 +66,34 @@ class QEmojiItem(QStandardItem):
         Returns:
             str: The emoji character.
         """
-        return self.data(Qt.ItemDataRole.EditRole)
+        return self.coloredEmojiChar().char
 
-    def rawAlias(self) -> typing.List[str]:
-        """Returns the text alias.
-
-        Returns:
-            str: The text alias.
-        """
-        return self.data(QEmojiDataRole.AliasRole)
+    def shortNames(self):
+        return self.emojiChar().short_names
 
     def aliasesText(self) -> str:
-        return " ".join(f":{a}:" for a in self.rawAlias())
+        return " ".join(f":{a}:" for a in self.shortNames())
 
     def firstAlias(self) -> str:
-        return self.rawAlias()[0]
+        return self.shortNames()[0]
 
-    def category(self) -> typing.Optional[str]:
-        """Returns the category.
-
-        Returns:
-            str: The category.
-        """
-        return self.data(QEmojiDataRole.CategoryRole)
+    def skinTone(self) -> str:
+        return self.data(QEmojiDataRole.SkinToneRole)
 
     def clone(self, /):
-        return QEmojiItem(self.emoji(), self.rawAlias(), self.category())
+        return QEmojiItem(self.emojiChar(), self.skinTone())
+
+    def data(self, /, role = ...):
+        if role == QEmojiDataRole.CategoryRole:
+            return self.emojiChar().category
+
+        if role == QEmojiDataRole.EmojiRole:
+            return self.emoji()
+
+        return super().data(role)
 
 
 class QEmojiDataRole(int, Enum):
-    """Custom item data roles for emoji-related data in models.
-
-    Attributes:
-        AliasRole: Role for emoji text aliases (e.g., ":smile:").
-        CategoryRole: Role for emoji category names.
-    """
-    AliasRole = Qt.ItemDataRole.UserRole + 1
+    SkinToneRole = Qt.ItemDataRole.UserRole + 1
     CategoryRole = Qt.ItemDataRole.UserRole + 2
+    EmojiRole = Qt.ItemDataRole.UserRole + 3

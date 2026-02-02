@@ -1,5 +1,4 @@
 import typing
-from enum import Enum
 from functools import partial
 
 from PySide6.QtCore import QSize, QModelIndex, Signal, QPoint, Qt, QTimer, Slot, QPersistentModelIndex
@@ -12,11 +11,10 @@ from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
 from qextrawidgets.models.emoji_picker_model import EmojiCategory, QEmojiPickerModel
 from qextrawidgets.proxys.emoji_picker_proxy import QEmojiPickerProxyModel
-from qextrawidgets.utils import get_max_pixel_size, QEmojiFonts, char_to_pixmap
+from qextrawidgets.utils import char_to_pixmap
 from qextrawidgets.views.grouped_icon_view import QGroupedIconView
 from qextrawidgets.widgets.accordion.accordion_item import QAccordionItem
-from qextrawidgets.proxys.emoji_sort_filter import QEmojiSortFilterProxyModel
-from qextrawidgets.items.emoji_item import QEmojiDataRole, QEmojiItem
+from qextrawidgets.items.emoji_item import QEmojiDataRole, QEmojiItem, EmojiSkinTone
 from qextrawidgets.widgets.icon_combo_box import QIconComboBox
 from qextrawidgets.widgets.search_line_edit import QSearchLineEdit
 
@@ -134,8 +132,22 @@ class QEmojiPicker(QWidget):
         self._grouped_icon_view.itemClicked.connect(self._on_item_clicked)
         self._grouped_icon_view.customContextMenuRequested.connect(self._on_context_menu)
 
+        self._skin_tone_selector.currentDataChanged.connect(self._on_set_skin_tone)
+
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
+
+        self._model.skinToneChanged.connect(delegate.forceReload)
+
+    @Slot(str)
+    def _on_set_skin_tone(self, skin_tone: str) -> None:
+        """Updates the skin tone of the emojis.
+
+        Args:
+            skin_tone (str): Skin tone modifier.
+        """
+        print(skin_tone)
+        self._model.setSkinTone(skin_tone)
 
     @Slot(QModelIndex)
     def _on_item_clicked(self, proxy_index: QModelIndex):
@@ -195,10 +207,30 @@ class QEmojiPicker(QWidget):
 
     @Slot(QPersistentModelIndex)
     def _on_request_image(self, persistent_index: QPersistentModelIndex):
-        source_index = self._proxy.mapToSource(persistent_index)
+        # 1. Converta explicitamente para QModelIndex (Segurança de Tipo)
+        proxy_index = QModelIndex(persistent_index)
+
+        if not proxy_index.isValid():
+            return
+
+        # 2. Mapeia do Proxy para o Modelo Original
+        source_index = self._proxy.mapToSource(proxy_index)
+
+        if not source_index.isValid():
+            return
+
+        # 3. Busca o item e define a imagem
         item: QEmojiItem = self._model.itemFromIndex(source_index)
-        pixmap = self.emojiPixmapGetter()(item.emoji())
-        item.setIcon(pixmap)
+        if item:
+            # Gera o pixmap
+            pixmap = self.emojiPixmapGetter()(item.emoji())
+
+            # Debug: Garante que o pixmap foi gerado
+            if pixmap.isNull():
+                print(f"ALERTA: Pixmap nulo gerado para {item.emoji()}")
+
+            # Seta o ícone (Isso dispara o dataChanged no model -> proxy -> view)
+            item.setIcon(pixmap)
 
     @Slot(QEmojiCategoryItem)
     def _on_categories_inserted(self, category_item: QEmojiCategoryItem) -> None:
@@ -361,38 +393,3 @@ class QEmojiPicker(QWidget):
 
     def emojiPixmapGetter(self):
         return self._emoji_pixmap_getter
-
-
-class EmojiSkinTone(str, Enum):
-    """Skin tone modifiers (Fitzpatrick scale) supported by Unicode.
-
-    Inherits from 'str' to facilitate direct concatenation with base emojis.
-
-    Attributes:
-        Default: Default skin tone (usually yellow/neutral). No modifier.
-        Light: Type 1-2: Light skin tone.
-        MediumLight: Type 3: Medium-light skin tone.
-        Medium: Type 4: Medium skin tone.
-        MediumDark: Type 5: Medium-dark skin tone.
-        Dark: Type 6: Dark skin tone.
-    """
-
-    # Default (Generally Yellow/Neutral) - Adds no code
-    Default = ""
-
-    # Type 1-2: Light Skin
-    Light = "1F3FB"  # 🏻
-
-    # Type 3: Medium-Light Skin
-    MediumLight = "1F3FC"  # 🏼
-
-    # Type 4: Medium Skin
-    Medium = "1F3FD"  # 🏽
-
-    # Type 5: Medium-Dark Skin
-    MediumDark = "1F3FE"  # 🏾
-
-    # Type 6: Dark Skin
-    Dark = "1F3FF"  # 🏿
-
-
