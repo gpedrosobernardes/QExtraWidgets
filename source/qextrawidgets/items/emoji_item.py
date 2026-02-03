@@ -90,6 +90,9 @@ class QEmojiItem(QStandardItem):
         if role == QEmojiDataRole.EmojiRole:
             return self.emojiChar().char
 
+        if role == QEmojiDataRole.ShortNamesRole:
+            return self.shortNames()
+
         return super().data(role)
 
 
@@ -97,3 +100,4 @@ class QEmojiDataRole(int, Enum):
     SkinToneRole = Qt.ItemDataRole.UserRole + 1
     CategoryRole = Qt.ItemDataRole.UserRole + 2
     EmojiRole = Qt.ItemDataRole.UserRole + 3
+    ShortNamesRole = Qt.ItemDataRole.UserRole + 4

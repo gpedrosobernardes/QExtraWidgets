@@ -69,7 +69,7 @@ class QEmojiPickerProxyModel(QSortFilterProxyModel):
 
         # Retrieve Aliases
         # Note: Ensure your QEmojiItem returns a list of strings for this role
-        aliases = index.data(QEmojiDataRole.AliasRole)
+        aliases = index.data(QEmojiDataRole.ShortNamesRole)
 
         if not aliases:
             return False
