@@ -1,14 +1,12 @@
-import typing
 from enum import Enum
 
 from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal, QModelIndex
 from PySide6.QtGui import QStandardItemModel, Qt
-from emoji_data_python import emoji_data, EmojiChar
+from emoji_data_python import emoji_data
 
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
-from qextrawidgets.items.emoji_item import QEmojiItem, QEmojiDataRole, EmojiSkinTone
-from qextrawidgets.views.grouped_icon_view import QGroupedIconView
+from qextrawidgets.items.emoji_item import QEmojiItem, QEmojiDataRole
 
 
 class EmojiCategory(str, Enum):

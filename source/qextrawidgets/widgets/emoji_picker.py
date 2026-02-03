@@ -162,8 +162,11 @@ class QEmojiPicker(QWidget):
         self.picked.emit(item.emoji())
 
         recent_category_index = self._model.findCategory(EmojiCategory.Recents)
+
         if recent_category_index:
-            recent_item_index = self._model.findEmojiInCategory(recent_category_index, item.emoji())
+            emoji = item.data(QEmojiDataRole.EmojiRole)
+            recent_item_index = self._model.findEmojiInCategory(recent_category_index, emoji)
+
             if not recent_item_index:
                 clone_item = item.clone()
                 clone_item.setData(EmojiCategory.Recents, role=QEmojiDataRole.CategoryRole)
@@ -188,11 +191,15 @@ class QEmojiPicker(QWidget):
             collapse_all_action.triggered.connect(lambda: self._model.setExpanded(False))
             expand_all_action = menu.addAction(self.tr("Expand all"))
             expand_all_action.triggered.connect(lambda: self._model.setExpanded(True))
+
         elif isinstance(item, QEmojiItem):
             favorite_category_index: QModelIndex = self._model.findCategory(EmojiCategory.Favorites)
+
             if favorite_category_index:
-                favorite_item_index: QModelIndex = self._model.findEmojiInCategory(favorite_category_index, item.emoji())
+                emoji = item.data(QEmojiDataRole.EmojiRole)
+                favorite_item_index: QModelIndex = self._model.findEmojiInCategory(favorite_category_index, emoji)
                 favorite_category_item: QEmojiCategoryItem = self._model.itemFromIndex(favorite_category_index)
+
                 if favorite_item_index:
                     action = menu.addAction(self.tr("Unfavorite"))
                     row = favorite_item_index.row()
