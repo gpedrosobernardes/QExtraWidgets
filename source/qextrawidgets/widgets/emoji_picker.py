@@ -137,7 +137,13 @@ class QEmojiPicker(QWidget):
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
 
-        self._model.skinToneChanged.connect(delegate.forceReload)
+        self._model.skinToneChanged.connect(self._on_skin_tone_changed)
+
+    @Slot(QModelIndex)
+    def _on_skin_tone_changed(self, source_index: QModelIndex):
+        proxy_index = self._proxy.mapFromSource(source_index)
+        delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
+        delegate.forceReload(proxy_index)
 
     @Slot(str)
     def _on_set_skin_tone(self, skin_tone: str) -> None:

@@ -88,7 +88,7 @@ class QEmojiPickerModel(QStandardItemModel):
 
     def setExpanded(self, value: bool):
         for row in range(self.rowCount()):
-            self.setData(self.index(row, 0), value, role=QGroupedIconView.ExpansionStateRole)
+            self.setData(self.index(row, 0), value, role=QEmojiCategoryItem.ExpansionStateRole)
 
     def findEmojiInCategory(self, category_index, emoji):
         # match(start_index, role, value, hits, flags)

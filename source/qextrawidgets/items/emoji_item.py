@@ -88,7 +88,7 @@ class QEmojiItem(QStandardItem):
             return self.emojiChar().category
 
         if role == QEmojiDataRole.EmojiRole:
-            return self.emoji()
+            return self.emojiChar().char
 
         return super().data(role)
 
