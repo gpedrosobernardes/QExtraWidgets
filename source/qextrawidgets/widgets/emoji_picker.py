@@ -253,7 +253,7 @@ class QEmojiPicker(QWidget):
 
         shortcut = self._create_shortcut_button(category, icon)
         shortcut.setObjectName(category)
-        shortcut.clicked.connect(lambda: self._on_shortcut_clicked(category_item.index()))
+        shortcut.clicked.connect(lambda: self._on_shortcut_clicked(category_item.index(), category_item))
 
         self._shortcuts_layout.addWidget(shortcut)
         self._shortcuts_group.addButton(shortcut)
@@ -295,7 +295,7 @@ class QEmojiPicker(QWidget):
             self._aliases_emoji_label.setText(elided_alias)
 
     @Slot(QModelIndex)
-    def _on_shortcut_clicked(self, source_index: QModelIndex) -> None:
+    def _on_shortcut_clicked(self, source_index: QModelIndex, category_item: QEmojiCategoryItem) -> None:
         """Scrolls the accordion to the selected category section.
 
         Args:
@@ -303,6 +303,7 @@ class QEmojiPicker(QWidget):
         """
         proxy_index = self._proxy.mapFromSource(source_index)
         self._grouped_icon_view.scrollTo(proxy_index)
+        category_item.setData(True, QEmojiCategoryItem.ExpansionStateRole)
 
     @Slot()
     def _on_filter_emojis(self) -> None:
