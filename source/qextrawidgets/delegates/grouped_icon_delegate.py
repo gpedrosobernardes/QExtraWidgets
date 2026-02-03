@@ -1,13 +1,15 @@
+from typing import Optional, Any, Set
+
 from PySide6.QtCore import Qt, QRect, QModelIndex, QPersistentModelIndex, Signal, QTimer
 from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage
 from PySide6.QtWidgets import (
     QStyleOptionViewItem,
     QStyle,
     QStyledItemDelegate,
-    QApplication,
-    QAbstractItemView
+    QApplication
 )
-from typing import Optional, Any, Set
+
+from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
 
 
 class QGroupedIconDelegate(QStyledItemDelegate):
@@ -55,23 +57,17 @@ class QGroupedIconDelegate(QStyledItemDelegate):
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         painter.save()
 
-        view = self.parent()
-        if not view and option.widget:
-            if isinstance(option.widget, QAbstractItemView):
-                view = option.widget
-            else:
-                view = option.widget.parent()
-
         is_category = not index.parent().isValid()
 
         if is_category:
-            self._draw_category(painter, option, index, view)
+            self._draw_category(painter, option, index)
         else:
             self._draw_grid_item(painter, option, index)
 
         painter.restore()
 
-    def _draw_category(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex, view: Any) -> None:
+    # noinspection PyUnresolvedReferences
+    def _draw_category(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         style = option.widget.style() if option.widget else QApplication.style()
         palette = option.palette
 
@@ -84,9 +80,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         painter.setPen(palette.color(QPalette.ColorRole.Mid))
         painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
 
-        is_expanded = False
-        if view and hasattr(view, 'isRowExpanded'):
-            is_expanded = view.isRowExpanded(index.row())
+        is_expanded = index.data(QEmojiCategoryItem.ExpansionStateRole)
 
         left_padding = 5
         element_spacing = 5
@@ -142,6 +136,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             text
         )
 
+    # noinspection PyUnresolvedReferences
     def _draw_grid_item(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         """
         Draws the child item. Checks for DecorationRole; if missing, triggers requestImage.
@@ -181,14 +176,14 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             elif isinstance(item_data, (QPixmap, QImage)) and not item_data.isNull():
                 is_data_valid = True
 
-        if not is_data_valid:
-            # Check if we already requested this index to avoid spamming the signal in the paint loop
-            p_index = QPersistentModelIndex(index)
-            if p_index not in self._requested_indices:
-                self._requested_indices.add(p_index)
-                # Emit asynchronously to not block painting
-                QTimer.singleShot(0, lambda: self.requestImage.emit(p_index))
+        # Check if we already requested this index to avoid spamming the signal in the paint loop
+        p_index = QPersistentModelIndex(index)
+        if p_index not in self._requested_indices:
+            self._requested_indices.add(p_index)
+            # Emit asynchronously to not block painting
+            QTimer.singleShot(0, lambda: self.requestImage.emit(p_index))
 
+        if not is_data_valid:
             # Optional: Draw a placeholder (e.g., a simple loading circle or gray box)
             painter.setPen(Qt.PenStyle.DotLine)
             painter.setPen(palette.color(QPalette.ColorRole.Mid))
@@ -196,12 +191,6 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             painter.drawRoundedRect(target_rect, 4, 4)
 
         else:
-            # If data is valid, ensure it is removed from pending requests
-            # (in case it was reloaded externally without clearing cache)
-            p_index = QPersistentModelIndex(index)
-            if p_index in self._requested_indices:
-                self._requested_indices.remove(p_index)
-
             # --- Drawing Logic ---
             if isinstance(item_data, QIcon):
                 mode = QIcon.Mode.Normal

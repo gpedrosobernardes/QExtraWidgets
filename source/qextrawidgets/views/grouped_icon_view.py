@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
 from typing import Optional
 
 from qextrawidgets.delegates.grouped_icon_delegate import QGroupedIconDelegate
+from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
 
 
 class QGroupedIconView(QAbstractItemView):
@@ -34,9 +35,6 @@ class QGroupedIconView(QAbstractItemView):
     itemEntered = Signal(QModelIndex)
     itemExited = Signal(QModelIndex)
     itemClicked = Signal(QModelIndex)
-
-    # Custom Role to store the expansion state in the model items
-    ExpansionStateRole = Qt.ItemDataRole.UserRole + 100
 
     def __init__(
             self,
@@ -105,20 +103,6 @@ class QGroupedIconView(QAbstractItemView):
 
     def headerHeight(self) -> int:
         return self._header_height
-
-    def isRowExpanded(self, row: int) -> bool:
-        """
-        Checks if a specific category row is expanded by querying the model.
-        """
-        if not self._item_rects or not self.model():
-            return False
-
-        root = self.rootIndex()
-        if row < 0 or row >= self.model().rowCount(root):
-            return False
-
-        index = self.model().index(row, 0, root)
-        return bool(index.data(self.ExpansionStateRole))
 
     # -------------------------------------------------------------------------
     # Internal Logic Helpers
@@ -219,13 +203,17 @@ class QGroupedIconView(QAbstractItemView):
     def _on_rows_removed(self, parent, start, end):
         self._schedule_layout()
 
-    def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int] = []) -> None:
+    def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int] = None) -> None:
+        if roles is None:
+            roles = []
+
         # Se for uma mudança estrutural ou de expansão, recalcula o layout
-        if not roles or self.ExpansionStateRole in roles:
+        if not roles or QEmojiCategoryItem.ExpansionStateRole in roles:
             self._schedule_layout()
         # [CRUCIAL] Se for uma mudança de dados (como o ícone chegando), força a repintura!
-        else:
-            self.viewport().update()
+        elif Qt.ItemDataRole.DecorationRole in roles:
+            self.update(top_left)
+
 
     # -------------------------------------------------------------------------
     # Event Handlers
@@ -238,8 +226,8 @@ class QGroupedIconView(QAbstractItemView):
 
         if index.isValid():
             if self._is_category(index) and event.button() == Qt.MouseButton.LeftButton:
-                current_state = bool(index.data(self.ExpansionStateRole))
-                self.model().setData(index, not current_state, self.ExpansionStateRole)
+                current_state = bool(index.data(QEmojiCategoryItem.ExpansionStateRole))
+                self.model().setData(index, not current_state, QEmojiCategoryItem.ExpansionStateRole)
                 event.accept()
                 return
             elif self._is_item(index):
@@ -258,6 +246,7 @@ class QGroupedIconView(QAbstractItemView):
         self.viewport().update()
         super().leaveEvent(event)
 
+    # noinspection PyUnresolvedReferences
     def paintEvent(self, event: QEvent) -> None:
         if not self._item_rects:
             return
@@ -305,7 +294,6 @@ class QGroupedIconView(QAbstractItemView):
 
         self._item_rects.clear()
         width = self.viewport().width()
-        x = 0
         y = 0
 
         item_w = self.iconSize().width()
@@ -322,7 +310,7 @@ class QGroupedIconView(QAbstractItemView):
             if not cat_index.isValid():
                 continue
 
-            is_expanded = bool(cat_index.data(self.ExpansionStateRole))
+            is_expanded = bool(cat_index.data(QEmojiCategoryItem.ExpansionStateRole))
 
             self._item_rects[QPersistentModelIndex(cat_index)] = QRect(0, y, width, self._header_height)
             y += self._header_height
