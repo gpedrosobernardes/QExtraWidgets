@@ -14,7 +14,7 @@ from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
 
 class QGroupedIconDelegate(QStyledItemDelegate):
     """
-    Delegate for the AccordionGridView.
+    Delegate for the QGroupedIconView.
     Renders categories as horizontal bars with expansion arrows and child items
     as rounded grid cells containing ONLY icons or pixmaps.
 
@@ -31,30 +31,66 @@ class QGroupedIconDelegate(QStyledItemDelegate):
     requestImage = Signal(QPersistentModelIndex)
 
     def __init__(self, parent: Optional[Any] = None, arrow_icon: Optional[QIcon] = None):
+        """
+        Initialize the delegate.
+
+        Args:
+            parent (Optional[Any]): The parent object.
+            arrow_icon (Optional[QIcon]): Custom icon for the expansion arrow. If None, uses default primitive.
+        """
         super().__init__(parent)
         self._arrow_icon: QIcon = arrow_icon if arrow_icon else QIcon()
         self._requested_indices: Set[QPersistentModelIndex] = set()
 
     def setArrowIcon(self, icon: QIcon) -> None:
+        """
+        Set the icon used for the expansion indicator.
+
+        Args:
+            icon (QIcon): The new arrow icon.
+        """
         self._arrow_icon = icon
 
     def arrowIcon(self) -> QIcon:
+        """
+        Get the current arrow icon.
+
+        Returns:
+            QIcon: The current arrow icon.
+        """
         return self._arrow_icon
 
     def forceReloadAll(self) -> None:
         """
-        Clears the cache of ALL requested images.
+        Clear the cache of ALL requested images.
+
         The next time the view paints a missing image item (e.g. on scroll or hover),
         it will emit requestImage again.
         """
         self._requested_indices.clear()
 
-    def forceReload(self, index: QModelIndex):
+    def forceReload(self, index: QModelIndex) -> None:
+        """
+        Clear the cache for a specific index to force re-requesting the image.
+
+        Args:
+            index (QModelIndex): The index to clear from the cache.
+        """
         persistent_index = QPersistentModelIndex(index)
         if persistent_index in self._requested_indices:
             self._requested_indices.remove(persistent_index)
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        """
+        Paint the item.
+
+        Delegates to _draw_category for category items and _draw_grid_item for child items.
+
+        Args:
+            painter (QPainter): The painter object.
+            option (QStyleOptionViewItem): Style options for rendering.
+            index (QModelIndex): The index of the item being painted.
+        """
         painter.save()
 
         is_category = not index.parent().isValid()
@@ -68,6 +104,16 @@ class QGroupedIconDelegate(QStyledItemDelegate):
 
     # noinspection PyUnresolvedReferences
     def _draw_category(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        """
+        Draw a category header item.
+
+        Renders the background, expansion arrow, icon, and text.
+
+        Args:
+            painter (QPainter): The painter object.
+            option (QStyleOptionViewItem): The style options.
+            index (QModelIndex): The model index of the category.
+        """
         style = option.widget.style() if option.widget else QApplication.style()
         palette = option.palette
 
@@ -80,7 +126,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         painter.setPen(palette.color(QPalette.ColorRole.Mid))
         painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
 
-        is_expanded = index.data(QEmojiCategoryItem.ExpansionStateRole)
+        is_expanded = bool(option.state & QStyle.State.State_Open)
 
         left_padding = 5
         element_spacing = 5
@@ -139,7 +185,15 @@ class QGroupedIconDelegate(QStyledItemDelegate):
     # noinspection PyUnresolvedReferences
     def _draw_grid_item(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         """
-        Draws the child item. Checks for DecorationRole; if missing, triggers requestImage.
+        Draw a child item in the grid used for lazy loading check.
+
+        Checks for DecorationRole; if missing, triggers requestImage signal.
+        Renders the icon or pixmap centered in the item rect.
+
+        Args:
+            painter (QPainter): The painter object.
+            option (QStyleOptionViewItem): The style options.
+            index (QModelIndex): The model index of the item.
         """
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)

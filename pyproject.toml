@@ -46,3 +46,9 @@ include-package-data = true
 where = ["source"]
 include = ["qextrawidgets*"]
 namespaces = false
+
+[tool.pyrefly]
+project-includes = [
+    "source"
+]
+source-paths = ["source"]

@@ -43,6 +43,15 @@ class QGroupedIconView(QAbstractItemView):
             margin: int = 8,
             header_height: int = 36
     ):
+        """
+        Initialize the QGroupedIconView.
+
+        Args:
+            parent (Optional[QWidget]): The parent widget.
+            icon_size (QSize): The size of the icons in the grid. Defaults to 100x100.
+            margin (int): The margin between items and headers. Defaults to 8.
+            header_height (int): The height of the category headers. Defaults to 36.
+        """
         super().__init__(parent)
 
         # Cache using Persistent Indices
@@ -56,6 +65,7 @@ class QGroupedIconView(QAbstractItemView):
 
         # View State
         self._hover_index: QPersistentModelIndex = QPersistentModelIndex()
+        self._expanded_items: set[QPersistentModelIndex] = set()
 
         # Layout Configuration
         self._margin: int = margin
@@ -83,35 +93,102 @@ class QGroupedIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def setIconSize(self, size: QSize) -> None:
+        """
+        Set the size of the icons in the grid view.
+
+        Args:
+            size (QSize): The new size for the icons.
+        """
         super().setIconSize(size)
         self._schedule_layout()
 
     def setMargin(self, margin: int) -> None:
+        """
+        Set the margin between items and headers.
+
+        Args:
+            margin (int): The new margin value in pixels.
+        """
         if self._margin == margin:
             return
         self._margin = margin
         self._schedule_layout()
 
     def margin(self) -> int:
+        """
+        Get the current margin between items and headers.
+
+        Returns:
+            int: The current margin in pixels.
+        """
         return self._margin
 
     def setHeaderHeight(self, height: int) -> None:
+        """
+        Set the height of the category headers.
+
+        Args:
+            height (int): The new header height in pixels.
+        """
         if self._header_height == height:
             return
         self._header_height = height
         self._schedule_layout()
 
     def headerHeight(self) -> int:
+        """
+        Get the current height of the category headers.
+
+        Returns:
+            int: The header height in pixels.
+        """
         return self._header_height
+
+    def isExpanded(self, index: QModelIndex) -> bool:
+        """Return True if the category at index is expanded."""
+        if not index.isValid():
+            return False
+        return QPersistentModelIndex(index) in self._expanded_items
+
+    def setExpanded(self, index: QModelIndex, expanded: bool) -> None:
+        """Set the expansion state of the category at index."""
+        if not index.isValid():
+            return
+
+        p_index = QPersistentModelIndex(index)
+        if expanded:
+            self._expanded_items.add(p_index)
+        else:
+            self._expanded_items.discard(p_index)
+        
+        self._schedule_layout()
+
+    def expandAll(self) -> None:
+        """Expand all categories."""
+        if not self.model():
+            return
+        
+        count = self.model().rowCount()
+        for i in range(count):
+            index = self.model().index(i, 0)
+            self._expanded_items.add(QPersistentModelIndex(index))
+        self._schedule_layout()
+
+    def collapseAll(self) -> None:
+        """Collapse all categories."""
+        self._expanded_items.clear()
+        self._schedule_layout()
 
     # -------------------------------------------------------------------------
     # Internal Logic Helpers
     # -------------------------------------------------------------------------
 
     def _is_category(self, index: QModelIndex) -> bool:
+        """Check if the given index represents a category (header)."""
         return index.isValid() and not index.parent().isValid()
 
     def _is_item(self, index: QModelIndex) -> bool:
+        """Check if the given index represents a child item."""
         return index.isValid() and index.parent().isValid()
 
     def _on_scroll_value_changed(self, value: int) -> None:
@@ -159,9 +236,19 @@ class QGroupedIconView(QAbstractItemView):
     def _clear_cache(self, *args) -> None:
         self._item_rects.clear()
         self._hover_index = QPersistentModelIndex()
+        # Clean up invalid persistent indices from expansion set
+        self._expanded_items = {pi for pi in self._expanded_items if pi.isValid()}
         self.viewport().update()
 
     def setModel(self, model: Optional[QAbstractItemModel]) -> None:
+        """
+        Set the model for the view.
+
+        Connects to necessary signals for handling layout updates and structural changes.
+
+        Args:
+            model (Optional[QAbstractItemModel]): The model to be set.
+        """
         current_model = self.model()
         if current_model == model:
             return
@@ -180,6 +267,7 @@ class QGroupedIconView(QAbstractItemView):
                 pass
 
         super().setModel(model)
+        self._expanded_items.clear()
 
         if model:
             model.layoutAboutToBeChanged.connect(self._clear_cache)
@@ -195,6 +283,7 @@ class QGroupedIconView(QAbstractItemView):
         self._schedule_layout()
 
     def _on_model_reset(self) -> None:
+        self._expanded_items.clear()
         self._schedule_layout()
 
     def _on_rows_inserted(self, parent, start, end):
@@ -206,12 +295,11 @@ class QGroupedIconView(QAbstractItemView):
     def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int] = None) -> None:
         if roles is None:
             roles = []
-
-        # Se for uma mudança estrutural ou de expansão, recalcula o layout
-        if not roles or QEmojiCategoryItem.ExpansionStateRole in roles:
-            self._schedule_layout()
+        
+        # NOTE: ExpansionStateRole check removed as it is now internal state
+        
         # [CRUCIAL] Se for uma mudança de dados (como o ícone chegando), força a repintura!
-        elif Qt.ItemDataRole.DecorationRole in roles:
+        if not roles or Qt.ItemDataRole.DecorationRole in roles:
             self.update(top_left)
 
 
@@ -220,14 +308,21 @@ class QGroupedIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
+        """
+        Handle mouse press events.
+
+        Toggles category expansion or emits itemClicked signal.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         if not self._item_rects: return
 
         index = self.indexAt(event.position().toPoint())
 
         if index.isValid() and event.button() == Qt.MouseButton.LeftButton:
             if self._is_category(index):
-                current_state = bool(index.data(QEmojiCategoryItem.ExpansionStateRole))
-                self.model().setData(index, not current_state, QEmojiCategoryItem.ExpansionStateRole)
+                self.setExpanded(index, not self.isExpanded(index))
                 event.accept()
                 return
             elif self._is_item(index):
@@ -236,10 +331,22 @@ class QGroupedIconView(QAbstractItemView):
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
+        """
+        Handle mouse move events to track hover state.
+
+        Args:
+            event (QMouseEvent): The mouse event.
+        """
         self._recalculate_hover()
         super().mouseMoveEvent(event)
 
     def leaveEvent(self, event: QEvent) -> None:
+        """
+        Handle mouse leave events to reset hover state.
+
+        Args:
+            event (QEvent): The leave event.
+        """
         if self._hover_index.isValid():
             self.itemExited.emit(QModelIndex(self._hover_index))
         self._hover_index = QPersistentModelIndex()
@@ -248,6 +355,12 @@ class QGroupedIconView(QAbstractItemView):
 
     # noinspection PyUnresolvedReferences
     def paintEvent(self, event: QEvent) -> None:
+        """
+        Paint the items in the view.
+
+        Args:
+            event (QEvent): The paint event.
+        """
         if not self._item_rects:
             return
 
@@ -282,6 +395,9 @@ class QGroupedIconView(QAbstractItemView):
             if p_index == self._hover_index:
                 option.state |= QStyle.State.State_MouseOver
 
+            if self.isExpanded(index):
+                option.state |= QStyle.State.State_Open
+
             self.itemDelegate(index).paint(painter, option, index)
 
     # -------------------------------------------------------------------------
@@ -289,6 +405,9 @@ class QGroupedIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def updateGeometries(self) -> None:
+        """
+        Recalculate the layout of item rectangles and update scrollbars.
+        """
         if not self.model():
             return
 
@@ -310,7 +429,7 @@ class QGroupedIconView(QAbstractItemView):
             if not cat_index.isValid():
                 continue
 
-            is_expanded = bool(cat_index.data(QEmojiCategoryItem.ExpansionStateRole))
+            is_expanded = self.isExpanded(cat_index)
 
             self._item_rects[QPersistentModelIndex(cat_index)] = QRect(0, y, width, self._header_height)
             y += self._header_height
@@ -347,6 +466,15 @@ class QGroupedIconView(QAbstractItemView):
         super().updateGeometries()
 
     def visualRect(self, index: QModelIndex) -> QRect:
+        """
+        Return the rectangle on the viewport occupied by the item at index.
+
+        Args:
+            index (QModelIndex): The index of the item.
+
+        Returns:
+            QRect: The visual rectangle.
+        """
         p_index = QPersistentModelIndex(index)
         rect = self._item_rects.get(p_index)
         if rect:
@@ -354,6 +482,15 @@ class QGroupedIconView(QAbstractItemView):
         return QRect()
 
     def indexAt(self, point: QPoint) -> QModelIndex:
+        """
+        Return the model index of the item at the viewport coordinates point.
+
+        Args:
+            point (QPoint): The coordinates in the viewport.
+
+        Returns:
+            QModelIndex: The index at the given point, or valid if not found.
+        """
         if not self._item_rects:
             return QModelIndex()
 
@@ -364,6 +501,13 @@ class QGroupedIconView(QAbstractItemView):
         return QModelIndex()
 
     def scrollTo(self, index: QModelIndex, hint=QAbstractItemView.ScrollHint.EnsureVisible) -> None:
+        """
+        Scroll the view to ensure the item at index is visible.
+
+        Args:
+            index (QModelIndex): The index to scroll to.
+            hint (QAbstractItemView.ScrollHint): The scroll hint.
+        """
         p_index = QPersistentModelIndex(index)
         rect = self._item_rects.get(p_index)
         if not rect:
@@ -403,16 +547,31 @@ class QGroupedIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def horizontalOffset(self) -> int:
+        """Return the horizontal offset of the view (always 0 for this view)."""
         return 0
 
     def verticalOffset(self) -> int:
+        """Return the vertical offset of the view."""
         return self.verticalScrollBar().value()
 
     def moveCursor(self, cursor_action, modifiers) -> QModelIndex:
+        """
+        Move the cursor in response to key navigation (Not implemented).
+
+        Returns:
+            QModelIndex: An invalid index.
+        """
         return QModelIndex()
 
     def setSelection(self, rect: QRect, command) -> None:
+        """Apply selection to items within the rectangle (Not implemented)."""
         pass
 
     def visualRegionForSelection(self, selection) -> QRect:
+        """
+        Return the region covered by the selection (Not implemented).
+
+        Returns:
+            QRect: The total viewport rect as a placeholder.
+        """
         return self.viewport().rect()

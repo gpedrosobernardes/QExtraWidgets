@@ -2,6 +2,7 @@ from enum import Enum
 
 from PySide6.QtGui import QStandardItem, Qt
 from emoji_data_python import EmojiChar
+import typing
 
 
 class EmojiSkinTone(str, Enum):
@@ -22,28 +23,34 @@ class EmojiSkinTone(str, Enum):
     Default = ""
 
     # Type 1-2: Light Skin
-    Light = "1F3FB"  # 🏻
+    Light = "1F3FB"
 
     # Type 3: Medium-Light Skin
-    MediumLight = "1F3FC"  # 🏼
+    MediumLight = "1F3FC"
 
     # Type 4: Medium Skin
-    Medium = "1F3FD"  # 🏽
+    Medium = "1F3FD"
 
     # Type 5: Medium-Dark Skin
-    MediumDark = "1F3FE"  # 🏾
+    MediumDark = "1F3FE"
 
     # Type 6: Dark Skin
-    Dark = "1F3FF"  # 🏿
+    Dark = "1F3FF"
 
 
 class QEmojiItem(QStandardItem):
     """A standard item representing a single emoji in the model."""
 
+    class QEmojiDataRole(int, Enum):
+        SkinToneRole = Qt.ItemDataRole.UserRole + 1
+        CategoryRole = Qt.ItemDataRole.UserRole + 2
+        EmojiRole = Qt.ItemDataRole.UserRole + 3
+        ShortNamesRole = Qt.ItemDataRole.UserRole + 4
+
     def __init__(self, emoji_char: EmojiChar, skin_tone: str = ""):
         super().__init__()
         self.setData(emoji_char, Qt.ItemDataRole.UserRole)
-        self.setData(skin_tone, QEmojiDataRole.SkinToneRole)
+        self.setData(skin_tone, self.QEmojiDataRole.SkinToneRole)
         self.setEditable(False)
 
     def emojiChar(self) -> EmojiChar:
@@ -68,8 +75,8 @@ class QEmojiItem(QStandardItem):
         """
         return self.coloredEmojiChar().char
 
-    def shortNames(self):
-        return self.emojiChar().short_names
+    def shortNames(self) -> typing.List[str]:
+        return self.emojiChar().short_names or []
 
     def aliasesText(self) -> str:
         return " ".join(f":{a}:" for a in self.shortNames())
@@ -78,26 +85,19 @@ class QEmojiItem(QStandardItem):
         return self.shortNames()[0]
 
     def skinTone(self) -> str:
-        return self.data(QEmojiDataRole.SkinToneRole)
+        return self.data(self.QEmojiDataRole.SkinToneRole)
 
     def clone(self, /):
         return QEmojiItem(self.emojiChar(), self.skinTone())
 
-    def data(self, /, role = ...):
-        if role == QEmojiDataRole.CategoryRole:
+    def data(self, role: int = Qt.ItemDataRole.UserRole) -> typing.Any:
+        if role == self.QEmojiDataRole.CategoryRole:
             return self.emojiChar().category
 
-        if role == QEmojiDataRole.EmojiRole:
+        if role == self.QEmojiDataRole.EmojiRole:
             return self.emojiChar().char
 
-        if role == QEmojiDataRole.ShortNamesRole:
+        if role == self.QEmojiDataRole.ShortNamesRole:
             return self.shortNames()
 
         return super().data(role)
-
-
-class QEmojiDataRole(int, Enum):
-    SkinToneRole = Qt.ItemDataRole.UserRole + 1
-    CategoryRole = Qt.ItemDataRole.UserRole + 2
-    EmojiRole = Qt.ItemDataRole.UserRole + 3
-    ShortNamesRole = Qt.ItemDataRole.UserRole + 4

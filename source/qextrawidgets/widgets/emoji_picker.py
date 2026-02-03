@@ -13,7 +13,7 @@ from qextrawidgets.models.emoji_picker_model import EmojiCategory, QEmojiPickerM
 from qextrawidgets.proxys.emoji_picker_proxy import QEmojiPickerProxyModel
 from qextrawidgets.utils import char_to_pixmap
 from qextrawidgets.views.grouped_icon_view import QGroupedIconView
-from qextrawidgets.items.emoji_item import QEmojiDataRole, QEmojiItem, EmojiSkinTone
+from qextrawidgets.items.emoji_item import QEmojiItem, EmojiSkinTone
 from qextrawidgets.widgets.icon_combo_box import QIconComboBox
 from qextrawidgets.widgets.search_line_edit import QSearchLineEdit
 
@@ -176,12 +176,12 @@ class QEmojiPicker(QWidget):
         recent_category_index = self._model.findCategory(EmojiCategory.Recents)
 
         if recent_category_index:
-            emoji = item.data(QEmojiDataRole.EmojiRole)
+            emoji = item.data(QEmojiItem.QEmojiDataRole.EmojiRole)
             recent_item_index = self._model.findEmojiInCategory(recent_category_index, emoji)
 
             if not recent_item_index:
                 clone_item = item.clone()
-                clone_item.setData(EmojiCategory.Recents, role=QEmojiDataRole.CategoryRole)
+                clone_item.setData(EmojiCategory.Recents, role=QEmojiItem.QEmojiDataRole.CategoryRole)
                 self._model.itemFromIndex(recent_category_index).appendRow(clone_item)
 
     @Slot(QPoint)
@@ -199,15 +199,15 @@ class QEmojiPicker(QWidget):
 
         if isinstance(item, QEmojiCategoryItem):
             collapse_all_action = menu.addAction(self.tr("Collapse all"))
-            collapse_all_action.triggered.connect(lambda: self._model.setExpanded(False))
+            collapse_all_action.triggered.connect(self._grouped_icon_view.collapseAll)
             expand_all_action = menu.addAction(self.tr("Expand all"))
-            expand_all_action.triggered.connect(lambda: self._model.setExpanded(True))
+            expand_all_action.triggered.connect(self._grouped_icon_view.expandAll)
 
         elif isinstance(item, QEmojiItem):
             favorite_category_index: QModelIndex = self._model.findCategory(EmojiCategory.Favorites)
 
             if favorite_category_index:
-                emoji = item.data(QEmojiDataRole.EmojiRole)
+                emoji = item.data(QEmojiItem.QEmojiDataRole.EmojiRole)
                 favorite_item_index: QModelIndex = self._model.findEmojiInCategory(favorite_category_index, emoji)
                 favorite_category_item: QEmojiCategoryItem = self._model.itemFromIndex(favorite_category_index)
 
@@ -218,7 +218,7 @@ class QEmojiPicker(QWidget):
                 else:
                     action = menu.addAction(self.tr("Favorite"))
                     clone_item = item.clone()
-                    clone_item.setData(EmojiCategory.Favorites, role=QEmojiDataRole.CategoryRole)
+                    clone_item.setData(EmojiCategory.Favorites, role=QEmojiItem.QEmojiDataRole.CategoryRole)
                     action.triggered.connect(lambda: favorite_category_item.appendRow(clone_item))
 
             copy_alias_action = menu.addAction(self.tr("Copy alias"))
@@ -316,7 +316,7 @@ class QEmojiPicker(QWidget):
         """
         proxy_index = self._proxy.mapFromSource(source_index)
         self._grouped_icon_view.scrollTo(proxy_index)
-        category_item.setData(True, QEmojiCategoryItem.ExpansionStateRole)
+        self._grouped_icon_view.setExpanded(proxy_index, True)
 
     @Slot()
     def _on_filter_emojis(self) -> None:

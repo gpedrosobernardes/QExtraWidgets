@@ -2,7 +2,7 @@ from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, Qt
 from PySide6.QtWidgets import QWidget
 from typing import Optional
 
-from qextrawidgets.items.emoji_item import QEmojiDataRole
+from qextrawidgets.items.emoji_item import QEmojiItem
 
 
 class QEmojiPickerProxyModel(QSortFilterProxyModel):
@@ -69,7 +69,7 @@ class QEmojiPickerProxyModel(QSortFilterProxyModel):
 
         # Retrieve Aliases
         # Note: Ensure your QEmojiItem returns a list of strings for this role
-        aliases = index.data(QEmojiDataRole.ShortNamesRole)
+        aliases = index.data(QEmojiItem.QEmojiDataRole.ShortNamesRole)
 
         if not aliases:
             return False
