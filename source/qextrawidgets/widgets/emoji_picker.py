@@ -129,6 +129,7 @@ class QEmojiPicker(QWidget):
         self._search_line_edit.textChanged.connect(lambda: self._search_timer.start())
 
         self._model.categoryInserted.connect(self._on_categories_inserted)
+        self._model.rowsAboutToBeRemoved.connect(self._on_categories_removed)
         self._grouped_icon_view.itemEntered.connect(self._on_mouse_entered_emoji)
         self._grouped_icon_view.itemExited.connect(self._on_mouse_exited_emoji)
         self._grouped_icon_view.itemClicked.connect(self._on_item_clicked)
@@ -277,6 +278,16 @@ class QEmojiPicker(QWidget):
 
         self._shortcuts_layout.addWidget(shortcut)
         self._shortcuts_group.addButton(shortcut)
+
+    @Slot(QEmojiCategoryItem)
+    def _on_categories_removed(self, category_item: QEmojiCategoryItem) -> None:
+        category = category_item.category()
+        button = self._shortcuts_container.findChild(QToolButton, category)
+
+        if button:
+            self._shortcuts_layout.removeWidget(button)
+            self._shortcuts_group.removeButton(button)
+            button.deleteLater()
 
     @Slot(QModelIndex)
     def _on_mouse_entered_emoji(self, index: QModelIndex) -> None:

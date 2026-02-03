@@ -1,6 +1,6 @@
 from enum import Enum
 
-from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal, QModelIndex
+from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal, QModelIndex, Slot
 from PySide6.QtGui import QStandardItemModel, Qt
 from emoji_data_python import emoji_data
 
@@ -26,6 +26,7 @@ class EmojiCategory(str, Enum):
 
 class QEmojiPickerModel(QStandardItemModel):
     categoryInserted = Signal(QEmojiCategoryItem)
+    categoryRemoved = Signal(QEmojiCategoryItem)
     skinToneChanged = Signal(QModelIndex)
     _emojis_skin_modifier_compatible = {}
 
@@ -33,6 +34,8 @@ class QEmojiPickerModel(QStandardItemModel):
         super().__init__()
         self._favorite_category = favorite_category
         self._recent_category = recent_category
+
+        self.rowsRemoved.connect(self._on_rows_removed)
 
     def populate(self):
         self._emojis_skin_modifier_compatible.clear()
@@ -133,3 +136,14 @@ class QEmojiPickerModel(QStandardItemModel):
                 emoji_item = self.itemFromIndex(emoji_index)
                 emoji_item.setData(skin_tone, QEmojiDataRole.SkinToneRole)
                 self.skinToneChanged.emit(emoji_index)
+
+    @Slot(QModelIndex, int, int)
+    def _on_rows_removed(self, parent: QModelIndex, first: int, last: int):
+        if parent.isValid():
+            return
+
+        for row in range(first, last + 1):
+            item = self.item(row)
+            if isinstance(item, QEmojiCategoryItem):
+                self.categoryRemoved.emit(item)
+
