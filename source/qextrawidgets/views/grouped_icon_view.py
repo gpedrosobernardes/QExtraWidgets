@@ -224,8 +224,8 @@ class QGroupedIconView(QAbstractItemView):
 
         index = self.indexAt(event.position().toPoint())
 
-        if index.isValid():
-            if self._is_category(index) and event.button() == Qt.MouseButton.LeftButton:
+        if index.isValid() and event.button() == Qt.MouseButton.LeftButton:
+            if self._is_category(index):
                 current_state = bool(index.data(QEmojiCategoryItem.ExpansionStateRole))
                 self.model().setData(index, not current_state, QEmojiCategoryItem.ExpansionStateRole)
                 event.accept()
