@@ -13,7 +13,6 @@ from qextrawidgets.models.emoji_picker_model import EmojiCategory, QEmojiPickerM
 from qextrawidgets.proxys.emoji_picker_proxy import QEmojiPickerProxyModel
 from qextrawidgets.utils import char_to_pixmap
 from qextrawidgets.views.grouped_icon_view import QGroupedIconView
-from qextrawidgets.widgets.accordion.accordion_item import QAccordionItem
 from qextrawidgets.items.emoji_item import QEmojiDataRole, QEmojiItem, EmojiSkinTone
 from qextrawidgets.widgets.icon_combo_box import QIconComboBox
 from qextrawidgets.widgets.search_line_edit import QSearchLineEdit
@@ -38,7 +37,10 @@ class QEmojiPicker(QWidget):
         """Initializes the emoji picker.
 
         Args:
-            model (QEmojiModel, optional): Custom emoji model. Defaults to None.
+            model (QEmojiPickerModel, optional): Custom emoji model. Defaults to None.
+            emoji_pixmap_getter (Union[str, QFont, Callable[[str], QPixmap]], optional):
+                Method or font to generate emoji pixmaps. Defaults to EmojiImageProvider.getPixmap.
+            emoji_label_size (QSize, optional): Size of the preview emoji label. Defaults to QSize(32, 32).
         """
         super().__init__()
 
@@ -140,7 +142,12 @@ class QEmojiPicker(QWidget):
         self._model.skinToneChanged.connect(self._on_skin_tone_changed)
 
     @Slot(QModelIndex)
-    def _on_skin_tone_changed(self, source_index: QModelIndex):
+    def _on_skin_tone_changed(self, source_index: QModelIndex) -> None:
+        """Handles skin tone changes from the model.
+
+        Args:
+            source_index (QModelIndex): The index in the source model that changed.
+        """
         proxy_index = self._proxy.mapFromSource(source_index)
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.forceReload(proxy_index)
@@ -152,11 +159,15 @@ class QEmojiPicker(QWidget):
         Args:
             skin_tone (str): Skin tone modifier.
         """
-        print(skin_tone)
         self._model.setSkinTone(skin_tone)
 
     @Slot(QModelIndex)
-    def _on_item_clicked(self, proxy_index: QModelIndex):
+    def _on_item_clicked(self, proxy_index: QModelIndex) -> None:
+        """Handles clicks on emoji items.
+
+        Args:
+            proxy_index (QModelIndex): The index in the proxy model that was clicked.
+        """
         source_index = self._proxy.mapToSource(proxy_index)
         item: QEmojiItem = self._model.itemFromIndex(source_index)
         self.picked.emit(item.emoji())
@@ -177,8 +188,7 @@ class QEmojiPicker(QWidget):
         """Handles the context menu for an emoji.
 
         Args:
-            grid (QEmojiGrid): The grid where the event occurred.
-            position (QPoint): Pixel position.
+            position (QPoint): Pixel position where the context menu was requested.
         """
         proxy_index = self._grouped_icon_view.indexAt(position)
         source_index = self._proxy.mapToSource(proxy_index)
@@ -212,42 +222,52 @@ class QEmojiPicker(QWidget):
 
             copy_alias_action = menu.addAction(self.tr("Copy alias"))
             clipboard = QApplication.clipboard()
-            copy_alias_action.triggered.connect(lambda: clipboard.setText(item.firstAlias()))
+            alias = item.firstAlias()
+            copy_alias_action.triggered.connect(lambda: clipboard.setText(alias))
         else:
             return
 
         menu.exec(self._grouped_icon_view.mapToGlobal(position))
 
     @Slot(QPersistentModelIndex)
-    def _on_request_image(self, persistent_index: QPersistentModelIndex):
-        # 1. Converta explicitamente para QModelIndex (Segurança de Tipo)
+    def _on_request_image(self, persistent_index: QPersistentModelIndex) -> None:
+        """Loads the emoji image when requested by the delegate.
+
+        Args:
+            persistent_index (QPersistentModelIndex): The persistent index of the item needing an image.
+        """
+        # 1. Explicitly convert to QModelIndex (Type Safety)
         proxy_index = QModelIndex(persistent_index)
 
         if not proxy_index.isValid():
             return
 
-        # 2. Mapeia do Proxy para o Modelo Original
+        # 2. Map from Proxy to Source Model
         source_index = self._proxy.mapToSource(proxy_index)
 
         if not source_index.isValid():
             return
 
-        # 3. Busca o item e define a imagem
+        # 3. Fetch the item and set the image
         item: QEmojiItem = self._model.itemFromIndex(source_index)
         if item:
-            # Gera o pixmap
+            # Generate the pixmap
             pixmap = self.emojiPixmapGetter()(item.emoji())
 
-            # Debug: Garante que o pixmap foi gerado
+            # Debug: Ensure the pixmap was generated
             if pixmap.isNull():
-                print(f"ALERTA: Pixmap nulo gerado para {item.emoji()}")
+                print(f"ALERT: Null pixmap generated for {item.emoji()}")
 
-            # Seta o ícone (Isso dispara o dataChanged no model -> proxy -> view)
+            # Set the icon (This triggers dataChanged in model -> proxy -> view)
             item.setIcon(pixmap)
 
     @Slot(QEmojiCategoryItem)
     def _on_categories_inserted(self, category_item: QEmojiCategoryItem) -> None:
-        """Handles the insertion of categories into the model."""
+        """Handles the insertion of categories into the model.
+
+        Args:
+            category_item (QEmojiCategoryItem): The inserted category item.
+        """
         category = category_item.text()
         icon = category_item.icon()
 
@@ -258,32 +278,13 @@ class QEmojiPicker(QWidget):
         self._shortcuts_layout.addWidget(shortcut)
         self._shortcuts_group.addButton(shortcut)
 
-    # @Slot(QModelIndex, int, int)
-    # def _on_categories_removed(self, _: QModelIndex, first: int, last: int) -> None:
-    #     """Handles the removal of categories from the model."""
-    #     for row in range(first, last + 1):
-    #         item = self._category_model.item(row)
-    #         if not item:
-    #             continue
-    #
-    #         category = item.data(QEmojiDataRole.CategoryRole)
-    #
-    #         section = self.accordion().item(category)
-    #         grid: QEmojiGridView = section.content()
-    #         shortcut = self._shortcuts_container.findChild(QToolButton, category)
-    #         proxy = grid.model()
-    #
-    #         self._accordion.removeAccordionItem(section)
-    #         self._shortcuts_layout.removeWidget(shortcut)
-    #         self._shortcuts_group.removeButton(shortcut)
-    #
-    #         section.deleteLater()
-    #         grid.deleteLater()
-    #         shortcut.deleteLater()
-    #         proxy.deleteLater()
-
     @Slot(QModelIndex)
     def _on_mouse_entered_emoji(self, index: QModelIndex) -> None:
+        """Handles mouse entry events on emoji items to show preview.
+
+        Args:
+            index (QModelIndex): The index of the item under the mouse.
+        """
         source_index = self._proxy.mapToSource(index)
         item: QEmojiItem = self._model.itemFromIndex(source_index)
         if isinstance(item, QEmojiItem):
@@ -296,10 +297,11 @@ class QEmojiPicker(QWidget):
 
     @Slot(QModelIndex)
     def _on_shortcut_clicked(self, source_index: QModelIndex, category_item: QEmojiCategoryItem) -> None:
-        """Scrolls the accordion to the selected category section.
+        """Scrolls the view to the selected category section.
 
         Args:
-            section (QAccordionItem): The section to scroll to.
+            source_index (QModelIndex): The index of the category in the source model.
+            category_item (QEmojiCategoryItem): The category item associated with the shortcut.
         """
         proxy_index = self._proxy.mapFromSource(source_index)
         self._grouped_icon_view.scrollTo(proxy_index)
@@ -366,12 +368,14 @@ class QEmojiPicker(QWidget):
         btn.setIcon(icon)
         return btn
 
-    def _paint_emoji_on_label(self):
+    def _paint_emoji_on_label(self) -> None:
+        """Updates the preview label with the current emoji pixmap."""
         if self._emoji_on_label:
             pixmap = self.emojiPixmapGetter()(self._emoji_on_label)
             self._emoji_label.setPixmap(pixmap)
 
-    def _paint_skintones(self):
+    def _paint_skintones(self) -> None:
+        """Updates the skin tone selector icons."""
         emoji_pixmap_getter = self.emojiPixmapGetter()
         for index, emoji in enumerate(self._skin_tone_selector_emojis.values()):
             self._skin_tone_selector.setItemIcon(index, emoji_pixmap_getter(emoji))
@@ -386,7 +390,14 @@ class QEmojiPicker(QWidget):
         """Resets the picker state."""
         self._search_line_edit.clear()
 
-    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Union[str, QFont, typing.Callable[[str], QPixmap]]):
+    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Union[str, QFont, typing.Callable[[str], QPixmap]]) -> None:
+        """Sets the strategy for retrieving emoji pixmaps.
+
+        Args:
+            emoji_pixmap_getter (Union[str, QFont, Callable[[str], QPixmap]]):
+                Can be a font family name (str), a QFont object, or a callable that takes an emoji string
+                and returns a QPixmap.
+        """
         if isinstance(emoji_pixmap_getter, str):
             font_family = emoji_pixmap_getter
         elif isinstance(emoji_pixmap_getter, QFont):
@@ -405,5 +416,10 @@ class QEmojiPicker(QWidget):
         self._paint_emoji_on_label()
         self._paint_skintones()
 
-    def emojiPixmapGetter(self):
+    def emojiPixmapGetter(self) -> typing.Callable[[str], QPixmap]:
+        """Returns the current emoji pixmap getter function.
+
+        Returns:
+            Callable[[str], QPixmap]: A function that takes an emoji string and returns a QPixmap.
+        """
         return self._emoji_pixmap_getter
