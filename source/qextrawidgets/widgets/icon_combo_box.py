@@ -1,7 +1,7 @@
 import typing
 
 from PySide6.QtWidgets import QToolButton, QMenu, QWidgetAction, QWidget, QVBoxLayout
-from PySide6.QtGui import QIcon, QFont
+from PySide6.QtGui import QIcon, QFont, QPixmap
 from PySide6.QtCore import Qt, QSize, Signal
 
 class QIconComboBox(QToolButton):
@@ -17,7 +17,7 @@ class QIconComboBox(QToolButton):
     currentIndexChanged = Signal(int)
     currentDataChanged = Signal(object)
 
-    def __init__(self, parent: QWidget = None, size: int = 40) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None, size: int = 40) -> None:
         """Initializes the icon combo box.
 
         Args:
@@ -50,11 +50,11 @@ class QIconComboBox(QToolButton):
         self._container_action.setDefaultWidget(self._panel)
         self._menu.addAction(self._container_action)
 
-    def addItem(self, icon: typing.Union[QIcon, str] = None, text: str = None, data: typing.Any = None, font: QFont = None) -> int:
+    def addItem(self, icon: typing.Optional[typing.Union[QIcon, str, QPixmap]] = None, text: typing.Optional[str] = None, data: typing.Any = None, font: typing.Optional[QFont] = None) -> int:
         """Adds an item to the menu.
 
         Args:
-            icon (Union[QIcon, str], optional): Item icon or theme icon name. Defaults to None.
+            icon (Union[QIcon, str, QPixmap], optional): Item icon, theme icon name, or QPixmap. Defaults to None.
             text (str, optional): Item text. Defaults to None.
             data (Any, optional): Custom data associated with the item. Defaults to None.
             font (QFont, optional): Custom font for the item. Defaults to None.
@@ -74,7 +74,9 @@ class QIconComboBox(QToolButton):
             btn_item.setFont(self.font())
 
         if icon:
-            if isinstance(icon, str):
+            if isinstance(icon, QPixmap):
+                icon = QIcon(icon)
+            elif isinstance(icon, str):
                 icon = QIcon.fromTheme(icon)
             btn_item.setIcon(icon)
             btn_item.setIconSize(QSize(int(self._size * 0.6), int(self._size * 0.6)))
@@ -217,15 +219,17 @@ class QIconComboBox(QToolButton):
             return self._items[index]['text']
         return ""
 
-    def setItemIcon(self, index: int, icon: typing.Optional[typing.Union[QIcon, str]]) -> None:
+    def setItemIcon(self, index: int, icon: typing.Optional[typing.Union[QIcon, str, QPixmap]]) -> None:
         """Sets the icon for the item at the given index.
 
         Args:
             index (int): Item index.
-            icon (Union[QIcon, str], optional): New icon or theme icon name.
+            icon (Union[QIcon, str, QPixmap], optional): New icon, theme icon name, or QPixmap.
         """
         if 0 <= index < len(self._items):
-            if isinstance(icon, str):
+            if isinstance(icon, QPixmap):
+                icon = QIcon(icon)
+            elif isinstance(icon, str):
                 icon = QIcon.fromTheme(icon)
 
             self._items[index]['icon'] = icon
@@ -283,7 +287,8 @@ class QIconComboBox(QToolButton):
         # Clear layout
         while self._layout.count():
             child = self._layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            widget = child.widget()
+            if widget:
+                widget.deleteLater()
         self.setIcon(QIcon())
         self.setText("")

@@ -1,4 +1,6 @@
-from typing import Optional, Any, Set
+
+from PySide6.QtGui import QFont
+from typing import Optional, Any, Set, Union, cast
 
 from PySide6.QtCore import Qt, QRect, QModelIndex, QPersistentModelIndex, Signal, QTimer
 from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage
@@ -6,7 +8,7 @@ from PySide6.QtWidgets import (
     QStyleOptionViewItem,
     QStyle,
     QStyledItemDelegate,
-    QApplication
+    QWidget
 )
 
 
@@ -89,7 +91,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         if persistent_index in self._requested_indices:
             self._requested_indices.remove(persistent_index)
 
-    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
         """
         Paint the item.
 
@@ -111,8 +113,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
 
         painter.restore()
 
-    # noinspection PyUnresolvedReferences
-    def _draw_category(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def _draw_category(self, painter: QPainter, option: QStyleOptionViewItem, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
         """
         Draw a category header item.
 
@@ -123,32 +124,35 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             option (QStyleOptionViewItem): The style options.
             index (QModelIndex): The model index of the category.
         """
-        style = option.widget.style() if option.widget else QApplication.style()
-        palette = option.palette
+        widget = cast(QWidget, option.widget)
+        style = widget.style()
+        palette = cast(QPalette, option.palette)
+        current_state = cast(QStyle.StateFlag, option.state)
+        option_rect = cast(QRect, option.rect)
 
-        if option.state & QStyle.State.State_MouseOver:
+        if current_state & QStyle.StateFlag.State_MouseOver:
             bg_color = palette.color(QPalette.ColorRole.Button).lighter(110)
         else:
             bg_color = palette.color(QPalette.ColorRole.Button)
 
-        painter.fillRect(option.rect, bg_color)
+        painter.fillRect(option_rect, bg_color)
         painter.setPen(palette.color(QPalette.ColorRole.Mid))
-        painter.drawLine(option.rect.bottomLeft(), option.rect.bottomRight())
+        painter.drawLine(option_rect.bottomLeft(), option_rect.bottomRight())
 
-        is_expanded = bool(option.state & QStyle.State.State_Open)
+        is_expanded = bool(current_state & QStyle.StateFlag.State_Open)
 
         left_padding = 5
         element_spacing = 5
         arrow_size = 20
         user_icon_size = 20
-        current_x = option.rect.left() + left_padding
-        center_y = option.rect.top() + (option.rect.height() - arrow_size) // 2
+        current_x = option_rect.left() + left_padding
+        center_y = option_rect.top() + (option_rect.height() - arrow_size) // 2
 
         # Draw Arrow
-        arrow_rect = QRect(current_x, center_y, arrow_size, arrow_size)
+        arrow_rect: Any = QRect(current_x, center_y, arrow_size, arrow_size)
         if not self._arrow_icon.isNull():
             state = QIcon.State.On if is_expanded else QIcon.State.Off
-            mode = QIcon.Mode.Disabled if not (option.state & QStyle.State.State_Enabled) else QIcon.Mode.Normal
+            mode = QIcon.Mode.Disabled if not (current_state & QStyle.StateFlag.State_Enabled) else QIcon.Mode.Normal
             self._arrow_icon.paint(painter, arrow_rect, Qt.AlignmentFlag.AlignCenter, mode, state)
         else:
             arrow_opt = QStyleOptionViewItem(option)
@@ -158,7 +162,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
                 if is_expanded
                 else QStyle.PrimitiveElement.PE_IndicatorArrowRight
             )
-            style.drawPrimitive(primitive, arrow_opt, painter, option.widget)
+            style.drawPrimitive(primitive, arrow_opt, painter, widget)
 
         current_x += arrow_size + element_spacing
 
@@ -166,19 +170,19 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         user_icon = index.data(Qt.ItemDataRole.DecorationRole)
         if isinstance(user_icon, QIcon) and not user_icon.isNull():
             icon_rect = QRect(current_x, center_y, user_icon_size, user_icon_size)
-            mode = QIcon.Mode.Disabled if not (option.state & QStyle.State.State_Enabled) else QIcon.Mode.Normal
+            mode = QIcon.Mode.Disabled if not (current_state & QStyle.StateFlag.State_Enabled) else QIcon.Mode.Normal
             user_icon.paint(painter, icon_rect, Qt.AlignmentFlag.AlignCenter, mode, QIcon.State.Off)
             current_x += user_icon_size + element_spacing
 
         # Draw Text
         text_rect = QRect(
             current_x,
-            option.rect.top(),
-            option.rect.right() - current_x - 5,
-            option.rect.height()
+            option_rect.top(),
+            option_rect.right() - current_x - 5,
+            option_rect.height()
         )
         painter.setPen(palette.color(QPalette.ColorRole.ButtonText))
-        font = option.font
+        font = cast(QFont, option.font)
         font.setBold(True)
         painter.setFont(font)
         text = str(index.data(Qt.ItemDataRole.DisplayRole))
@@ -191,8 +195,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             text
         )
 
-    # noinspection PyUnresolvedReferences
-    def _draw_grid_item(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def _draw_grid_item(self, painter: QPainter, option: QStyleOptionViewItem, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
         """
         Draw a child item in the grid used for lazy loading check.
 
@@ -204,22 +207,24 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             option (QStyleOptionViewItem): The style options.
             index (QModelIndex): The model index of the item.
         """
+
         painter.save()
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
 
-        palette = option.palette
+        palette = cast(QPalette, option.palette)
+        current_state = cast(QStyle.StateFlag, option.state)
         bg_color = None
         base_bg_color = palette.color(QPalette.ColorRole.Base)
 
         # Determine Background Color for Selection/Hover
-        if option.state & QStyle.State.State_Selected:
+        if current_state & QStyle.StateFlag.State_Selected:
             bg_color = palette.color(QPalette.ColorRole.Highlight)
-        elif option.state & QStyle.State.State_MouseOver:
+        elif current_state & QStyle.StateFlag.State_MouseOver:
             bg_color = base_bg_color.lighter(120)
 
         # Draw Background (Rounded Rect)
-        rect = option.rect.adjusted(2, 2, -2, -2)
+        rect = cast(QRect, option.rect).adjusted(2, 2, -2, -2)
 
         if bg_color is not None:
             painter.setPen(Qt.PenStyle.NoPen)
@@ -259,9 +264,9 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             # --- Drawing Logic ---
             if isinstance(item_data, QIcon):
                 mode = QIcon.Mode.Normal
-                if not (option.state & QStyle.State.State_Enabled):
+                if not (current_state & QStyle.StateFlag.State_Enabled):
                     mode = QIcon.Mode.Disabled
-                elif option.state & QStyle.State.State_Selected:
+                elif current_state & QStyle.StateFlag.State_Selected:
                     mode = QIcon.Mode.Selected
 
                 item_data.paint(painter, target_rect, Qt.AlignmentFlag.AlignCenter, mode, QIcon.State.Off)
@@ -281,7 +286,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
                 x = target_rect.x() + (target_rect.width() - scaled_pixmap.width()) // 2
                 y = target_rect.y() + (target_rect.height() - scaled_pixmap.height()) // 2
 
-                if not (option.state & QStyle.State.State_Enabled):
+                if not (current_state & QStyle.StateFlag.State_Enabled):
                     painter.setOpacity(0.5)
 
                 painter.drawPixmap(x, y, scaled_pixmap)

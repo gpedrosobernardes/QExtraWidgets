@@ -97,7 +97,7 @@ class QEmojiPicker(QWidget):
         if model is None:
             self._model.populate()
 
-        self._emoji_pixmap_getter = None
+        self._emoji_pixmap_getter: typing.Callable[[str], QPixmap]
         self.setEmojiPixmapGetter(emoji_pixmap_getter)
 
         self.translateUI()
@@ -130,6 +130,7 @@ class QEmojiPicker(QWidget):
 
         self._model.categoryInserted.connect(self._on_categories_inserted)
         self._model.categoryRemoved.connect(self._on_categories_removed)
+        
         self._grouped_icon_view.itemEntered.connect(self._on_mouse_entered_emoji)
         self._grouped_icon_view.itemExited.connect(self._on_mouse_exited_emoji)
         self._grouped_icon_view.itemClicked.connect(self._on_item_clicked)
@@ -170,7 +171,11 @@ class QEmojiPicker(QWidget):
             proxy_index (QModelIndex): The index in the proxy model that was clicked.
         """
         source_index = self._proxy.mapToSource(proxy_index)
-        item: QEmojiItem = self._model.itemFromIndex(source_index)
+        item = self._model.itemFromIndex(source_index)
+
+        if not isinstance(item, QEmojiItem):
+            return
+
         self.picked.emit(item.emoji())
 
         recent_category_index = self._model.findCategory(EmojiCategory.Recents)
@@ -204,12 +209,12 @@ class QEmojiPicker(QWidget):
             expand_all_action.triggered.connect(self._grouped_icon_view.expandAll)
 
         elif isinstance(item, QEmojiItem):
-            favorite_category_index: QModelIndex = self._model.findCategory(EmojiCategory.Favorites)
+            favorite_category_index = self._model.findCategory(EmojiCategory.Favorites)
 
             if favorite_category_index:
                 emoji = item.data(QEmojiItem.QEmojiDataRole.EmojiRole)
-                favorite_item_index: QModelIndex = self._model.findEmojiInCategory(favorite_category_index, emoji)
-                favorite_category_item: QEmojiCategoryItem = self._model.itemFromIndex(favorite_category_index)
+                favorite_item_index = self._model.findEmojiInCategory(favorite_category_index, emoji)
+                favorite_category_item = self._model.itemFromIndex(favorite_category_index)
 
                 if favorite_item_index:
                     action = menu.addAction(self.tr("Unfavorite"))
@@ -237,8 +242,16 @@ class QEmojiPicker(QWidget):
         Args:
             persistent_index (QPersistentModelIndex): The persistent index of the item needing an image.
         """
-        # 1. Explicitly convert to QModelIndex (Type Safety)
-        proxy_index = QModelIndex(persistent_index)
+        if not persistent_index.isValid():
+            return
+
+        # 1. Explicitly convert to QModelIndex
+        # Note: QModelIndex constructor does not accept QPersistentModelIndex directly in PySide6
+        proxy_index = persistent_index.model().index(
+            persistent_index.row(),
+            persistent_index.column(),
+            persistent_index.parent()
+        )
 
         if not proxy_index.isValid():
             return
@@ -250,8 +263,8 @@ class QEmojiPicker(QWidget):
             return
 
         # 3. Fetch the item and set the image
-        item: QEmojiItem = self._model.itemFromIndex(source_index)
-        if item:
+        item = self._model.itemFromIndex(source_index)
+        if isinstance(item, QEmojiItem):
             # Generate the pixmap
             pixmap = self.emojiPixmapGetter()(item.emoji())
 
@@ -297,7 +310,7 @@ class QEmojiPicker(QWidget):
             index (QModelIndex): The index of the item under the mouse.
         """
         source_index = self._proxy.mapToSource(index)
-        item: QEmojiItem = self._model.itemFromIndex(source_index)
+        item = self._model.itemFromIndex(source_index)
         if isinstance(item, QEmojiItem):
             self._emoji_on_label = item.emoji()
             self._paint_emoji_on_label()
@@ -422,7 +435,7 @@ class QEmojiPicker(QWidget):
             emoji_font.setPixelSize(48)
             self._emoji_pixmap_getter = partial(char_to_pixmap, font=emoji_font)
         else:
-            self._emoji_pixmap_getter = emoji_pixmap_getter
+            self._emoji_pixmap_getter = typing.cast(typing.Callable[[str], QPixmap], emoji_pixmap_getter)
 
         self._paint_emoji_on_label()
         self._paint_skintones()

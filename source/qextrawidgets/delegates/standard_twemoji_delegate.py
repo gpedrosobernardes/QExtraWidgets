@@ -1,7 +1,8 @@
+from PySide6.QtWidgets import QWidget
 import typing
 
 import emoji_data_python
-from PySide6.QtCore import QModelIndex, Qt, QPoint, QSize
+from PySide6.QtCore import QModelIndex, QPersistentModelIndex, Qt, QPoint, QSize
 from PySide6.QtGui import QPainter, QPalette, QFontMetrics
 from PySide6.QtWidgets import (
     QStyledItemDelegate,
@@ -21,7 +22,7 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
 
     EmojiRegex = emoji_data_python.get_emoji_regex()
 
-    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> None:
         """Renders the delegate using the given painter and style option.
 
         Args:
@@ -34,19 +35,19 @@ class QStandardTwemojiDelegate(QStyledItemDelegate):
         opt = QStyleOptionViewItem(option)
         self.initStyleOption(opt, index)
 
-        widget = getattr(opt, "widget")
+        widget = typing.cast(QWidget, opt.widget)
 
         style = widget.style()
 
         # Draws background, selection, focus, etc.
-        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, option, painter, getattr(option, "widget"))
+        style.drawControl(QStyle.ControlElement.CE_ItemViewItem, option, painter, widget)
 
         # ===== data =====
-        text: str = getattr(opt, "text")
-        fm: QFontMetrics = getattr(opt, "fontMetrics")
-        alignment: Qt.AlignmentFlag = getattr(opt, "displayAlignment")
-        palette: QPalette = getattr(opt, "palette")
-        state: QStyle.StateFlag = getattr(opt, "state")
+        text = typing.cast(str, opt.text)
+        fm = typing.cast(QFontMetrics, opt.fontMetrics)
+        alignment = typing.cast(Qt.AlignmentFlag, opt.displayAlignment)
+        palette = typing.cast(QPalette, opt.palette)
+        state = typing.cast(QStyle.StateFlag, opt.state)
 
         painter.setPen(
             palette.color(

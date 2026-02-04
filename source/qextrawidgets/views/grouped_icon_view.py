@@ -1,3 +1,4 @@
+import typing
 from PySide6.QtCore import (
     QModelIndex,
     QPersistentModelIndex,
@@ -8,9 +9,10 @@ from PySide6.QtCore import (
     QEvent,
     Signal,
     QAbstractItemModel,
-    QTimer
+    QTimer,
+    QItemSelection
 )
-from PySide6.QtGui import QCursor, QPainter, QMouseEvent
+from PySide6.QtGui import QCursor, QPainter, QMouseEvent, QRegion, QPaintEvent
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QStyleOptionViewItem,
@@ -91,6 +93,10 @@ class QGroupedIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
     # Public API
     # -------------------------------------------------------------------------
+
+    def itemDelegate(self, _: typing.Union[QModelIndex, QPersistentModelIndex, None] = None) -> QGroupedIconDelegate:
+        """Returns the item delegate used by the view."""
+        return typing.cast(QGroupedIconDelegate, super().itemDelegate())
 
     def setIconSize(self, size: QSize) -> None:
         """
@@ -183,13 +189,22 @@ class QGroupedIconView(QAbstractItemView):
     # Internal Logic Helpers
     # -------------------------------------------------------------------------
 
-    def _is_category(self, index: QModelIndex) -> bool:
+    def _is_category(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """Check if the given index represents a category (header)."""
         return index.isValid() and not index.parent().isValid()
 
-    def _is_item(self, index: QModelIndex) -> bool:
+    def _is_item(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """Check if the given index represents a child item."""
         return index.isValid() and index.parent().isValid()
+
+    def _persistent_to_index(self, persistent: QPersistentModelIndex) -> QModelIndex:
+        """Helper to convert QPersistentModelIndex to QModelIndex (workaround for PySide6)."""
+        if not persistent.isValid():
+            return QModelIndex()
+        model = persistent.model()
+        if not model:
+            return QModelIndex()
+        return model.index(persistent.row(), persistent.column(), persistent.parent())
 
     def _on_scroll_value_changed(self, value: int) -> None:
         self._recalculate_hover()
@@ -211,12 +226,12 @@ class QGroupedIconView(QAbstractItemView):
 
         if new_persistent != self._hover_index:
             if self._hover_index.isValid():
-                self.itemExited.emit(QModelIndex(self._hover_index))
+                self.itemExited.emit(self._persistent_to_index(self._hover_index))
 
             self._hover_index = new_persistent
 
             if self._hover_index.isValid():
-                self.itemEntered.emit(QModelIndex(self._hover_index))
+                self.itemEntered.emit(self._persistent_to_index(self._hover_index))
 
             if not self.verticalScrollBar().isSliderDown():
                 self.viewport().update()
@@ -292,7 +307,7 @@ class QGroupedIconView(QAbstractItemView):
     def _on_rows_removed(self, parent, start, end):
         self._schedule_layout()
 
-    def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int] = None) -> None:
+    def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: Optional[list[int]] = None) -> None:
         if roles is None:
             roles = []
         
@@ -348,55 +363,55 @@ class QGroupedIconView(QAbstractItemView):
             event (QEvent): The leave event.
         """
         if self._hover_index.isValid():
-            self.itemExited.emit(QModelIndex(self._hover_index))
+            self.itemExited.emit(self._persistent_to_index(self._hover_index))
         self._hover_index = QPersistentModelIndex()
         self.viewport().update()
         super().leaveEvent(event)
 
     # noinspection PyUnresolvedReferences
-    def paintEvent(self, event: QEvent) -> None:
+    def paintEvent(self, event: QPaintEvent) -> None:
         """
         Paint the items in the view.
 
         Args:
-            event (QEvent): The paint event.
+            event (QPaintEvent): The paint event.
         """
         if not self._item_rects:
             return
 
         painter = QPainter(self.viewport())
-        region = event.rect()
+        region = event.region()
         scroll_y = self.verticalScrollBar().value()
 
-        option = QStyleOptionViewItem()
+        option: typing.Any = QStyleOptionViewItem()
         option.initFrom(self)
 
         for p_index, rect in self._item_rects.items():
             if not p_index.isValid():
                 continue
 
-            index = QModelIndex(p_index)
+            index = self._persistent_to_index(p_index)
             if not index.isValid():
                 continue
 
             visual_rect = rect.translated(0, -scroll_y)
 
-            if not visual_rect.intersects(region):
+            if not visual_rect.intersects(region.boundingRect()):
                 continue
 
             option.rect = visual_rect
-            option.state = QStyle.State.State_None
+            option.state = QStyle.StateFlag.State_None
 
             if self.isEnabled():
-                option.state |= QStyle.State.State_Enabled
+                option.state |= QStyle.StateFlag.State_Enabled
             if self.selectionModel().isSelected(index):
-                option.state |= QStyle.State.State_Selected
+                option.state |= QStyle.StateFlag.State_Selected
 
             if p_index == self._hover_index:
-                option.state |= QStyle.State.State_MouseOver
+                option.state |= QStyle.StateFlag.State_MouseOver
 
             if self.isExpanded(index):
-                option.state |= QStyle.State.State_Open
+                option.state |= QStyle.StateFlag.State_Open
 
             self.itemDelegate(index).paint(painter, option, index)
 
@@ -465,12 +480,12 @@ class QGroupedIconView(QAbstractItemView):
 
         super().updateGeometries()
 
-    def visualRect(self, index: QModelIndex) -> QRect:
+    def visualRect(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> QRect:
         """
         Return the rectangle on the viewport occupied by the item at index.
 
         Args:
-            index (QModelIndex): The index of the item.
+            index (QModelIndex | QPersistentModelIndex): The index of the item.
 
         Returns:
             QRect: The visual rectangle.
@@ -497,15 +512,15 @@ class QGroupedIconView(QAbstractItemView):
         real_point = point + QPoint(0, self.verticalScrollBar().value())
         for p_index, rect in self._item_rects.items():
             if rect.contains(real_point):
-                return QModelIndex(p_index)
+                return self._persistent_to_index(p_index)
         return QModelIndex()
 
-    def scrollTo(self, index: QModelIndex, hint=QAbstractItemView.ScrollHint.EnsureVisible) -> None:
+    def scrollTo(self, index: typing.Union[QModelIndex, QPersistentModelIndex], hint: QAbstractItemView.ScrollHint = QAbstractItemView.ScrollHint.EnsureVisible) -> None:
         """
         Scroll the view to ensure the item at index is visible.
 
         Args:
-            index (QModelIndex): The index to scroll to.
+            index (QModelIndex | QPersistentModelIndex): The index to scroll to.
             hint (QAbstractItemView.ScrollHint): The scroll hint.
         """
         p_index = QPersistentModelIndex(index)
@@ -539,7 +554,7 @@ class QGroupedIconView(QAbstractItemView):
             self.verticalScrollBar().setValue(item_bottom - viewport_height)
 
         elif hint == QAbstractItemView.ScrollHint.PositionAtCenter:
-            center_target = item_top - (viewport_height / 2) + (rect.height() / 2)
+            center_target = int(item_top - (viewport_height / 2) + (rect.height() / 2))
             self.verticalScrollBar().setValue(center_target)
 
     # -------------------------------------------------------------------------
@@ -567,11 +582,11 @@ class QGroupedIconView(QAbstractItemView):
         """Apply selection to items within the rectangle (Not implemented)."""
         pass
 
-    def visualRegionForSelection(self, selection) -> QRect:
+    def visualRegionForSelection(self, selection: QItemSelection) -> QRegion:
         """
         Return the region covered by the selection (Not implemented).
 
         Returns:
-            QRect: The total viewport rect as a placeholder.
+            QRegion: The total viewport rect as a placeholder.
         """
-        return self.viewport().rect()
+        return QRegion(self.viewport().rect())
