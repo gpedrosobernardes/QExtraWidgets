@@ -385,6 +385,7 @@ class QGroupedIconView(QAbstractItemView):
 
         option: typing.Any = QStyleOptionViewItem()
         option.initFrom(self)
+        option.widget = self
 
         for p_index, rect in self._item_rects.items():
             if not p_index.isValid():
