@@ -7,13 +7,11 @@
 
 **QExtraWidgets** is a comprehensive library of modern, responsive, and feature-rich widgets for **PySide6** applications. It aims to fill the gaps in standard Qt widgets by providing high-level components like Excel-style filterable tables, emoji pickers, accordion menus, and theme-aware icons.
 
----
 
 ## 📖 Documentation
 
 The complete documentation is available at: [https://gpedrosobernardes.github.io/QExtraWidgets/](https://gpedrosobernardes.github.io/QExtraWidgets/)
 
----
 
 ## 📦 Installation
 
@@ -21,15 +19,6 @@ The complete documentation is available at: [https://gpedrosobernardes.github.io
 pip install qextrawidgets
 ```
 
-**Requirements:**
-
-* Python 3.9+
-* PySide6 >= 6.10.1
-* twemoji-api >= 2.0.0
-* emoji-data-python == 1.6.0
-* qtawesome == 1.4.0
-
----
 
 ## ✨ Features & Widgets
 
@@ -49,8 +38,9 @@ A powerful `QTableView` extension that adds Excel-like filtering capabilities to
 
 A full-featured Emoji Picker and a Text Edit that renders Twemoji images inline.
 
-* **Lazy Loading:** Efficiently handles thousands of emojis.
-* **Auto-Resize:** The `QExtraTextEdit` grows automatically with content (like WhatsApp/Telegram).
+* **Rich Features:** Includes skin tone selector, favorites/recents management, and context menu actions (copy alias, favorite/unfavorite).
+* **Optimized Search:** Fast filtering with recursive category matching.
+* **QTwemojiTextEdit:** Inherits from `QExtraTextEdit`, providing auto-resize capabilities (like WhatsApp/Telegram) while rendering high-quality Twemoji images.
 * **Emoji Replacement:** Automatically converts `:smile:` aliases or pasted unicode characters into high-quality images.
 
 ![QEmojiPicker](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QEmojiPicker.png)
@@ -69,9 +59,11 @@ A flexible accordion widget for grouping content in collapsible sections.
 
 ---
 
-### 4. QThemeResponsiveIcon
+### 4. QThemeResponsiveIcon & QThemeResponsiveLabel
 
-Stop worrying about Dark/Light mode icons. This class wraps `QtAwesome` to automatically invert colors (Black <-> White) based on the current system or application palette.
+Stop worrying about Dark/Light mode icons. `QThemeResponsiveIcon` wraps `QtAwesome` to automatically invert colors (Black <-> White) based on the current system or application palette.
+
+For labels, `QThemeResponsiveLabel` automatically updates its pixmap when the icon theme or widget size changes.
 
 ```python
 from qextrawidgets.icons import QThemeResponsiveIcon
@@ -117,6 +109,8 @@ view.setItemDelegate(delegate)
 | **QDualList**         | Two lists side-by-side for moving items (Select/Deselect).           | ![QDualList](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png)                 |
 | **QSearchLineEdit**   | A search input field with a clear button and search icon.            | ![QSearchLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png)     |
 | **QIconComboBox**     | A ToolButton-style combo box optimized for icons or short text.      |                                                                                                                                  |
+| **QEmojiPickerMenu**  | A menu wrapper for `QEmojiPicker` to easily attach it to buttons.    |                                                                                                                                  |
+| **QThemeResponsiveLabel** | A label that automatically updates its icon based on theme and size. |                                                                                                                                  |
 
 ---
 

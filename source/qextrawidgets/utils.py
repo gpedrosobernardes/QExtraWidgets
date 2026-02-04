@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QFont, QFontDatabase, QFontMetrics, QColor, QColorConstants
+from PySide6.QtGui import QFontDatabase, QColorConstants
 from PySide6.QtWidgets import QApplication
 
 
