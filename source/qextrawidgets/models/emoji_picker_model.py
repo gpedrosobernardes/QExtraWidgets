@@ -96,17 +96,17 @@ class QEmojiPickerModel(QStandardItemModel):
                     self._emojis_skin_modifier_compatible[emoji_char.category].append(emoji_char.char)
 
         if self._recent_category:
-            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Recents])
+            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Recents], options=[{"scale_factor": 0.9}])
             recent_category_item = QEmojiCategoryItem(EmojiCategory.Recents, icon)
             self.appendRow(recent_category_item)
 
         if self._favorite_category:
-            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Favorites])
+            icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Favorites], options=[{"scale_factor": 0.9}])
             favorite_category_item = QEmojiCategoryItem(EmojiCategory.Favorites, icon)
             self.appendRow(favorite_category_item)
 
         for category, emoji_items in emoji_grouped_by_category.items():
-            icon = QThemeResponsiveIcon.fromAwesome(icons[category])
+            icon = QThemeResponsiveIcon.fromAwesome(icons[category], options=[{"scale_factor": 0.9}])
             category_item = QEmojiCategoryItem(category, icon)
             self.appendRow(category_item)
             category_item.appendRows(emoji_items)
