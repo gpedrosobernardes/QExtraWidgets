@@ -9,8 +9,6 @@ from PySide6.QtWidgets import (
     QApplication
 )
 
-from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
-
 
 class QGroupedIconDelegate(QStyledItemDelegate):
     """
@@ -30,17 +28,28 @@ class QGroupedIconDelegate(QStyledItemDelegate):
     # Signal emitted when an item has no DecorationRole data
     requestImage = Signal(QPersistentModelIndex)
 
-    def __init__(self, parent: Optional[Any] = None, arrow_icon: Optional[QIcon] = None):
+    def __init__(self, parent: Optional[Any] = None, arrow_icon: Optional[QIcon] = None, item_internal_margin_ratio: float = 0.1):
         """
         Initialize the delegate.
 
         Args:
             parent (Optional[Any]): The parent object.
             arrow_icon (Optional[QIcon]): Custom icon for the expansion arrow. If None, uses default primitive.
+            item_internal_margin_ratio (float): Internal margin ratio (0.0 to 0.5).
         """
         super().__init__(parent)
         self._arrow_icon: QIcon = arrow_icon if arrow_icon else QIcon()
         self._requested_indices: Set[QPersistentModelIndex] = set()
+        self.setItemInternalMargin(item_internal_margin_ratio)
+
+    def setItemInternalMargin(self, ratio: float) -> None:
+        """
+        Set the internal margin ratio for the item content.
+
+        Args:
+            ratio (float): A value between 0.0 (0%) and 0.5 (50%).
+        """
+        self._item_internal_margin_ratio = max(0.0, min(0.5, ratio))
 
     def setArrowIcon(self, icon: QIcon) -> None:
         """
@@ -219,7 +228,9 @@ class QGroupedIconDelegate(QStyledItemDelegate):
 
         # Retrieve Data
         item_data = index.data(Qt.ItemDataRole.DecorationRole)
-        target_rect = rect.adjusted(4, 4, -4, -4)
+
+        margin = int(min(rect.width(), rect.height()) * self._item_internal_margin_ratio)
+        target_rect = rect.adjusted(margin, margin, -margin, -margin)
 
         # --- Lazy Loading Logic ---
         # If no valid data is found, trigger the signal

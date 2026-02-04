@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QVBoxLayout, 
                                QLineEdit, QHBoxLayout, QFormLayout, QSpinBox, 
@@ -11,6 +11,10 @@ from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts
 from qextrawidgets.widgets.emoji_picker import QEmojiPicker
+from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
+from qextrawidgets.items.emoji_item import QEmojiItem
+from emoji_data_python import emoji_data
+from functools import partial
 
 
 class MainWindow(QMainWindow):
@@ -48,7 +52,14 @@ class MainWindow(QMainWindow):
         self.emoji_margin_spin.setDecimals(2)
         self.emoji_margin_spin.setValue(0.10)
         self.emoji_margin_spin.valueChanged.connect(self._on_emoji_margin_changed)
-        config_form.addRow("Emoji Margin:", self.emoji_margin_spin)
+        config_form.addRow("Emoji Internal Margin:", self.emoji_margin_spin)
+
+        # Grid spacing control
+        self.grid_spacing_spin = QSpinBox()
+        self.grid_spacing_spin.setRange(0, 50)
+        self.grid_spacing_spin.setValue(8)
+        self.grid_spacing_spin.valueChanged.connect(self._on_grid_spacing_changed)
+        config_form.addRow("Grid Spacing:", self.grid_spacing_spin)
 
         self.favorite_check = QCheckBox()
         self.favorite_check.setChecked(True)
@@ -101,7 +112,7 @@ class MainWindow(QMainWindow):
         self.emoji_picker = QEmojiPicker()
         self.emoji_picker.picked.connect(self._on_emoji_picked)
         # Ensure the picker's margin matches the UI initial value
-        self.emoji_picker.delegate().setEmojiMarginPercentage(self.emoji_margin_spin.value())
+        self.emoji_picker.delegate().setItemInternalMargin(self.emoji_margin_spin.value())
 
         # Setup initial state based on configuration
         self._on_use_pixmaps_changed(self.use_pixmaps_check.checkState().value)
@@ -112,7 +123,7 @@ class MainWindow(QMainWindow):
         self.line_edit.insert(emoji)
 
     def _on_emoji_size_changed(self, value: int) -> None:
-        self.emoji_picker.delegate().setEmojiSize(value)
+        self.emoji_picker.view().setIconSize(QSize(value, value))
 
     def _on_emoji_margin_changed(self, value: float) -> None:
         """Handle emoji margin changes from the UI.
@@ -121,34 +132,51 @@ class MainWindow(QMainWindow):
             value (float): Margin percentage value between 0.10 and 0.50.
         """
         # Forward the percentage value to the picker
-        self.emoji_picker.delegate().setEmojiMarginPercentage(value)
+        self.emoji_picker.delegate().setItemInternalMargin(value)
+
+    def _on_grid_spacing_changed(self, value: int) -> None:
+        self.emoji_picker.view().setMargin(value)
 
     def _on_favorite_changed(self, state: int) -> None:
-        self.emoji_picker.categoryModel().setFavoriteCategory(state == Qt.CheckState.Checked.value)
+        # Dynamic toggling of favorite category is not yet supported in the model
+        pass
+        # self.emoji_picker.model().setFavoriteCategory(state == Qt.CheckState.Checked.value)
 
     def _on_recent_changed(self, state: int) -> None:
-        self.emoji_picker.categoryModel().setRecentCategory(state == Qt.CheckState.Checked.value)
+        # Dynamic toggling of recent category is not yet supported in the model
+        pass
+        # self.emoji_picker.model().setRecentCategory(state == Qt.CheckState.Checked.value)
 
     def _on_font_combo_changed(self, font_family: str) -> None:
         font = QFont(font_family)
-        self.emoji_picker.delegate().setEmojiFont(font_family)
+        # setEmojiPixmapGetter handles font families
+        self.emoji_picker.setEmojiPixmapGetter(font_family)
         self.line_edit.setFont(font)
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
-        delegate = self.emoji_picker.delegate()
         if state == Qt.CheckState.Checked.value:
-            delegate.setEmojiPixmapGetter(EmojiImageProvider.getPixmap)
+            self.emoji_picker.setEmojiPixmapGetter(partial(EmojiImageProvider.getPixmap, margin=0, size=64, dpr=1.0))
         else:
-            delegate.setEmojiPixmapGetter(None)
+            # Revert to current font in combo
+            self.emoji_picker.setEmojiPixmapGetter(self.font_combo.currentText())
 
     def _add_custom_category(self) -> None:
         icon = QThemeResponsiveIcon.fromAwesome("fa6s.rocket")
-        self.emoji_picker.categoryModel().addCategory("Custom", "My Custom Category", icon)
+        category_item = QEmojiCategoryItem("Custom", icon)
+        self.emoji_picker.model().appendRow(category_item)
+        
+        # Add some sample emojis (using first 10 from data)
+        items = [QEmojiItem(emoji_data[i]) for i in range(10)]
+        category_item.appendRows(items)
+        
         self.add_cat_btn.setEnabled(False)
         self.remove_cat_btn.setEnabled(True)
 
     def _remove_custom_category(self) -> None:
-        self.emoji_picker.categoryModel().removeCategory("Custom")
+        index = self.emoji_picker.model().findCategory("Custom")
+        if index:
+            self.emoji_picker.model().removeRow(index.row())
+            
         self.add_cat_btn.setEnabled(True)
         self.remove_cat_btn.setEnabled(False)
 

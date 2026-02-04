@@ -129,7 +129,7 @@ class QEmojiPicker(QWidget):
         self._search_line_edit.textChanged.connect(lambda: self._search_timer.start())
 
         self._model.categoryInserted.connect(self._on_categories_inserted)
-        self._model.rowsAboutToBeRemoved.connect(self._on_categories_removed)
+        self._model.categoryRemoved.connect(self._on_categories_removed)
         self._grouped_icon_view.itemEntered.connect(self._on_mouse_entered_emoji)
         self._grouped_icon_view.itemExited.connect(self._on_mouse_exited_emoji)
         self._grouped_icon_view.itemClicked.connect(self._on_item_clicked)
@@ -434,3 +434,15 @@ class QEmojiPicker(QWidget):
             Callable[[str], QPixmap]: A function that takes an emoji string and returns a QPixmap.
         """
         return self._emoji_pixmap_getter
+
+    def delegate(self) -> QGroupedIconDelegate:
+        """Returns the item delegate used by the view."""
+        return self._grouped_icon_view.itemDelegate()
+
+    def view(self) -> QGroupedIconView:
+        """Returns the internal grouped icon view."""
+        return self._grouped_icon_view
+
+    def model(self) -> QEmojiPickerModel:
+        """Returns the emoji picker model."""
+        return self._model

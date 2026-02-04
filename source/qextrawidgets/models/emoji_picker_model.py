@@ -55,7 +55,8 @@ class QEmojiPickerModel(QStandardItemModel):
         self._favorite_category = favorite_category
         self._recent_category = recent_category
 
-        self.rowsRemoved.connect(self._on_rows_removed)
+        self.rowsInserted.connect(self._on_rows_inserted)
+        self.rowsAboutToBeRemoved.connect(self._on_rows_removed)
 
     def populate(self):
         """
@@ -98,20 +99,17 @@ class QEmojiPickerModel(QStandardItemModel):
             icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Recents])
             recent_category_item = QEmojiCategoryItem(EmojiCategory.Recents, icon)
             self.appendRow(recent_category_item)
-            self.categoryInserted.emit(recent_category_item)
 
         if self._favorite_category:
             icon = QThemeResponsiveIcon.fromAwesome(icons[EmojiCategory.Favorites])
             favorite_category_item = QEmojiCategoryItem(EmojiCategory.Favorites, icon)
             self.appendRow(favorite_category_item)
-            self.categoryInserted.emit(favorite_category_item)
 
         for category, emoji_items in emoji_grouped_by_category.items():
             icon = QThemeResponsiveIcon.fromAwesome(icons[category])
             category_item = QEmojiCategoryItem(category, icon)
             self.appendRow(category_item)
             category_item.appendRows(emoji_items)
-            self.categoryInserted.emit(category_item)
 
 
 
@@ -207,4 +205,24 @@ class QEmojiPickerModel(QStandardItemModel):
             item = self.item(row)
             if isinstance(item, QEmojiCategoryItem):
                 self.categoryRemoved.emit(item)
+
+    @Slot(QModelIndex, int, int)
+    def _on_rows_inserted(self, parent: QModelIndex, first: int, last: int):
+        """
+        Handle internal slot for rows inserted signal.
+
+        Emits categoryInserted signal when top-level rows (categories) are added.
+
+        Args:
+            parent (QModelIndex): The parent index.
+            first (int): The first inserted row.
+            last (int): The last inserted row.
+        """
+        if parent.isValid():
+            return
+
+        for row in range(first, last + 1):
+            item = self.item(row)
+            if isinstance(item, QEmojiCategoryItem):
+                self.categoryInserted.emit(item)
 
