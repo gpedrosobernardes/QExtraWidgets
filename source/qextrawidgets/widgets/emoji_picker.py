@@ -99,6 +99,7 @@ class QEmojiPicker(QWidget):
 
         self._emoji_pixmap_getter: typing.Callable[[str], QPixmap]
         self.setEmojiPixmapGetter(emoji_pixmap_getter)
+        self.setContentsMargins(5, 5, 5, 5)
 
         self.translateUI()
 

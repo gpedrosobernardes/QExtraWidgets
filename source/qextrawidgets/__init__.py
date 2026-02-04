@@ -7,7 +7,6 @@ from .widgets import (
     QAccordionItem,
     QExtraTextEdit,
     QEmojiPicker,
-    QFilterableTable,
     QSearchLineEdit
 )
 from .documents import QTwemojiTextDocument

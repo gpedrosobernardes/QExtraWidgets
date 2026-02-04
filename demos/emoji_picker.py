@@ -5,12 +5,13 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QVBoxLayout, 
                                QLineEdit, QHBoxLayout, QFormLayout, QSpinBox, 
                                QCheckBox, QGroupBox, QPushButton, QComboBox,
-                               QDoubleSpinBox)
+                               QDoubleSpinBox, QToolButton)
 
 from qextrawidgets.emoji_utils import EmojiImageProvider
 from qextrawidgets.icons import QThemeResponsiveIcon
 from qextrawidgets.utils import QEmojiFonts
 from qextrawidgets.widgets.emoji_picker import QEmojiPicker
+from qextrawidgets.widgets.emoji_picker_menu import QEmojiPickerMenu
 from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
 from qextrawidgets.items.emoji_item import QEmojiItem
 from emoji_data_python import emoji_data
@@ -99,28 +100,51 @@ class MainWindow(QMainWindow):
         controls_layout.addWidget(cat_group)
         controls_layout.addStretch()
 
-        # Output Area
-        output_group = QGroupBox("Output")
-        output_layout = QVBoxLayout(output_group)
+
+
+        # Right side: Playground
+        playground_container = QGroupBox("Playground")
+        playground_layout = QVBoxLayout(playground_container)
+        
+        main_layout.addWidget(playground_container, 2)
+        
+        # Add a spacer or label
+        from PySide6.QtWidgets import QLabel
+        playground_layout.addStretch()
+        playground_layout.addWidget(QLabel("Type a message:"))
+        
+        # Input Row
+        input_container = QWidget()
+        input_layout = QHBoxLayout(input_container)
+        input_layout.setContentsMargins(0,0,0,0)
+        
         self.line_edit = QLineEdit()
         self.line_edit.setFont(QEmojiFonts.twemojiFont())
-        self.line_edit.setPlaceholderText("Picked emojis will appear here...")
-        output_layout.addWidget(self.line_edit)
-        controls_layout.addWidget(output_group)
-
-        # Right side: Emoji Picker
-        self.emoji_picker = QEmojiPicker()
+        self.line_edit.setPlaceholderText("Type a message...")
+        
+        self.emoji_picker_menu = QEmojiPickerMenu(self)
+        self.emoji_picker = self.emoji_picker_menu.picker()
         self.emoji_picker.picked.connect(self._on_emoji_picked)
+
+        self.emoji_btn = QToolButton()
+        # self.emoji_btn.setText("Open Emoji Picker")
+        self.emoji_btn.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.face-smile"))
+        self.emoji_btn.setMenu(self.emoji_picker_menu)
+        self.emoji_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        
+        input_layout.addWidget(self.emoji_btn)
+        input_layout.addWidget(self.line_edit)
+        
+        playground_layout.addWidget(input_container)
+
         # Ensure the picker's margin matches the UI initial value
         self.emoji_picker.delegate().setItemInternalMargin(self.emoji_margin_spin.value())
 
         # Setup initial state based on configuration
         self._on_use_pixmaps_changed(self.use_pixmaps_check.checkState().value)
 
-        main_layout.addWidget(self.emoji_picker, 2)
-
-    def _on_emoji_picked(self, emoji: str) -> None:
-        self.line_edit.insert(emoji)
+    def _on_emoji_picked(self, item: QEmojiItem) -> None:
+        self.line_edit.insert(item.emoji())
 
     def _on_emoji_size_changed(self, value: int) -> None:
         self.emoji_picker.view().setIconSize(QSize(value, value))
