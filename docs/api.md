@@ -9,6 +9,7 @@ The main widgets of the library.
 ::: qextrawidgets.widgets.accordion
 ::: qextrawidgets.widgets.accordion_item
 ::: qextrawidgets.widgets.color_button
+::: qextrawidgets.widgets.color_tool_button
 ::: qextrawidgets.widgets.dual_list
 ::: qextrawidgets.widgets.extra_text_edit
 ::: qextrawidgets.widgets.icon_combo_box
@@ -20,11 +21,11 @@ The main widgets of the library.
 
 ### Emoji Picker
 
-::: qextrawidgets.widgets.emoji_picker.emoji_picker
-::: qextrawidgets.widgets.emoji_picker.emoji_grid
-::: qextrawidgets.widgets.emoji_picker.emoji_model
+::: qextrawidgets.widgets.emoji_picker
+::: qextrawidgets.widgets.emoji_picker_menu
+::: qextrawidgets.models.emoji_picker_model
 
-The QEmojiSortFilterProxyModel supports an injectable pixmap getter via `setEmojiPixmapGetter`. The getter may return either a QPixmap or a QIcon; the proxy converts QPixmap to QIcon for DecorationRole to ensure consistent native rendering. If the getter returns an invalid value, the model provides an empty QIcon.
+The `QEmojiPicker` widget (and by extension `QEmojiPickerMenu`) manages custom emoji rendering through its `setEmojiPixmapGetter` method. This allows you to inject a custom function, font, or logic to generate pixmaps for emojis, ensuring consistent visual representation across the picker's view and model. The picker ensures these pixmaps are correctly provided to the underlying model and delegates for display.
 
 ### Filterable Table
 
@@ -33,11 +34,25 @@ The QEmojiSortFilterProxyModel supports an injectable pixmap getter via `setEmoj
 ## Delegates
 
 ::: qextrawidgets.delegates.standard_twemoji_delegate
+::: qextrawidgets.delegates.grouped_icon_delegate
 
 ## Proxies
 
+::: qextrawidgets.proxys.emoji_picker_proxy
 ::: qextrawidgets.proxys.emoji_sort_filter
 ::: qextrawidgets.proxys.multi_filter
+
+## Views
+
+::: qextrawidgets.views.emoji_grid_view
+::: qextrawidgets.views.filter_header_view
+::: qextrawidgets.views.filterable_table_view
+::: qextrawidgets.views.grouped_icon_view
+
+## Items
+
+::: qextrawidgets.items.emoji_category_item
+::: qextrawidgets.items.emoji_item
 
 ## Validators
 

@@ -9,7 +9,7 @@ from .extra_text_edit import QExtraTextEdit
 from .search_line_edit import QSearchLineEdit
 
 # Subpackages
-from .filterable_table import QFilterableTable
 from .emoji_picker import QEmojiPicker
+from .emoji_picker_menu import QEmojiPickerMenu
 from .icon_combo_box import QIconComboBox
 from .theme_responsive_label import QThemeResponsiveLabel

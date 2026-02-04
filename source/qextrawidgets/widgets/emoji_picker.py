@@ -4,7 +4,7 @@ from functools import partial
 from PySide6.QtCore import QSize, QModelIndex, Signal, QPoint, Qt, QTimer, Slot, QPersistentModelIndex
 from PySide6.QtGui import QFont, QIcon, QFontMetrics, QPixmap
 from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
-                               QWidget, QButtonGroup, QMenu, QToolButton, QApplication)
+                               QWidget, QButtonGroup, QMenu, QToolButton, QApplication, QWidgetAction)
 
 from qextrawidgets.delegates.grouped_icon_delegate import QGroupedIconDelegate
 from qextrawidgets.emoji_utils import EmojiImageProvider
@@ -27,7 +27,7 @@ class QEmojiPicker(QWidget):
         picked (str): Emitted when an emoji is selected.
     """
 
-    picked = Signal(str)
+    picked = Signal(QEmojiItem)
 
     def __init__(
             self,
@@ -176,7 +176,7 @@ class QEmojiPicker(QWidget):
         if not isinstance(item, QEmojiItem):
             return
 
-        self.picked.emit(item.emoji())
+        self.picked.emit(item)
 
         recent_category_index = self._model.findCategory(EmojiCategory.Recents)
 
@@ -459,3 +459,5 @@ class QEmojiPicker(QWidget):
     def model(self) -> QEmojiPickerModel:
         """Returns the emoji picker model."""
         return self._model
+
+
