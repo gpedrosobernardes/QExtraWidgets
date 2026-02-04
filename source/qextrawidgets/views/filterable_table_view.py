@@ -8,11 +8,11 @@ from PySide6.QtWidgets import (
 
 from qextrawidgets.icons.theme_responsive_icon import QThemeResponsiveIcon
 from qextrawidgets.proxys.multi_filter import QMultiFilterProxy
-from qextrawidgets.widgets.filterable_table.filter_header import QFilterHeader
-from qextrawidgets.widgets.filterable_table.filter_popup import QFilterPopup
+from qextrawidgets.widgets.filterable_table.filter_header import QFilterHeaderView
+from qextrawidgets.dialogs.filter_popup import QFilterPopup
 
 
-class QFilterableTable(QTableView):
+class QFilterableTableView(QTableView):
     """A QTableView extension that provides Excel-style filtering and sorting on headers."""
 
     def __init__(self, parent: Optional[QWidget] = None) -> None:
@@ -26,7 +26,7 @@ class QFilterableTable(QTableView):
         self._proxy = QMultiFilterProxy()
         self._popups: Dict[int, QFilterPopup] = {}
 
-        header = QFilterHeader(Qt.Orientation.Horizontal, self)
+        header = QFilterHeaderView(Qt.Orientation.Horizontal, self)
         header.setSectionsClickable(True)
         header.sectionClicked.connect(self._on_header_clicked)
         self.setHorizontalHeader(header)

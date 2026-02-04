@@ -3,7 +3,7 @@ from PySide6.QtGui import QPainter, QIcon
 from PySide6.QtWidgets import QHeaderView, QStyle, QStyleOptionHeader
 
 
-class QFilterHeader(QHeaderView):
+class QFilterHeaderView(QHeaderView):
     """A customized horizontal header for QFilterableTable that renders filter icons.
 
     This header overrides the default painting to draw a filter icon on the right

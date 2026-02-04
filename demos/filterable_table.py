@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets.filterable_table.filterable_table import QFilterableTable
+from qextrawidgets.views.filterable_table import QFilterableTableView
 
 
 class DemoTableWindow(QMainWindow):
@@ -41,7 +41,7 @@ class DemoTableWindow(QMainWindow):
         layout.addLayout(header_layout)
 
         # 2. The Filterable Table
-        self.table = QFilterableTable()
+        self.table = QFilterableTableView()
         self.table.setAlternatingRowColors(True)
 
         # Style for better visualization (Columns fill the space)
