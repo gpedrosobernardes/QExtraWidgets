@@ -62,15 +62,7 @@ class MainWindow(QMainWindow):
         self.grid_spacing_spin.valueChanged.connect(self._on_grid_spacing_changed)
         config_form.addRow("Grid Spacing:", self.grid_spacing_spin)
 
-        self.favorite_check = QCheckBox()
-        self.favorite_check.setChecked(True)
-        self.favorite_check.stateChanged.connect(self._on_favorite_changed)
-        config_form.addRow("Show Favorites:", self.favorite_check)
 
-        self.recent_check = QCheckBox()
-        self.recent_check.setChecked(True)
-        self.recent_check.stateChanged.connect(self._on_recent_changed)
-        config_form.addRow("Show Recents:", self.recent_check)
 
         self.font_combo = QComboBox()
         self.font_combo.addItem(QEmojiFonts.loadTwemojiFont())

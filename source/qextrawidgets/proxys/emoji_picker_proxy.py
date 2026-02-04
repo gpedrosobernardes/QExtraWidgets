@@ -1,4 +1,5 @@
-from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, Qt
+import typing
+from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QPersistentModelIndex, Qt
 from PySide6.QtWidgets import QWidget
 from typing import Optional
 
@@ -42,7 +43,7 @@ class QEmojiPickerProxyModel(QSortFilterProxyModel):
         self._cached_pattern = pattern.lower() if pattern else ""
         super().setFilterFixedString(pattern)
 
-    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+    def filterAcceptsRow(self, source_row: int, source_parent: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """
         Determines if a row should be included in the view.
 
