@@ -1,3 +1,6 @@
+from qextrawidgets.core.utils import QIconGenerator
+from qextrawidgets.widgets.views.grouped_icon_view import QGroupedIconView
+from qextrawidgets.gui.items.emoji_item import EmojiSkinTone
 import typing
 from functools import partial
 
@@ -11,9 +14,7 @@ from qextrawidgets.core.utils.twemoji_image_provider import QTwemojiImageProvide
 from qextrawidgets.gui.items import QEmojiCategoryItem
 from qextrawidgets.gui.models.emoji_picker_model import EmojiCategory, QEmojiPickerModel
 from qextrawidgets.gui.proxys import QEmojiPickerProxyModel
-from qextrawidgets.utils import char_to_pixmap
-from qextrawidgets.widgets.views import QGroupedIconView
-from qextrawidgets.gui.items import QEmojiItem, EmojiSkinTone
+from qextrawidgets.gui.items import QEmojiItem
 from qextrawidgets.widgets.inputs.icon_combo_box import QIconComboBox
 from qextrawidgets.widgets.inputs.search_line_edit import QSearchLineEdit
 
@@ -433,8 +434,7 @@ class QEmojiPicker(QWidget):
         if font_family:
             emoji_font = QFont()
             emoji_font.setFamily(font_family)
-            emoji_font.setPixelSize(48)
-            self._emoji_pixmap_getter = partial(char_to_pixmap, font=emoji_font)
+            self._emoji_pixmap_getter = partial(QIconGenerator.charToPixmap, font=emoji_font, target_size=QSize(100, 100))
         else:
             self._emoji_pixmap_getter = typing.cast(typing.Callable[[str], QPixmap], emoji_pixmap_getter)
 

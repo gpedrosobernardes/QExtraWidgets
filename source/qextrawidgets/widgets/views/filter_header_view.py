@@ -1,6 +1,7 @@
+import typing
 from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import QPainter, QIcon
-from PySide6.QtWidgets import QHeaderView, QStyle, QStyleOptionHeader
+from PySide6.QtWidgets import QHeaderView, QStyle, QStyleOptionHeader, QWidget
 
 
 class QFilterHeaderView(QHeaderView):
@@ -10,7 +11,7 @@ class QFilterHeaderView(QHeaderView):
     side of the section if the model provides one via the DecorationRole.
     """
 
-    def __init__(self, orientation: Qt.Orientation, parent: QHeaderView = None) -> None:
+    def __init__(self, orientation: Qt.Orientation, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the filter header.
 
         Args:
@@ -34,21 +35,24 @@ class QFilterHeaderView(QHeaderView):
         # 1. Configure native style options
         opt = QStyleOptionHeader()
         self.initStyleOption(opt)
-        opt.rect = rect
-        opt.section = logical_index
-        opt.textAlignment = Qt.AlignmentFlag.AlignCenter
+
+        setattr(opt, "rect", rect)
+        setattr(opt, "section", logical_index)
+        setattr(opt, "textAlignment", Qt.AlignmentFlag.AlignCenter)
 
         # Get data from model
         model = self.model()
         if model:
             # Text
             text = model.headerData(logical_index, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
-            opt.text = str(text) if text is not None else ""
+            if text is None:
+                text = ""
+            setattr(opt, "text", text)
 
             # Alignment
             alignment = model.headerData(logical_index, Qt.Orientation.Horizontal, Qt.ItemDataRole.TextAlignmentRole)
             if alignment:
-                opt.textAlignment = alignment
+                setattr(opt, "textAlignment", alignment)
 
             # Icon (Filter)
             icon = model.headerData(logical_index, Qt.Orientation.Horizontal, Qt.ItemDataRole.DecorationRole)
@@ -61,7 +65,7 @@ class QFilterHeaderView(QHeaderView):
             if isinstance(icon, QIcon) and not icon.isNull():
                 # Draw the native control (Background + Text)
                 # We'll trick the style saying there is no icon, as we'll draw it manually on the right
-                opt.icon = QIcon()
+                setattr(opt, "icon", QIcon())
                 self.style().drawControl(QStyle.ControlElement.CE_Header, opt, painter, self)
 
                 # Draw the icon aligned to the right manually
@@ -76,7 +80,7 @@ class QFilterHeaderView(QHeaderView):
                 mode = QIcon.Mode.Normal
                 if not self.isEnabled():
                     mode = QIcon.Mode.Disabled
-                elif opt.state & QStyle.StateFlag.State_MouseOver:
+                elif typing.cast(QStyle.StateFlag, opt.state) & QStyle.StateFlag.State_MouseOver:
                     mode = QIcon.Mode.Active
 
                 icon.paint(painter, icon_rect, alignment=Qt.AlignmentFlag.AlignCenter, mode=mode)

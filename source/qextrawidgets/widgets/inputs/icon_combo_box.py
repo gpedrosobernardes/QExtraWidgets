@@ -287,8 +287,11 @@ class QIconComboBox(QToolButton):
         # Clear layout
         while self._layout.count():
             child = self._layout.takeAt(0)
-            widget = child.widget()
-            if widget:
-                widget.deleteLater()
+            if child:
+                widget = child.widget()
+                if widget:
+                    widget.deleteLater()
+            else:
+                break
         self.setIcon(QIcon())
         self.setText("")

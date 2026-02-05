@@ -16,7 +16,7 @@ class QEmojiFonts:
             str: The loaded font family name.
         """
         if not cls.TwemojiFontFamily:
-            root_folder_path = Path(__file__).parent
+            root_folder_path = Path(__file__).parent.parent.parent
             fonts_folder_path = root_folder_path / "fonts"
             file_path = fonts_folder_path / "Twemoji-17.0.2.ttf"
 

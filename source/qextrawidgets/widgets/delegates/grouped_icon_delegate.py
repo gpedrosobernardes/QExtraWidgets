@@ -1,6 +1,6 @@
-
+from PySide6.QtCore import QObject
+import typing
 from PySide6.QtGui import QFont
-from typing import Optional, Any, Set, Union, cast
 
 from PySide6.QtCore import Qt, QRect, QModelIndex, QPersistentModelIndex, Signal, QTimer
 from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage
@@ -30,7 +30,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
     # Signal emitted when an item has no DecorationRole data
     requestImage = Signal(QPersistentModelIndex)
 
-    def __init__(self, parent: Optional[Any] = None, arrow_icon: Optional[QIcon] = None, item_internal_margin_ratio: float = 0.1):
+    def __init__(self, parent: typing.Optional[QObject] = None, arrow_icon: typing.Optional[QIcon] = None, item_internal_margin_ratio: float = 0.1):
         """
         Initialize the delegate.
 
@@ -41,7 +41,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         """
         super().__init__(parent)
         self._arrow_icon: QIcon = arrow_icon if arrow_icon else QIcon()
-        self._requested_indices: Set[QPersistentModelIndex] = set()
+        self._requested_indices: typing.Set[QPersistentModelIndex] = set()
         self.setItemInternalMargin(item_internal_margin_ratio)
 
     def setItemInternalMargin(self, ratio: float) -> None:
@@ -91,7 +91,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         if persistent_index in self._requested_indices:
             self._requested_indices.remove(persistent_index)
 
-    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> None:
         """
         Paint the item.
 
@@ -113,7 +113,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
 
         painter.restore()
 
-    def _draw_category(self, painter: QPainter, option: QStyleOptionViewItem, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
+    def _draw_category(self, painter: QPainter, option: QStyleOptionViewItem, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> None:
         """
         Draw a category header item.
 
@@ -124,11 +124,11 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             option (QStyleOptionViewItem): The style options.
             index (QModelIndex): The model index of the category.
         """
-        widget = cast(QWidget, option.widget)
+        widget = typing.cast(QWidget, option.widget)
         style = widget.style()
-        palette = cast(QPalette, option.palette)
-        current_state = cast(QStyle.StateFlag, option.state)
-        option_rect = cast(QRect, option.rect)
+        palette = typing.cast(QPalette, option.palette)
+        current_state = typing.cast(QStyle.StateFlag, option.state)
+        option_rect = typing.cast(QRect, option.rect)
 
         if current_state & QStyle.StateFlag.State_MouseOver:
             bg_color = palette.color(QPalette.ColorRole.Button).lighter(110)
@@ -149,14 +149,14 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         center_y = option_rect.top() + (option_rect.height() - arrow_size) // 2
 
         # Draw Arrow
-        arrow_rect: Any = QRect(current_x, center_y, arrow_size, arrow_size)
+        arrow_rect = QRect(current_x, center_y, arrow_size, arrow_size)
         if not self._arrow_icon.isNull():
             state = QIcon.State.On if is_expanded else QIcon.State.Off
             mode = QIcon.Mode.Disabled if not (current_state & QStyle.StateFlag.State_Enabled) else QIcon.Mode.Normal
             self._arrow_icon.paint(painter, arrow_rect, Qt.AlignmentFlag.AlignCenter, mode, state)
         else:
             arrow_opt = QStyleOptionViewItem(option)
-            arrow_opt.rect = arrow_rect
+            setattr(arrow_opt, "rect", arrow_rect)
             primitive = (
                 QStyle.PrimitiveElement.PE_IndicatorArrowDown
                 if is_expanded
@@ -182,7 +182,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             option_rect.height()
         )
         painter.setPen(palette.color(QPalette.ColorRole.ButtonText))
-        font = cast(QFont, option.font)
+        font = typing.cast(QFont, option.font)
         font.setBold(True)
         painter.setFont(font)
         text = str(index.data(Qt.ItemDataRole.DisplayRole))
@@ -195,7 +195,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             text
         )
 
-    def _draw_grid_item(self, painter: QPainter, option: QStyleOptionViewItem, index: Union[QModelIndex, QPersistentModelIndex]) -> None:
+    def _draw_grid_item(self, painter: QPainter, option: QStyleOptionViewItem, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> None:
         """
         Draw a child item in the grid used for lazy loading check.
 
@@ -212,8 +212,8 @@ class QGroupedIconDelegate(QStyledItemDelegate):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
 
-        palette = cast(QPalette, option.palette)
-        current_state = cast(QStyle.StateFlag, option.state)
+        palette = typing.cast(QPalette, option.palette)
+        current_state = typing.cast(QStyle.StateFlag, option.state)
         bg_color = None
         base_bg_color = palette.color(QPalette.ColorRole.Base)
 
@@ -224,7 +224,7 @@ class QGroupedIconDelegate(QStyledItemDelegate):
             bg_color = base_bg_color.lighter(120)
 
         # Draw Background (Rounded Rect)
-        rect = cast(QRect, option.rect).adjusted(2, 2, -2, -2)
+        rect = typing.cast(QRect, option.rect).adjusted(2, 2, -2, -2)
 
         if bg_color is not None:
             painter.setPen(Qt.PenStyle.NoPen)

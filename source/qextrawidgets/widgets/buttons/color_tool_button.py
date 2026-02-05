@@ -1,3 +1,4 @@
+from PySide6.QtCore import Qt
 import typing
 
 from PySide6.QtGui import QPalette, QColor
@@ -9,24 +10,28 @@ from qextrawidgets.core.utils.color_utils import QColorUtils
 class QColorToolButton(QToolButton):
     """A tool button that displays a specific color and automatically adjusts its text color for contrast."""
 
-    def __init__(self, color: QColor, text: str = "", text_color: QColor = None, checked_color: QColor = None,
-                 parent: QWidget = None) -> None:
+    def __init__(self,
+                 color: typing.Union[Qt.GlobalColor, QColor, str],
+                 text: str = "",
+                 text_color: typing.Union[Qt.GlobalColor, QColor, str, None] = None,
+                 checked_color: typing.Union[Qt.GlobalColor, QColor, str, None] = None,
+                 parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the color tool button.
 
         Args:
-            color (QColor): Background color of the button.
+            color (Qt.GlobalColor, QColor, str): Background color of the button.
             text (str, optional): Button text. Defaults to "".
-            text_color (QColor, optional): Text color. If None, it's calculated for contrast. Defaults to None.
-            checked_color (QColor, optional): Color when the button is in checked state. Defaults to None.
+            text_color (Qt.GlobalColor, QColor, str, optional): Text color. If None, it's calculated for contrast. Defaults to None.
+            checked_color (Qt.GlobalColor, QColor, str, optional): Color when the button is in checked state. Defaults to None.
             parent (QWidget, optional): Parent widget. Defaults to None.
         """
         super().__init__(parent)
         self.setText(text)
 
         # We store colors as class attributes
-        self._color = None
-        self._text_color = None
-        self._checked_color = None
+        self._color: QColor
+        self._text_color: typing.Optional[QColor]
+        self._checked_color: typing.Optional[QColor]
 
         self.setColor(color)
         self.setTextColor(text_color)
@@ -78,11 +83,11 @@ class QColorToolButton(QToolButton):
         """
         return self._color
 
-    def setColor(self, color: QColor) -> None:
+    def setColor(self, color: typing.Union[Qt.GlobalColor, QColor, str]) -> None:
         """Sets the button background color.
 
         Args:
-            color (QColor): New background color.
+            color (Qt.GlobalColor, QColor, str): New background color.
         """
         self._color = QColor(color)
 
@@ -94,11 +99,11 @@ class QColorToolButton(QToolButton):
         """
         return self._checked_color
 
-    def setCheckedColor(self, color: typing.Union[str, QColor, None]) -> None:
+    def setCheckedColor(self, color: typing.Union[Qt.GlobalColor, QColor, str, None]) -> None:
         """Sets the color to use when the button is checked.
 
         Args:
-            color (Union[str, QColor, None]): New checked color.
+            color (Qt.GlobalColor, QColor, str, None): New checked color.
         """
         if color is None:
             self._checked_color = None
@@ -113,11 +118,11 @@ class QColorToolButton(QToolButton):
         """
         return self._text_color
 
-    def setTextColor(self, text_color: typing.Union[str, QColor, None]) -> None:
+    def setTextColor(self, text_color: typing.Union[Qt.GlobalColor, QColor, str, None]) -> None:
         """Sets the text color.
 
         Args:
-            text_color (Union[str, QColor, None]): New text color.
+            text_color (Qt.GlobalColor, QColor, str, None): New text color.
         """
         if text_color is None:
             self._text_color = text_color

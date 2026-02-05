@@ -1,4 +1,5 @@
-from PySide6.QtGui import QColor, QColorConstants
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QColor
 
 
 class QColorUtils:
@@ -27,4 +28,4 @@ class QColorUtils:
         # Common threshold is 128 (half of 255).
         # If brighter than 128, background is light -> Black Text
         # If darker, background is dark -> White Text
-        return QColorConstants.Black if luminance > 128 else QColorConstants.White
+        return QColor(Qt.GlobalColor.black) if luminance > 128 else QColor(Qt.GlobalColor.white)

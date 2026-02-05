@@ -1,12 +1,10 @@
+import typing
 from PySide6.QtCore import QSize, Qt, Signal, QEvent
 from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import QListView, QAbstractScrollArea, QSizePolicy, QWidget
 
-from qextrawidgets.widgets.miscellaneous.emoji_picker import QEmojiDelegate
-from qextrawidgets.gui.proxys import QEmojiSortFilterProxyModel
 
-
-class QEmojiGridView(QListView):
+class QListGridView(QListView):
     """A customized QListView designed to display emojis in a grid layout.
 
     Signals:
@@ -15,12 +13,11 @@ class QEmojiGridView(QListView):
 
     left = Signal()
 
-    def __init__(self, parent: QWidget = None, delegate: QEmojiDelegate = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the emoji grid.
 
         Args:
             parent (QWidget, optional): Parent widget. Defaults to None.
-            delegate (QEmojiDelegate, optional): The delegate to use. Defaults to None.
         """
         super().__init__(parent)
 
@@ -45,14 +42,6 @@ class QEmojiGridView(QListView):
 
         # Native adjustment (helps, but sizeHint does the heavy lifting)
         self.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
-
-        proxy = QEmojiSortFilterProxyModel()
-        self.setModel(proxy)
-
-        if delegate is None:
-            delegate = QEmojiDelegate(self)
-
-        self.setItemDelegate(delegate)
 
     def sizeHint(self) -> QSize:
         """Informs the layout of the ideal size for this widget.
@@ -107,21 +96,3 @@ class QEmojiGridView(QListView):
         """
         super().resizeEvent(event)
         self.updateGeometry()
-
-    def setModel(self, model: QEmojiSortFilterProxyModel) -> None:
-        """Sets the model for the emoji grid.
-
-        Args:
-            model (QEmojiSortFilterProxyModel): The emoji sort/filter proxy model.
-        """
-        if not isinstance(model, QEmojiSortFilterProxyModel):
-            raise TypeError("Model must be an instance of QEmojiSortFilterProxyModel")
-        super().setModel(model)
-
-    def model(self) -> QEmojiSortFilterProxyModel:
-        """Returns the current model as a QEmojiSortFilterProxyModel.
-
-        Returns:
-            QEmojiSortFilterProxyModel: The current model.
-        """
-        return super().model()  # type: ignore

@@ -1,9 +1,10 @@
+from source.qextrawidgets.widgets.inputs import QPasswordLineEdit
 import sys
 
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QWidget
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from qextrawidgets import QPasswordLineEdit
+
 
 
 class MainWindow(QWidget):

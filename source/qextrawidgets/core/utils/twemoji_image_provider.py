@@ -74,7 +74,7 @@ class QTwemojiImageProvider:
                 return pixmap
 
         # 5. Fallback (Returns a transparent pixmap or placeholder in case of error)
-        fallback = QPixmap(size * dpr)
+        fallback = QPixmap(target_size, target_size)
         fallback.fill(Qt.GlobalColor.transparent)
         fallback.setDevicePixelRatio(dpr)
         return fallback

@@ -1,8 +1,9 @@
+from PySide6.QtCore import Slot
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget, QListWidget, QAbstractItemView, QPushButton, QLineEdit, QLabel, QGroupBox, \
     QVBoxLayout, QHBoxLayout
-from typing import List
+import typing
 
 from qextrawidgets.gui.icons.theme_responsive_icon import QThemeResponsiveIcon
 
@@ -19,7 +20,7 @@ class QDualList(QWidget):
     # Public signal
     selectionChanged = Signal(list)
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the dual list widget.
 
         Args:
@@ -35,8 +36,9 @@ class QDualList(QWidget):
         # Creates the container using the factory method
         self._available_container = self._create_container(self.tr("Available"))
         # The container layout depends on the returned container type
-        container_layout_l = QVBoxLayout(
-            self._available_container) if not self._available_container.layout() else self._available_container.layout()
+        container_layout_l = self._available_container.layout()
+        if not container_layout_l:
+            container_layout_l = QVBoxLayout(self._available_container)
 
         self._search_input = self._create_search_input()
         self._list_available = self._create_list_widget()
@@ -61,8 +63,9 @@ class QDualList(QWidget):
 
         # C. Right Side (Selected)
         self._selected_container = self._create_container(self.tr("Selected"))
-        container_layout_r = QVBoxLayout(
-            self._selected_container) if not self._selected_container.layout() else self._selected_container.layout()
+        container_layout_r = self._selected_container.layout()
+        if not container_layout_r:
+            container_layout_r = QVBoxLayout(self._selected_container)
 
         self._list_selected = self._create_list_widget()
         self._lbl_count = self._create_label(self.tr("0 items"))
@@ -211,14 +214,9 @@ class QDualList(QWidget):
             item = self._list_available.item(i)
             item.setHidden(text.lower() not in item.text().lower())
 
-    def _update_internal_count(self, parent: QWidget = None, start: int = 0, end: int = 0) -> None:
-        """Updates the selected items count and emits selectionChanged signal.
-
-        Args:
-            parent (QWidget, optional): Parent. Defaults to None.
-            start (int, optional): Start index. Defaults to 0.
-            end (int, optional): End index. Defaults to 0.
-        """
+    @Slot()
+    def _update_internal_count(self) -> None:
+        """Updates the selected items count and emits selectionChanged signal."""
         count = self._list_selected.count()
         self._lbl_count.setText(self.tr("{} items").format(count))
         current_data = [self._list_selected.item(i).text() for i in range(count)]
@@ -226,7 +224,7 @@ class QDualList(QWidget):
 
     # --- Public API (camelCase) ---
 
-    def setAvailableItems(self, items: List[str]) -> None:
+    def setAvailableItems(self, items: typing.List[str]) -> None:
         """Sets the list of available items.
 
         Args:
@@ -238,7 +236,7 @@ class QDualList(QWidget):
         self._list_available.sortItems()
         self._update_internal_count()
 
-    def getSelectedItems(self) -> List[str]:
+    def getSelectedItems(self) -> typing.List[str]:
         """Returns the list of currently selected items.
 
         Returns:
@@ -246,7 +244,7 @@ class QDualList(QWidget):
         """
         return [self._list_selected.item(i).text() for i in range(self._list_selected.count())]
 
-    def setSelectedItems(self, items: List[str]) -> None:
+    def setSelectedItems(self, items: typing.List[str]) -> None:
         """Sets the list of selected items.
 
         Args:

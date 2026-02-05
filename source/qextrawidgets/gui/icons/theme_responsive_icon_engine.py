@@ -1,7 +1,6 @@
 import typing
-
 from PySide6.QtCore import QRect, QSize, Qt
-from PySide6.QtGui import QIconEngine, QIcon, QPainter, QPixmap, QColor
+from PySide6.QtGui import QIconEngine, QIcon, QPainter, QPixmap, QColor, QImage
 from PySide6.QtWidgets import QApplication
 
 
@@ -20,9 +19,9 @@ class QThemeResponsiveIconEngine(QIconEngine):
         """
         super().__init__()
         self._source_icon = icon
-        self._theme_icons: typing.Dict[Qt.ColorScheme] = {
-            Qt.ColorScheme.Light: self._generate_colored_icon(icon, Qt.GlobalColor.black),
-            Qt.ColorScheme.Dark: self._generate_colored_icon(icon, Qt.GlobalColor.white),
+        self._theme_icons: typing.Dict[Qt.ColorScheme, QIcon] = {
+            Qt.ColorScheme.Light: self._generate_colored_icon(icon, QColor(Qt.GlobalColor.black)),
+            Qt.ColorScheme.Dark: self._generate_colored_icon(icon, QColor(Qt.GlobalColor.white)),
         }
 
     def paint(self, painter: QPainter, rect: QRect, mode: QIcon.Mode, state: QIcon.State) -> None:
@@ -49,19 +48,22 @@ class QThemeResponsiveIconEngine(QIconEngine):
         """
         return self.themePixmap(size, mode, state, QApplication.styleHints().colorScheme())
 
-    def addPixmap(self, pixmap: QPixmap, mode: QIcon.Mode, state: QIcon.State) -> None:
+    def addPixmap(self, pixmap: typing.Union[QPixmap, QImage], mode: QIcon.Mode, state: QIcon.State) -> None:
         """Adds a pixmap to the source icon.
 
         Args:
-            pixmap (QPixmap): Pixmap to add.
+            pixmap (QPixmap | QImage): Pixmap to add.
             mode (Mode): Icon mode.
             state (State): Icon state.
         """
+        if isinstance(pixmap, QImage):
+            pixmap = QPixmap.fromImage(pixmap)
+
         self._source_icon.addPixmap(pixmap, mode, state)
-        dark_icon = self._theme_icons.get(Qt.ColorScheme.Dark)
-        dark_icon.addPixmap(self._generate_colored_pixmap(pixmap, Qt.GlobalColor.white), mode, state)
-        light_icon = self._theme_icons.get(Qt.ColorScheme.Light)
-        light_icon.addPixmap(self._generate_colored_pixmap(pixmap, Qt.GlobalColor.black), mode, state)
+        dark_icon = self._theme_icons[Qt.ColorScheme.Dark]
+        dark_icon.addPixmap(self._generate_colored_pixmap(pixmap, QColor(Qt.GlobalColor.white)), mode, state)
+        light_icon = self._theme_icons[Qt.ColorScheme.Light]
+        light_icon.addPixmap(self._generate_colored_pixmap(pixmap, QColor(Qt.GlobalColor.black)), mode, state)
 
     def addFile(self, file_name: str, size: QSize, mode: QIcon.Mode, state: QIcon.State) -> None:
         """Adds a file to the source icon.
@@ -141,7 +143,7 @@ class QThemeResponsiveIconEngine(QIconEngine):
         if self._theme_icons.get(scheme) is None:
             raise ValueError(f"Unsupported color scheme: {scheme}")
         else:
-            return self._theme_icons.get(scheme)
+            return self._theme_icons[scheme]
 
     def currentThemeIcon(self) -> QIcon:
         """Returns the icon for the current application theme.
@@ -167,7 +169,7 @@ class QThemeResponsiveIconEngine(QIconEngine):
             for state in QIcon.State:
                 available_sizes = base.availableSizes(mode, state)
                 if available_sizes:
-                    pixmap = base.pixmap(max(available_sizes), mode, state)
+                    pixmap = base.pixmap(max(available_sizes, key=lambda s: s.width() * s.height()), mode, state)
                 else:
                     pixmap = base.pixmap(128, mode, state)
 

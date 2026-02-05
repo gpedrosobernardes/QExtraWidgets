@@ -1,4 +1,4 @@
-from typing import Optional
+import typing
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIcon, QResizeEvent
@@ -13,7 +13,7 @@ class QThemeResponsiveLabel(QLabel):
     when the system theme or the widget size changes.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """
         Initializes the label.
 
@@ -21,7 +21,7 @@ class QThemeResponsiveLabel(QLabel):
             parent: The parent widget.
         """
         super().__init__(parent)
-        self._icon: Optional[QThemeResponsiveIcon] = None
+        self._icon: typing.Optional[QThemeResponsiveIcon] = None
         style_hints = QApplication.styleHints()
         style_hints.colorSchemeChanged.connect(self._on_theme_change)
 
@@ -61,7 +61,7 @@ class QThemeResponsiveLabel(QLabel):
         self._icon = icon
         self._update_pixmap(QApplication.styleHints().colorScheme())
 
-    def icon(self) -> Optional[QThemeResponsiveIcon]:
+    def icon(self) -> typing.Optional[QThemeResponsiveIcon]:
         """
         Returns the current icon.
 

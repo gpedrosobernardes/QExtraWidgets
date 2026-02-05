@@ -1,3 +1,4 @@
+from PySide6.QtCore import QPersistentModelIndex
 import typing
 
 from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QObject, Qt
@@ -6,7 +7,7 @@ from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QObject, Qt
 class QMultiFilterProxy(QSortFilterProxyModel):
     """A proxy model that supports multiple filters per column."""
 
-    def __init__(self, parent: QObject = None) -> None:
+    def __init__(self, parent: typing.Optional[QObject] = None) -> None:
         """Initializes the multi-filter proxy model.
 
         Args:
@@ -29,7 +30,7 @@ class QMultiFilterProxy(QSortFilterProxyModel):
             self._filters.pop(col, None)
         self.invalidateFilter()
 
-    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+    def filterAcceptsRow(self, source_row: int, source_parent: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """Determines if a row passes all column filters.
 
         Args:

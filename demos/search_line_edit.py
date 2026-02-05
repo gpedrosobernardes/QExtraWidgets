@@ -1,9 +1,9 @@
+from qextrawidgets.widgets.inputs.search_line_edit import QSearchLineEdit
 import sys
 
 from PySide6.QtWidgets import QApplication, QHBoxLayout, QWidget
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from qextrawidgets import QSearchLineEdit
 
 
 class MainWindow(QWidget):

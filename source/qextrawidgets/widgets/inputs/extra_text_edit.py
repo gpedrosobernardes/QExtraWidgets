@@ -1,23 +1,22 @@
 from PySide6.QtCore import QMimeData, QSize, Qt
 from PySide6.QtGui import QKeyEvent, QValidator
 from PySide6.QtWidgets import QTextEdit, QSizePolicy, QWidget
-
-# Ensure the import is correct for your project
+import typing
 
 
 class QExtraTextEdit(QTextEdit):
     """A QTextEdit extension that supports auto-resizing based on content and input validation."""
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the text edit widget.
 
         Args:
             parent (QWidget, optional): Parent widget. Defaults to None.
         """
         super().__init__(parent)
-
+ 
         # Private Variables
-        self._validator = None
+        self._validator: typing.Optional[QValidator] = None
         self._max_height = 16777215  # QWIDGETSIZE_MAX (Qt Default)
         self._responsive = False
 
@@ -111,19 +110,19 @@ class QExtraTextEdit(QTextEdit):
         # The constraint is applied logically in sizeHint
         self.updateGeometry()
 
-    def setValidator(self, validator: QValidator) -> None:
+    def setValidator(self, validator: typing.Optional[QValidator]) -> None:
         """Sets a validator for the input text.
 
         Args:
-            validator (QValidator): The validator to use.
+            validator (QValidator, None): The validator to use.
         """
         self._validator = validator
 
-    def validator(self) -> QValidator:
+    def validator(self) -> typing.Optional[QValidator]:
         """Returns the current input validator.
 
         Returns:
-            QValidator: The current validator.
+            QValidator, None: The current validator.
         """
         return self._validator
 
@@ -170,7 +169,8 @@ class QExtraTextEdit(QTextEdit):
 
         text = event.text()
 
-        state, _, _ = self._validator.validate(text, 0)
+        res = self._validator.validate(text, 0)
+        state = res[0] if isinstance(res, tuple) else res
 
         if state == QValidator.State.Acceptable:
             super().keyPressEvent(event)
@@ -183,7 +183,9 @@ class QExtraTextEdit(QTextEdit):
             source (QMimeData): MIME data to insert.
         """
         if source.hasText() and self._validator is not None:
-            state, _, _ = self._validator.validate(source.text(), 0)
+            res = self._validator.validate(source.text(), 0)
+            state = res[0] if isinstance(res, tuple) else res
+            
             if state == QValidator.State.Acceptable:
                 super().insertFromMimeData(source)
         else:

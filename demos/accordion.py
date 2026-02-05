@@ -1,3 +1,4 @@
+from qextrawidgets.widgets.miscellaneous.accordion.accordion_header import QAccordionHeader
 import sys
 
 from PySide6.QtCore import Qt, QEasingCurve
@@ -8,7 +9,6 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets.miscellaneous.accordion import QAccordionHeader
 from qextrawidgets.widgets.miscellaneous.accordion import QAccordion
 
 
@@ -156,7 +156,6 @@ class MainWindow(QMainWindow):
         v_anim = QVBoxLayout()
 
         check_animation = QCheckBox("Enable Animation")
-        check_animation.setChecked(True)
         check_animation.toggled.connect(self.accordion.setAnimationEnabled)
         v_anim.addWidget(check_animation)
 
@@ -202,7 +201,7 @@ class MainWindow(QMainWindow):
         lbl_custom = QLabel(
             "This item was added and configured individually\nwith icon on the right initially.")
         item_custom = self.accordion.insertSection("2. Manually Configured Item", lbl_custom)
-        item_custom.setIconPosition("right")
+        item_custom.setIconPosition(QAccordionHeader.IconPosition.TrailingPosition)
 
         # 3. Nested Layout (Buttons and actions)
         widget_actions = QWidget()

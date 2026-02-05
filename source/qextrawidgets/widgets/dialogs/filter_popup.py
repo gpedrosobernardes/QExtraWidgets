@@ -1,4 +1,4 @@
-from typing import Set
+import typing
 
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 from PySide6.QtGui import QStandardItemModel, QStandardItem
@@ -17,7 +17,7 @@ class QFilterPopup(QDialog):
     items to be displayed in the table.
     """
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the filter popup.
 
         Args:
@@ -146,7 +146,7 @@ class QFilterPopup(QDialog):
         self.model.blockSignals(False)
         self.check_all_box.setCheckState(state)
 
-    def _update_select_all_state(self, item: QStandardItem = None) -> None:
+    def _update_select_all_state(self, item: typing.Optional[QStandardItem] = None) -> None:
         """Updates the state of the 'Select All' checkbox based on items.
 
         Args:
@@ -187,7 +187,7 @@ class QFilterPopup(QDialog):
 
     # --- Data API ---
 
-    def getSelectedData(self) -> Set[str]:
+    def getSelectedData(self) -> typing.Set[str]:
         """Returns all checked items in the original model.
 
         Regardless of whether they are filtered by the popup search or not.
@@ -202,7 +202,7 @@ class QFilterPopup(QDialog):
                 data.add(item.text())
         return data
 
-    def getData(self) -> Set[str]:
+    def getData(self) -> typing.Set[str]:
         """Returns all data contained in the popup.
 
         Returns:

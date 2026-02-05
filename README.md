@@ -30,21 +30,19 @@ A powerful `QTableView` extension that adds Excel-like filtering capabilities to
 * **Sort & Search:** Built-in sorting and search within the filter popup.
 * **Model Agnostic:** Works with `QSqlTableModel`, `QStandardItemModel`, or any custom model.
 
-![QFilterableTable](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QFilterableTable.png)
+![QFilterableTable](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QFilterableTable.gif)
 
 ---
 
-### 2. QEmojiPicker & QTwemojiTextEdit
+### 2. QEmojiPicker
 
-A full-featured Emoji Picker and a Text Edit that renders Twemoji images inline.
+A full-featured Emoji Picker.
 
 * **Rich Features:** Includes skin tone selector, favorites/recents management, and context menu actions (copy alias, favorite/unfavorite).
 * **Optimized Search:** Fast filtering with recursive category matching.
-* **QTwemojiTextEdit:** Inherits from `QExtraTextEdit`, providing auto-resize capabilities (like WhatsApp/Telegram) while rendering high-quality Twemoji images.
 * **Emoji Replacement:** Automatically converts `:smile:` aliases or pasted unicode characters into high-quality images.
 
-![QEmojiPicker](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QEmojiPicker.png)
-![QExtraTextEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QExtraTextEdit.png)
+![QEmojiPicker](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QEmojiPicker.gifs)
 
 ---
 
@@ -55,7 +53,7 @@ A flexible accordion widget for grouping content in collapsible sections.
 * **Customizable:** Change icon position (left/right) and animation speed.
 * **Smooth Animation:** Uses `QPropertyAnimation` for expanding/collapsing.
 
-![QAccordion](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QAccordion.png)
+![QAccordion](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QAccordion.gif)
 
 ---
 
@@ -65,40 +63,11 @@ Stop worrying about Dark/Light mode icons. `QThemeResponsiveIcon` wraps `QtAweso
 
 For labels, `QThemeResponsiveLabel` automatically updates its pixmap when the icon theme or widget size changes.
 
-```python
-from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from PySide6.QtWidgets import QPushButton
-
-btn = QPushButton("Theme Aware Button")
-# Automatically switches color when QPalette changes
-btn.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.house"))
-
-```
+![QThemeResponsiveIcon](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QThemeResponsiveIcon.gif)
 
 ---
 
-### 5. QStandardTwemojiDelegate
-
-A delegate that renders Twemoji images within standard item views (like `QListView`, `QTableView`, `QTreeView`).
-
-* **Unicode Support:** Renders standard Unicode emojis as high-quality Twemoji images.
-* **Alignment:** Supports standard Qt text alignment flags.
-* **Mixed Content:** Handles text mixed with emojis seamlessly.
-
-![QStandardTwemojiDelegate](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QStandardTwemojiDelegate.png)
-
-```python
-from PySide6.QtWidgets import QListView
-from qextrawidgets.widgets.delegates.standard_twemoji_delegate import QEmojiDelegate
-
-view = QListView()
-delegate = QEmojiDelegate(view)
-view.setItemDelegate(delegate)
-```
-
----
-
-### 6. Other Useful Widgets
+### 5. Other Useful Widgets
 
 | Widget                | Description                                                          | Image                                                                                                                            |
 |-----------------------|----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|

@@ -1,7 +1,6 @@
 import typing
 from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QPersistentModelIndex, Qt
 from PySide6.QtWidgets import QWidget
-from typing import Optional
 
 from qextrawidgets.gui.items.emoji_item import QEmojiItem
 
@@ -15,7 +14,7 @@ class QEmojiPickerProxyModel(QSortFilterProxyModel):
     2. Caches the search term to avoid repetitive string manipulations per row.
     """
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(self, parent: typing.Optional[QWidget] = None):
         """
         Initializes the QEmojiProxyModel.
 

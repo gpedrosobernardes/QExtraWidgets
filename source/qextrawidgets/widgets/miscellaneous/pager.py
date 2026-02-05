@@ -1,3 +1,4 @@
+import typing
 from functools import partial
 
 from PySide6.QtCore import Signal, Qt
@@ -18,7 +19,7 @@ class QPager(QWidget):
     # Public signals
     currentPageChanged = Signal(int)
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the pager widget.
 
         Args:
@@ -140,6 +141,8 @@ class QPager(QWidget):
         # 2. Total Cleanup of numeric area
         while self._numbers_layout.count():
             item = self._numbers_layout.takeAt(0)
+            if item is None:
+                break
             widget = item.widget()
             if widget:
                 if isinstance(widget, QPushButton):
@@ -180,14 +183,15 @@ class QPager(QWidget):
         """
         # 1. Identify position in layout
         index = self._numbers_layout.indexOf(button_sender)
-        if index == -1: return
+        if index == -1:
+            return
 
         # 2. Create and configure editor
         spin = self._create_editor()
 
         # 3. Replace in layout (Swap)
         # We remove the button from the layout and hide it (don't delete yet to avoid crash in active slots)
-        item = self._numbers_layout.takeAt(index)
+        self._numbers_layout.takeAt(index)
         button_sender.hide()
         self._button_group.removeButton(button_sender)  # Important not to bug the group
 
@@ -210,7 +214,8 @@ class QPager(QWidget):
         Args:
             total (int): Total page count.
         """
-        if total < 1: total = 1
+        if total < 1:
+            total = 1
         self._total_pages = total
         if self._current_page > total:
             self.setCurrentPage(total)
@@ -231,7 +236,8 @@ class QPager(QWidget):
         Args:
             count (int): Maximum number of visible page buttons.
         """
-        if count < 1: count = 1
+        if count < 1:
+            count = 1
         self._max_visible_buttons = count
         self._update_view()
 
@@ -249,8 +255,10 @@ class QPager(QWidget):
         Args:
             page (int): Page index to set.
         """
-        if page < 1: page = 1
-        if page > self._total_pages: page = self._total_pages
+        if page < 1:
+            page = 1
+        if page > self._total_pages:
+            page = self._total_pages
 
         # Updates state
         self._current_page = page

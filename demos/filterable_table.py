@@ -1,3 +1,4 @@
+from qextrawidgets.widgets.views.filterable_table_view import QFilterableTableView
 import sys
 import random
 from datetime import datetime, timedelta
@@ -10,7 +11,6 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets.views import QFilterableTableView
 
 
 class DemoTableWindow(QMainWindow):

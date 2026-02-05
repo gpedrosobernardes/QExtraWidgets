@@ -1,3 +1,4 @@
+import typing
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QLineEdit, QWidget
 
@@ -7,7 +8,7 @@ from qextrawidgets.gui.icons.theme_responsive_icon import QThemeResponsiveIcon
 class QPasswordLineEdit(QLineEdit):
     """A line edit widget for passwords with a built-in toggle button to show/hide the text."""
 
-    def __init__(self, parent: QWidget = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the password line edit.
 
         Args:

@@ -1,21 +1,19 @@
-from typing import Dict, Set, Optional
+import typing
 
 from PySide6.QtCore import Qt, QRect, QAbstractItemModel, QModelIndex
 from PySide6.QtGui import QStandardItemModel
-from PySide6.QtWidgets import (
-    QTableView, QWidget
-)
+from PySide6.QtWidgets import QTableView, QWidget
 
 from qextrawidgets.gui.icons.theme_responsive_icon import QThemeResponsiveIcon
 from qextrawidgets.gui.proxys import QMultiFilterProxy
-from qextrawidgets.widgets.filterable_table.filter_header import QFilterHeaderView
 from qextrawidgets.widgets.dialogs import QFilterPopup
+from qextrawidgets.widgets.views.filter_header_view import QFilterHeaderView
 
 
 class QFilterableTableView(QTableView):
     """A QTableView extension that provides Excel-style filtering and sorting on headers."""
 
-    def __init__(self, parent: Optional[QWidget] = None) -> None:
+    def __init__(self, parent: typing.Optional[QWidget] = None) -> None:
         """Initializes the filterable table.
 
         Args:
@@ -24,7 +22,8 @@ class QFilterableTableView(QTableView):
         super().__init__(parent)
 
         self._proxy = QMultiFilterProxy()
-        self._popups: Dict[int, QFilterPopup] = {}
+        super().setModel(self._proxy)
+        self._popups: typing.Dict[int, QFilterPopup] = {}
 
         header = QFilterHeaderView(Qt.Orientation.Horizontal, self)
         header.setSectionsClickable(True)
@@ -35,21 +34,24 @@ class QFilterableTableView(QTableView):
 
     # --- Public API ---
 
-    def setModel(self, model: QAbstractItemModel) -> None:
+    def setModel(self, model: typing.Optional[QAbstractItemModel]) -> None:
         """Sets the source model for the table and initializes filters.
 
         Args:
-            model (QAbstractItemModel): The data model to display.
+            model (Optional[QAbstractItemModel]): The data model to display.
         """
+        if model is None:
+            return
+
         if self._proxy.sourceModel():
             self._disconnect_model_signals(self._proxy.sourceModel())
 
         self._proxy.setSourceModel(model)
-        super().setModel(self._proxy)
 
         if model:
             self._connect_model_signals(model)
-            self._refresh_popups()
+
+        self._refresh_popups()
 
     def model(self) -> QAbstractItemModel:
         """Returns the source model (not the proxy).
@@ -87,11 +89,19 @@ class QFilterableTableView(QTableView):
 
         popup = QFilterPopup(self)
 
-        popup.apply_button.clicked.connect(lambda _, col=logical_index: self._apply_filter(col))
+        popup.apply_button.clicked.connect(
+            lambda _, col=logical_index: self._apply_filter(col)
+        )
         popup.order_button.clicked.connect(
-            lambda _, col=logical_index: self.sortByColumn(col, Qt.SortOrder.AscendingOrder))
+            lambda _, col=logical_index: self.sortByColumn(
+                col, Qt.SortOrder.AscendingOrder
+            )
+        )
         popup.reverse_order_button.clicked.connect(
-            lambda _, col=logical_index: self.sortByColumn(col, Qt.SortOrder.DescendingOrder))
+            lambda _, col=logical_index: self.sortByColumn(
+                col, Qt.SortOrder.DescendingOrder
+            )
+        )
 
         self._popups[logical_index] = popup
         self._update_header_icon(logical_index)
@@ -168,11 +178,16 @@ class QFilterableTableView(QTableView):
 
         # Use the proxy to set the header data. This works for QSqlTableModel and others
         # that might not support setting header icons directly or easily.
-        self._proxy.setHeaderData(logical_index, Qt.Orientation.Horizontal, icon, Qt.ItemDataRole.DecorationRole)
+        self._proxy.setHeaderData(
+            logical_index,
+            Qt.Orientation.Horizontal,
+            icon,
+            Qt.ItemDataRole.DecorationRole,
+        )
 
     # --- Smart Data Logic ---
 
-    def _get_unique_column_values(self, target_col: int, limit: int = 5000) -> Set[str]:
+    def _get_unique_column_values(self, target_col: int, limit: int = 5000) -> typing.Set[str]:
         """Returns unique values from a column, considering active filters in other columns.
 
         Args:
@@ -186,7 +201,7 @@ class QFilterableTableView(QTableView):
         values = set()
 
         # 1. Captures filter state from OTHER columns
-        active_filters: Dict[int, Set[str]] = {}
+        active_filters: typing.Dict[int, typing.Set[str]] = {}
 
         for col_idx, popup in self._popups.items():
             # Ignores current column to show all its options
