@@ -1,1 +1,0 @@
-from .standard_twemoji_delegate import QStandardTwemojiDelegate

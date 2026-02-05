@@ -65,7 +65,7 @@ A flexible accordion widget for grouping content in collapsible sections.
 Stop worrying about Dark/Light mode icons. This class wraps `QtAwesome` to automatically invert colors (Black <-> White) based on the current system or application palette.
 
 ```python
-from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from PySide6.QtWidgets import QPushButton
 
 btn = QPushButton("Theme Aware Button")
@@ -88,10 +88,10 @@ A delegate that renders Twemoji images within standard item views (like `QListVi
 
 ```python
 from PySide6.QtWidgets import QListView
-from qextrawidgets.delegates.standard_twemoji_delegate import QStandardTwemojiDelegate
+from qextrawidgets.widgets.delegates.standard_twemoji_delegate import QEmojiDelegate
 
 view = QListView()
-delegate = QStandardTwemojiDelegate(view)
+delegate = QEmojiDelegate(view)
 view.setItemDelegate(delegate)
 ```
 

@@ -1,0 +1,1 @@
+from .emoji_picker_model import QEmojiPickerModel

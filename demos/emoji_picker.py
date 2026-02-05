@@ -7,13 +7,12 @@ from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QVBoxLayout,
                                QCheckBox, QGroupBox, QPushButton, QComboBox,
                                QDoubleSpinBox, QToolButton)
 
-from qextrawidgets.emoji_utils import EmojiImageProvider
-from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.utils import QEmojiFonts
-from qextrawidgets.widgets.emoji_picker import QEmojiPicker
-from qextrawidgets.widgets.emoji_picker_menu import QEmojiPickerMenu
-from qextrawidgets.items.emoji_category_item import QEmojiCategoryItem
-from qextrawidgets.items.emoji_item import QEmojiItem
+from qextrawidgets.core.utils.twemoji_image_provider import QTwemojiImageProvider
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.core.utils.emoji_fonts import QEmojiFonts
+from qextrawidgets.widgets.menus.emoji_picker_menu import QEmojiPickerMenu
+from qextrawidgets.gui.items import QEmojiCategoryItem
+from qextrawidgets.gui.items import QEmojiItem
 from emoji_data_python import emoji_data
 from functools import partial
 
@@ -171,7 +170,7 @@ class MainWindow(QMainWindow):
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
         if state == Qt.CheckState.Checked.value:
-            self.emoji_picker.setEmojiPixmapGetter(partial(EmojiImageProvider.getPixmap, margin=0, size=64, dpr=1.0))
+            self.emoji_picker.setEmojiPixmapGetter(partial(QTwemojiImageProvider.getPixmap, margin=0, size=64, dpr=1.0))
         else:
             # Revert to current font in combo
             self.emoji_picker.setEmojiPixmapGetter(self.font_combo.currentText())

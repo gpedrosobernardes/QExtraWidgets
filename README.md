@@ -66,7 +66,7 @@ Stop worrying about Dark/Light mode icons. `QThemeResponsiveIcon` wraps `QtAweso
 For labels, `QThemeResponsiveLabel` automatically updates its pixmap when the icon theme or widget size changes.
 
 ```python
-from qextrawidgets.icons import QThemeResponsiveIcon
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from PySide6.QtWidgets import QPushButton
 
 btn = QPushButton("Theme Aware Button")
@@ -89,10 +89,10 @@ A delegate that renders Twemoji images within standard item views (like `QListVi
 
 ```python
 from PySide6.QtWidgets import QListView
-from qextrawidgets.delegates.standard_twemoji_delegate import QStandardTwemojiDelegate
+from qextrawidgets.widgets.delegates.standard_twemoji_delegate import QEmojiDelegate
 
 view = QListView()
-delegate = QStandardTwemojiDelegate(view)
+delegate = QEmojiDelegate(view)
 view.setItemDelegate(delegate)
 ```
 

@@ -9,8 +9,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout, QHeaderView
 )
 
-from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.views.filterable_table import QFilterableTableView
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.views import QFilterableTableView
 
 
 class DemoTableWindow(QMainWindow):

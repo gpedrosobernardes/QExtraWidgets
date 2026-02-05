@@ -5,8 +5,8 @@ from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QGroupBox, QFormLayout, QSpinBox, QLabel, \
     QFrame
 
-from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets.pager import QPager
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.miscellaneous.pager import QPager
 
 
 class MainWindow(QMainWindow):
