@@ -1,9 +1,8 @@
-from qextrawidgets.widgets.displays.theme_responsive_label import QThemeResponsiveLabel
 import sys
 
 import qtawesome
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QGuiApplication
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QToolButton, QFrame, QGroupBox
@@ -11,6 +10,7 @@ from PySide6.QtWidgets import (
 
 from qextrawidgets.core.utils.system_utils import QSystemUtils
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.displays.theme_responsive_label import QThemeResponsiveLabel
 
 
 class DemoWindow(QMainWindow):

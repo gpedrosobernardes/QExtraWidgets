@@ -30,7 +30,7 @@ def test_emoji_finder_finds_all_emojis(emoji):
 
 def test_emoji_finder_mixed_content():
     text = "Hello 👋 World 🔥"
-    matches = QEmojiFinder.findEmojis(text)
+    matches = list(QEmojiFinder.findEmojis(text))
     assert len(matches) == 2
     assert matches[0].captured(0) == "👋"
     assert matches[1].captured(0) == "🔥"

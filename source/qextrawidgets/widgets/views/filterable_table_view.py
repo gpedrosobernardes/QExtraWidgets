@@ -1,10 +1,8 @@
-from PySide6.QtCore import Slot
 import typing
 
 from PySide6.QtCore import Qt, QRect, QAbstractItemModel, QModelIndex
+from PySide6.QtCore import Slot
 from PySide6.QtGui import QStandardItemModel
-
-# Remove QApplication import as it is no longer used here if we moved logic to header
 from PySide6.QtWidgets import QTableView, QWidget
 
 from qextrawidgets.gui.icons.theme_responsive_icon import QThemeResponsiveIcon
@@ -217,23 +215,19 @@ class QFilterableTableView(QTableView):
         except RuntimeError:
             pass
 
-    def _on_columns_inserted(self, parent: QModelIndex, start: int, end: int) -> None:
+    def _on_columns_inserted(self, _: QModelIndex, start: int, end: int) -> None:
         """Handles columns inserted in the model.
 
         Args:
-            parent (QModelIndex): Parent index.
             start (int): Start index.
             end (int): End index.
         """
         for i in range(start, end + 1):
             self._create_popup(i)
 
-    def _on_columns_removed(self, parent: QModelIndex, start: int, end: int) -> None:
+    @Slot()
+    def _on_columns_removed(self) -> None:
         """Handles columns removed from the model.
 
-        Args:
-            parent (QModelIndex): Parent index.
-            start (int): Start index.
-            end (int): End index.
         """
         self._refresh_popups()

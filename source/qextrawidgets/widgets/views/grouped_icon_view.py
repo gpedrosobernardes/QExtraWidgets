@@ -1,11 +1,11 @@
 import typing
+
 from PySide6.QtCore import (
     QModelIndex,
     QPersistentModelIndex,
     QSize,
     Qt,
     QRect,
-    QPoint,
     QAbstractItemModel,
 )
 from PySide6.QtGui import QMouseEvent
@@ -121,13 +121,15 @@ class QGroupedIconView(QGridIconView):
     # Internal Logic Helpers
     # -------------------------------------------------------------------------
 
+    @staticmethod
     def _is_category(
-        self, index: typing.Union[QModelIndex, QPersistentModelIndex]
+        index: typing.Union[QModelIndex, QPersistentModelIndex]
     ) -> bool:
         """Check if the given index represents a category (header)."""
         return index.isValid() and not index.parent().isValid()
 
-    def _is_item(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
+    @staticmethod
+    def _is_item(index: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """Check if the given index represents a child item."""
         return index.isValid() and index.parent().isValid()
 

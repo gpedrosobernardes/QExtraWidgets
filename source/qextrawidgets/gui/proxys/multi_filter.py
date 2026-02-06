@@ -1,7 +1,7 @@
-from PySide6.QtCore import QPersistentModelIndex
 import typing
 
-from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QObject, Qt
+from PySide6.QtCore import QPersistentModelIndex
+from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QObject
 
 
 class QMultiFilterProxy(QSortFilterProxyModel):

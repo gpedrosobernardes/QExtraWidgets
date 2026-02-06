@@ -36,7 +36,8 @@ class QFilterHeaderView(QHeaderView):
         self._press_pos: typing.Optional[QPoint] = None
         self._current_hover_pos: typing.Optional[QPoint] = None
 
-    def _get_icon_rect(self, section_rect: QRect) -> QRect:
+    @staticmethod
+    def _get_icon_rect(section_rect: QRect) -> QRect:
         """Calculates the filter icon rectangle within the section."""
         icon_size = 16  # Comfortable default size
         padding = 4
@@ -147,10 +148,6 @@ class QFilterHeaderView(QHeaderView):
             icon = model.headerData(
                 logical_index, Qt.Orientation.Horizontal, Qt.ItemDataRole.DecorationRole
             )
-
-            # 2. Drawing Logic
-            icon_size = 16  # Comfortable default size
-            padding = 4
 
             # If there is an icon, reserve space on the right for it
             if isinstance(icon, QIcon) and not icon.isNull():

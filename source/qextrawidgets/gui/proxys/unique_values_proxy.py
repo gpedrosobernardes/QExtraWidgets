@@ -30,16 +30,16 @@ class QUniqueValuesProxyModel(QSortFilterProxyModel):
     def targetColumn(self) -> int:
         return self._target_column
 
-    def setSourceModel(self, sourceModel: QAbstractItemModel) -> None:
-        super().setSourceModel(sourceModel)
+    def setSourceModel(self, source_model: QAbstractItemModel) -> None:
+        super().setSourceModel(source_model)
         # Connect signals to invalidate cache on changes
-        if sourceModel:
+        if source_model:
             # Connect using the correct signal signatures
-            sourceModel.modelReset.connect(self.invalidateFilter)
-            sourceModel.layoutChanged.connect(self.invalidateFilter)
-            sourceModel.rowsInserted.connect(self.invalidateFilter)
-            sourceModel.rowsRemoved.connect(self.invalidateFilter)
-            sourceModel.dataChanged.connect(self.invalidateFilter)
+            source_model.modelReset.connect(self.invalidateFilter)
+            source_model.layoutChanged.connect(self.invalidateFilter)
+            source_model.rowsInserted.connect(self.invalidateFilter)
+            source_model.rowsRemoved.connect(self.invalidateFilter)
+            source_model.dataChanged.connect(self.invalidateFilter)
 
         # Explicitly rebuild cache for the new model
         self.invalidateFilter()

@@ -291,7 +291,7 @@ class QEmojiPicker(QWidget):
 
         shortcut = self._create_shortcut_button(category, icon)
         shortcut.setObjectName(category)
-        shortcut.clicked.connect(lambda: self._on_shortcut_clicked(category_item.index(), category_item))
+        shortcut.clicked.connect(lambda: self._on_shortcut_clicked(category_item.index()))
 
         self._shortcuts_layout.addWidget(shortcut)
         self._shortcuts_group.addButton(shortcut)
@@ -324,12 +324,11 @@ class QEmojiPicker(QWidget):
             self._aliases_emoji_label.setText(elided_alias)
 
     @Slot(QModelIndex)
-    def _on_shortcut_clicked(self, source_index: QModelIndex, category_item: QEmojiCategoryItem) -> None:
+    def _on_shortcut_clicked(self, source_index: QModelIndex) -> None:
         """Scrolls the view to the selected category section.
 
         Args:
             source_index (QModelIndex): The index of the category in the source model.
-            category_item (QEmojiCategoryItem): The category item associated with the shortcut.
         """
         proxy_index = self._proxy.mapFromSource(source_index)
         self._grouped_icon_view.scrollTo(proxy_index)

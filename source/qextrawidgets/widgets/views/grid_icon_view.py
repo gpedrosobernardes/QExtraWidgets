@@ -11,7 +11,7 @@ from PySide6.QtCore import (
     QAbstractItemModel,
     QTimer,
     QItemSelection,
-    QItemSelectionModel,
+    QItemSelectionModel, Slot,
 )
 from PySide6.QtGui import QCursor, QPainter, QMouseEvent, QRegion, QPaintEvent
 from PySide6.QtWidgets import QAbstractItemView, QStyleOptionViewItem, QStyle, QWidget
@@ -123,7 +123,8 @@ class QGridIconView(QAbstractItemView):
     # Internal Logic Helpers
     # -------------------------------------------------------------------------
 
-    def _persistent_to_index(self, persistent: QPersistentModelIndex) -> QModelIndex:
+    @staticmethod
+    def _persistent_to_index(persistent: QPersistentModelIndex) -> QModelIndex:
         """Helper to convert QPersistentModelIndex to QModelIndex (workaround for PySide6)."""
         if not persistent.isValid():
             return QModelIndex()
@@ -132,7 +133,8 @@ class QGridIconView(QAbstractItemView):
             return QModelIndex()
         return model.index(persistent.row(), persistent.column(), persistent.parent())
 
-    def _on_scroll_value_changed(self, value: int) -> None:
+    @Slot()
+    def _on_scroll_value_changed(self) -> None:
         self._recalculate_hover()
         self.viewport().update()
 
@@ -250,16 +252,20 @@ class QGridIconView(QAbstractItemView):
             model.rowsRemoved.connect(self._on_rows_removed)
             model.dataChanged.connect(self._on_data_changed)
 
-    def _on_layout_changed(self, *args, **kwargs) -> None:
+    @Slot()
+    def _on_layout_changed(self) -> None:
         self._schedule_layout()
 
+    @Slot()
     def _on_model_reset(self) -> None:
         self._schedule_layout()
 
-    def _on_rows_inserted(self, parent, start, end):
+    @Slot()
+    def _on_rows_inserted(self):
         self._schedule_layout()
 
-    def _on_rows_removed(self, parent, start, end):
+    @Slot()
+    def _on_rows_removed(self):
         self._schedule_layout()
 
     def _on_data_changed(
@@ -331,9 +337,6 @@ class QGridIconView(QAbstractItemView):
             return
 
         painter = QPainter(self.viewport())
-        region = event.region()
-        scroll_y = self.verticalScrollBar().value()
-
         option = QStyleOptionViewItem()
         option.initFrom(self)
         setattr(option, "widget", self)
@@ -364,7 +367,6 @@ class QGridIconView(QAbstractItemView):
 
         self._item_rects.clear()
         width = self.viewport().width()
-        y = 0
 
         item_w = self.iconSize().width()
         item_h = self.iconSize().height()

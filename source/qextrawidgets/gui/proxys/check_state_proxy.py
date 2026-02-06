@@ -1,8 +1,8 @@
 import typing
+
 from PySide6.QtCore import (
     QIdentityProxyModel,
     Qt,
-    QAbstractItemModel,
     QModelIndex,
     QObject,
     QPersistentModelIndex,
@@ -92,7 +92,7 @@ class QCheckStateProxyModel(QIdentityProxyModel):
         # Iterate over all rows to check their state
         # Note: This checks the effective state (explicit or default)
         for row in range(model.rowCount()):
-            index = capture_index = self.index(row, column)
+            index = self.index(row, column)
             if (
                 self.data(index, Qt.ItemDataRole.CheckStateRole)
                 == Qt.CheckState.Checked

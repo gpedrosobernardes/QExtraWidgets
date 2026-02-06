@@ -1,11 +1,7 @@
-from PySide6.QtCore import Signal
-from qextrawidgets.gui.proxys import (
-    QCheckStateProxyModel,
-    QUniqueValuesProxyModel,
-)
 import typing
-from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractItemModel
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractItemModel, Slot
+from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QVBoxLayout,
     QPushButton,
@@ -21,6 +17,10 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.gui.proxys import (
+    QCheckStateProxyModel,
+    QUniqueValuesProxyModel,
+)
 
 
 class QFilterPopup(QDialog):
@@ -199,13 +199,10 @@ class QFilterPopup(QDialog):
 
         self._check_all_box.setCheckState(state)
 
-    def _update_select_all_state(
-        self, item: typing.Optional[QStandardItem] = None
-    ) -> None:
+    @Slot()
+    def _update_select_all_state(self) -> None:
         """Updates the state of the 'Select All' checkbox based on items.
 
-        Args:
-            item (QStandardItem, optional): The item that changed. Defaults to None.
         """
         checked_count = 0
         total_count = self._proxy_model.rowCount()
