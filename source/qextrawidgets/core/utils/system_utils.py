@@ -3,15 +3,15 @@ from PySide6.QtWidgets import QApplication
 
 
 class QSystemUtils:
-    """Utilitários relacionados ao sistema e configurações da aplicação."""
+    """Utilities related to system and application settings."""
 
     @staticmethod
     def isDarkMode() -> bool:
         """
-        Verifica se a aplicação está rodando em modo escuro.
+        Checks if the application is running in dark mode.
 
         Returns:
-            bool: True se o modo escuro estiver ativo, False caso contrário.
+            bool: True if dark mode is active, False otherwise.
         """
         style_hints = QApplication.styleHints()
         color_scheme = style_hints.colorScheme()
