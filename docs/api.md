@@ -2,53 +2,93 @@
 
 This page contains the automatic API reference for the `qextrawidgets` package.
 
+## Core
+
+### Regexs
+
+::: qextrawidgets.core.regexs.emoji_color_regex
+::: qextrawidgets.core.regexs.emoji_regex
+
+### Utils
+
+::: qextrawidgets.core.utils.color_utils
+::: qextrawidgets.core.utils.emoji_finder
+::: qextrawidgets.core.utils.emoji_fonts
+::: qextrawidgets.core.utils.icon_generator
+::: qextrawidgets.core.utils.system_utils
+::: qextrawidgets.core.utils.twemoji_image_provider
+
+## GUI
+
+### Icons
+
+::: qextrawidgets.gui.icons.theme_responsive_icon
+
+### Items
+
+::: qextrawidgets.gui.items.emoji_category_item
+::: qextrawidgets.gui.items.emoji_item
+
+### Models
+
+::: qextrawidgets.gui.models.emoji_picker_model
+
+### Proxies
+
+::: qextrawidgets.gui.proxys.check_state_proxy
+::: qextrawidgets.gui.proxys.emoji_picker_proxy
+::: qextrawidgets.gui.proxys.header_proxy
+::: qextrawidgets.gui.proxys.multi_filter
+::: qextrawidgets.gui.proxys.unique_values_proxy
+
+### Validators
+
+::: qextrawidgets.gui.validators.emoji_validator
+
 ## Widgets
 
-The main widgets of the library.
+### Buttons
 
-::: qextrawidgets.widgets.accordion
-::: qextrawidgets.widgets.accordion_item
-::: qextrawidgets.widgets.color_button
-::: qextrawidgets.widgets.dual_list
-::: qextrawidgets.widgets.extra_text_edit
-::: qextrawidgets.widgets.icon_combo_box
-::: qextrawidgets.widgets.pager
-::: qextrawidgets.widgets.password_line_edit
-::: qextrawidgets.widgets.search_line_edit
-::: qextrawidgets.widgets.theme_responsive_label
-::: qextrawidgets.widgets.twemoji_text_edit
+::: qextrawidgets.widgets.buttons.color_button
+::: qextrawidgets.widgets.buttons.color_tool_button
 
-### Emoji Picker
+### Delegates
 
-::: qextrawidgets.widgets.emoji_picker.emoji_picker
-::: qextrawidgets.widgets.emoji_picker.emoji_grid
-::: qextrawidgets.widgets.emoji_picker.emoji_model
+::: qextrawidgets.widgets.delegates.grid_icon_delegate
+::: qextrawidgets.widgets.delegates.grouped_icon_delegate
 
-The QEmojiSortFilterProxyModel supports an injectable pixmap getter via `setEmojiPixmapGetter`. The getter may return either a QPixmap or a QIcon; the proxy converts QPixmap to QIcon for DecorationRole to ensure consistent native rendering. If the getter returns an invalid value, the model provides an empty QIcon.
+### Dialogs
 
-### Filterable Table
+::: qextrawidgets.widgets.dialogs.filter_popup
 
-::: qextrawidgets.widgets.filterable_table.filterable_table
+### Displays
 
-## Delegates
+::: qextrawidgets.widgets.displays.theme_responsive_label
 
-::: qextrawidgets.delegates.standard_twemoji_delegate
+### Inputs
 
-## Proxies
+::: qextrawidgets.widgets.inputs.extra_text_edit
+::: qextrawidgets.widgets.inputs.icon_combo_box
+::: qextrawidgets.widgets.inputs.password_line_edit
+::: qextrawidgets.widgets.inputs.search_line_edit
 
-::: qextrawidgets.proxys.emoji_sort_filter
-::: qextrawidgets.proxys.multi_filter
+### Menus
 
-## Validators
+::: qextrawidgets.widgets.menus.emoji_picker_menu
 
-::: qextrawidgets.validators.emoji_validator
+### Miscellaneous
 
-## Documents
+::: qextrawidgets.widgets.miscellaneous.accordion.accordion_header
+::: qextrawidgets.widgets.miscellaneous.accordion.accordion_item
+::: qextrawidgets.widgets.miscellaneous.accordion.accordion
+::: qextrawidgets.widgets.miscellaneous.dual_list
+::: qextrawidgets.widgets.miscellaneous.emoji_picker
+::: qextrawidgets.widgets.miscellaneous.pager
 
-::: qextrawidgets.documents.twemoji_text_document
+### Views
 
-## Utilities and Icons
-
-::: qextrawidgets.icons
-::: qextrawidgets.utils
-::: qextrawidgets.emoji_utils
+::: qextrawidgets.widgets.views.filter_header_view
+::: qextrawidgets.widgets.views.filterable_table_view
+::: qextrawidgets.widgets.views.grid_icon_view
+::: qextrawidgets.widgets.views.grouped_icon_view
+::: qextrawidgets.widgets.views.list_grid_view

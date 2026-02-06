@@ -2,8 +2,8 @@ import sys
 
 from PySide6.QtWidgets import QMainWindow, QApplication
 
-from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets.dual_list import QDualList
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.miscellaneous.dual_list import QDualList
 
 
 class MainWindow(QMainWindow):

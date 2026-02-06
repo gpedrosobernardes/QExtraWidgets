@@ -1,1 +1,0 @@
-from .twemoji_text_document import QTwemojiTextDocument

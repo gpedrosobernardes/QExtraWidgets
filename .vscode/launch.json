@@ -1,0 +1,138 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Accordion",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/accordion.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Color Button",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/color_button.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Dual List",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/dual_list.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Emoji Picker",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/emoji_picker.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Extra Text Edit",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/extra_text_edit.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Filterable Table",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/filterable_table.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "justMyCode": false,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Icon Theme Responsive",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/icon_theme_responsive.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Pager",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/pager.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Password Line Edit",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/password_line_edit.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Search Line Edit",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/search_line_edit.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        },
+        {
+            "name": "Demo: Standard Twemoji Delegate",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/demos/standard_twemoji_delegate.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/source"
+            }
+        }
+    ]
+}

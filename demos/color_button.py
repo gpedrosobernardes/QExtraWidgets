@@ -2,9 +2,9 @@ import sys
 
 from PySide6.QtWidgets import QMainWindow, QApplication, QWidget, QVBoxLayout, QLabel
 
-from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets.color_button import QColorButton
-from qextrawidgets.widgets.color_tool_button import QColorToolButton
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.widgets.buttons.color_button import QColorButton
+from qextrawidgets.widgets.buttons.color_tool_button import QColorToolButton
 
 
 class MainWindow(QMainWindow):

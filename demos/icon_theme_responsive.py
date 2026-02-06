@@ -1,3 +1,4 @@
+from qextrawidgets.widgets.displays.theme_responsive_label import QThemeResponsiveLabel
 import sys
 
 import qtawesome
@@ -8,9 +9,8 @@ from PySide6.QtWidgets import (
     QPushButton, QLabel, QToolButton, QFrame, QGroupBox
 )
 
-from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.widgets import QThemeResponsiveLabel
-from qextrawidgets.utils import is_dark_mode
+from qextrawidgets.core.utils.system_utils import QSystemUtils
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
 
 
 class DemoWindow(QMainWindow):
@@ -32,7 +32,6 @@ class DemoWindow(QMainWindow):
         # A simple icon for the theme button
         btn_theme_toggle.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.palette"))
         btn_theme_toggle.clicked.connect(self.toggleTheme)
-
 
         main_layout.addWidget(btn_theme_toggle)
 
@@ -133,29 +132,19 @@ class DemoWindow(QMainWindow):
         main_layout.addWidget(group_label)
 
         # Initialize with light theme
-        self.applyLightTheme()
+        QSystemUtils.applyLightMode()
 
     def updateToggleBtnText(self, checked):
         state_text = "CHECKED (ON)" if checked else "UNCHECKED (OFF)"
         self.btn_toggle_state.setText(f"Click to Toggle State - {state_text}")
 
-    def toggleTheme(self):
+    @staticmethod
+    def toggleTheme():
         """Toggles between palettes and applies to the entire application."""
-        if is_dark_mode():
-            self.applyLightTheme()
+        if QSystemUtils.isDarkMode():
+            QSystemUtils.applyLightMode()
         else:
-            self.applyDarkTheme()
-
-    @staticmethod
-    def applyDarkTheme():
-        """Applies a generic dark palette."""
-        QGuiApplication.styleHints().setColorScheme(Qt.ColorScheme.Dark)
-
-    @staticmethod
-    def applyLightTheme():
-        """Restores the default system palette (Light)."""
-        # Using the default Fusion style palette is usually a clean light palette
-        QGuiApplication.styleHints().setColorScheme(Qt.ColorScheme.Light)
+            QSystemUtils.applyDarkMode()
 
 
 if __name__ == "__main__":

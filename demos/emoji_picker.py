@@ -1,16 +1,20 @@
+from PySide6.QtGui import QFontDatabase
 import sys
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QVBoxLayout, 
                                QLineEdit, QHBoxLayout, QFormLayout, QSpinBox, 
                                QCheckBox, QGroupBox, QPushButton, QComboBox,
-                               QDoubleSpinBox)
+                               QDoubleSpinBox, QToolButton)
 
-from qextrawidgets.emoji_utils import EmojiImageProvider
-from qextrawidgets.icons import QThemeResponsiveIcon
-from qextrawidgets.utils import QEmojiFonts
-from qextrawidgets.widgets.emoji_picker.emoji_picker import QEmojiPicker
+from qextrawidgets.core.utils.twemoji_image_provider import QTwemojiImageProvider
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.core.utils.emoji_fonts import QEmojiFonts
+from qextrawidgets.widgets.menus.emoji_picker_menu import QEmojiPickerMenu
+from qextrawidgets.gui.items import QEmojiCategoryItem
+from qextrawidgets.gui.items import QEmojiItem
+from emoji_data_python import emoji_data
+from functools import partial
 
 
 class MainWindow(QMainWindow):
@@ -48,21 +52,20 @@ class MainWindow(QMainWindow):
         self.emoji_margin_spin.setDecimals(2)
         self.emoji_margin_spin.setValue(0.10)
         self.emoji_margin_spin.valueChanged.connect(self._on_emoji_margin_changed)
-        config_form.addRow("Emoji Margin:", self.emoji_margin_spin)
+        config_form.addRow("Emoji Internal Margin:", self.emoji_margin_spin)
 
-        self.favorite_check = QCheckBox()
-        self.favorite_check.setChecked(True)
-        self.favorite_check.stateChanged.connect(self._on_favorite_changed)
-        config_form.addRow("Show Favorites:", self.favorite_check)
+        # Grid spacing control
+        self.grid_spacing_spin = QSpinBox()
+        self.grid_spacing_spin.setRange(0, 50)
+        self.grid_spacing_spin.setValue(8)
+        self.grid_spacing_spin.valueChanged.connect(self._on_grid_spacing_changed)
+        config_form.addRow("Grid Spacing:", self.grid_spacing_spin)
 
-        self.recent_check = QCheckBox()
-        self.recent_check.setChecked(True)
-        self.recent_check.stateChanged.connect(self._on_recent_changed)
-        config_form.addRow("Show Recents:", self.recent_check)
+
 
         self.font_combo = QComboBox()
-        self.font_combo.addItem(QEmojiFonts.loadTwemojiFont())
         self.font_combo.currentTextChanged.connect(self._on_font_combo_changed)
+        self.font_combo.addItem(QEmojiFonts.loadTwemojiFont())
         config_form.addRow("Emoji Font:", self.font_combo)
 
         self.use_pixmaps_check = QCheckBox()
@@ -88,31 +91,52 @@ class MainWindow(QMainWindow):
         controls_layout.addWidget(cat_group)
         controls_layout.addStretch()
 
-        # Output Area
-        output_group = QGroupBox("Output")
-        output_layout = QVBoxLayout(output_group)
-        self.line_edit = QLineEdit()
-        self.line_edit.setFont(QEmojiFonts.twemojiFont())
-        self.line_edit.setPlaceholderText("Picked emojis will appear here...")
-        output_layout.addWidget(self.line_edit)
-        controls_layout.addWidget(output_group)
 
-        # Right side: Emoji Picker
-        self.emoji_picker = QEmojiPicker()
+        # Right side: Playground
+        playground_container = QGroupBox("Playground")
+        playground_layout = QVBoxLayout(playground_container)
+        
+        main_layout.addWidget(playground_container, 2)
+        
+        # Add a spacer or label
+        from PySide6.QtWidgets import QLabel
+        playground_layout.addStretch()
+        playground_layout.addWidget(QLabel("Type a message:"))
+        
+        # Input Row
+        input_container = QWidget()
+        input_layout = QHBoxLayout(input_container)
+        input_layout.setContentsMargins(0,0,0,0)
+        
+        self.line_edit = QLineEdit()
+        self.line_edit.setPlaceholderText("Type a message...")
+        
+        self.emoji_picker_menu = QEmojiPickerMenu(self)
+        self.emoji_picker = self.emoji_picker_menu.picker()
         self.emoji_picker.picked.connect(self._on_emoji_picked)
+
+        self.emoji_btn = QToolButton()
+        # self.emoji_btn.setText("Open Emoji Picker")
+        self.emoji_btn.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.face-smile"))
+        self.emoji_btn.setMenu(self.emoji_picker_menu)
+        self.emoji_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        
+        input_layout.addWidget(self.emoji_btn)
+        input_layout.addWidget(self.line_edit)
+        
+        playground_layout.addWidget(input_container)
+
         # Ensure the picker's margin matches the UI initial value
-        self.emoji_picker.delegate().setEmojiMarginPercentage(self.emoji_margin_spin.value())
+        self.emoji_picker.delegate().setItemInternalMargin(self.emoji_margin_spin.value())
 
         # Setup initial state based on configuration
         self._on_use_pixmaps_changed(self.use_pixmaps_check.checkState().value)
 
-        main_layout.addWidget(self.emoji_picker, 2)
-
-    def _on_emoji_picked(self, emoji: str) -> None:
-        self.line_edit.insert(emoji)
+    def _on_emoji_picked(self, item: QEmojiItem) -> None:
+        self.line_edit.insert(item.emoji())
 
     def _on_emoji_size_changed(self, value: int) -> None:
-        self.emoji_picker.delegate().setEmojiSize(value)
+        self.emoji_picker.view().setIconSize(QSize(value, value))
 
     def _on_emoji_margin_changed(self, value: float) -> None:
         """Handle emoji margin changes from the UI.
@@ -121,34 +145,38 @@ class MainWindow(QMainWindow):
             value (float): Margin percentage value between 0.10 and 0.50.
         """
         # Forward the percentage value to the picker
-        self.emoji_picker.delegate().setEmojiMarginPercentage(value)
+        self.emoji_picker.delegate().setItemInternalMargin(value)
 
-    def _on_favorite_changed(self, state: int) -> None:
-        self.emoji_picker.categoryModel().setFavoriteCategory(state == Qt.CheckState.Checked.value)
-
-    def _on_recent_changed(self, state: int) -> None:
-        self.emoji_picker.categoryModel().setRecentCategory(state == Qt.CheckState.Checked.value)
+    def _on_grid_spacing_changed(self, value: int) -> None:
+        self.emoji_picker.view().setMargin(value)
 
     def _on_font_combo_changed(self, font_family: str) -> None:
-        font = QFont(font_family)
-        self.emoji_picker.delegate().setEmojiFont(font_family)
-        self.line_edit.setFont(font)
+        QFontDatabase.addApplicationEmojiFontFamily(font_family)
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
-        delegate = self.emoji_picker.delegate()
         if state == Qt.CheckState.Checked.value:
-            delegate.setEmojiPixmapGetter(EmojiImageProvider.getPixmap)
+            self.emoji_picker.setEmojiPixmapGetter(partial(QTwemojiImageProvider.getPixmap, margin=0, size=64, dpr=1.0))
         else:
-            delegate.setEmojiPixmapGetter(None)
+            # Revert to current font in combo
+            self.emoji_picker.setEmojiPixmapGetter(self.font_combo.currentText())
 
     def _add_custom_category(self) -> None:
         icon = QThemeResponsiveIcon.fromAwesome("fa6s.rocket")
-        self.emoji_picker.categoryModel().addCategory("Custom", "My Custom Category", icon)
+        category_item = QEmojiCategoryItem("Custom", icon)
+        self.emoji_picker.model().appendRow(category_item)
+        
+        # Add some sample emojis (using first 10 from data)
+        items = [QEmojiItem(emoji_data[i]) for i in range(10)]
+        category_item.appendRows(items)
+        
         self.add_cat_btn.setEnabled(False)
         self.remove_cat_btn.setEnabled(True)
 
     def _remove_custom_category(self) -> None:
-        self.emoji_picker.categoryModel().removeCategory("Custom")
+        index = self.emoji_picker.model().findCategory("Custom")
+        if index:
+            self.emoji_picker.model().removeRow(index.row())
+            
         self.add_cat_btn.setEnabled(True)
         self.remove_cat_btn.setEnabled(False)
 
