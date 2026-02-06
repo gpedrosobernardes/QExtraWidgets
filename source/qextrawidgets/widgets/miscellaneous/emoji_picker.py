@@ -443,6 +443,9 @@ class QEmojiPicker(QWidget):
         self._paint_emoji_on_label()
         self._paint_skintones()
 
+        delegate = self.delegate()
+        delegate.forceReloadAll()
+
     def emojiPixmapGetter(self) -> typing.Callable[[str], QPixmap]:
         """Returns the current emoji pixmap getter function.
 

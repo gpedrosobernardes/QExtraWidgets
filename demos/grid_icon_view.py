@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QSpinBox,
     QDoubleSpinBox,
-    QLabel,
     QGroupBox,
 )
 from PySide6.QtGui import (
@@ -23,7 +22,7 @@ from PySide6.QtGui import (
     QBrush,
     QPen,
 )
-from PySide6.QtCore import QSize, Qt, QRect
+from PySide6.QtCore import QSize, Qt
 
 from qextrawidgets.widgets.views.grid_icon_view import QGridIconView
 

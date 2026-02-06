@@ -152,6 +152,7 @@ class MainWindow(QMainWindow):
 
     def _on_font_combo_changed(self, font_family: str) -> None:
         QFontDatabase.addApplicationEmojiFontFamily(font_family)
+        self.emoji_picker.setEmojiPixmapGetter(font_family)
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
         if state == Qt.CheckState.Checked.value:
