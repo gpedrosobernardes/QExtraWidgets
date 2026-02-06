@@ -1,3 +1,4 @@
+from PySide6.QtWidgets import QAbstractItemView
 from qextrawidgets.core.utils import QIconGenerator
 from qextrawidgets.widgets.views.grouped_icon_view import QGroupedIconView
 from qextrawidgets.gui.items.emoji_item import EmojiSkinTone
@@ -66,6 +67,7 @@ class QEmojiPicker(QWidget):
 
         self._grouped_icon_view = QGroupedIconView(self, QSize(40, 40), 5)
         self._grouped_icon_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self._grouped_icon_view.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self._grouped_icon_view.setModel(self._proxy)
 
         self._search_timer = QTimer(self)

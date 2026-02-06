@@ -1,7 +1,7 @@
+from PySide6.QtGui import QFontDatabase
 import sys
 
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (QMainWindow, QApplication, QWidget, QVBoxLayout, 
                                QLineEdit, QHBoxLayout, QFormLayout, QSpinBox, 
                                QCheckBox, QGroupBox, QPushButton, QComboBox,
@@ -64,8 +64,8 @@ class MainWindow(QMainWindow):
 
 
         self.font_combo = QComboBox()
-        self.font_combo.addItem(QEmojiFonts.loadTwemojiFont())
         self.font_combo.currentTextChanged.connect(self._on_font_combo_changed)
+        self.font_combo.addItem(QEmojiFonts.loadTwemojiFont())
         config_form.addRow("Emoji Font:", self.font_combo)
 
         self.use_pixmaps_check = QCheckBox()
@@ -92,7 +92,6 @@ class MainWindow(QMainWindow):
         controls_layout.addStretch()
 
 
-
         # Right side: Playground
         playground_container = QGroupBox("Playground")
         playground_layout = QVBoxLayout(playground_container)
@@ -110,7 +109,6 @@ class MainWindow(QMainWindow):
         input_layout.setContentsMargins(0,0,0,0)
         
         self.line_edit = QLineEdit()
-        self.line_edit.setFont(QEmojiFonts.twemojiFont())
         self.line_edit.setPlaceholderText("Type a message...")
         
         self.emoji_picker_menu = QEmojiPickerMenu(self)
@@ -152,21 +150,8 @@ class MainWindow(QMainWindow):
     def _on_grid_spacing_changed(self, value: int) -> None:
         self.emoji_picker.view().setMargin(value)
 
-    def _on_favorite_changed(self, state: int) -> None:
-        # Dynamic toggling of favorite category is not yet supported in the model
-        pass
-        # self.emoji_picker.model().setFavoriteCategory(state == Qt.CheckState.Checked.value)
-
-    def _on_recent_changed(self, state: int) -> None:
-        # Dynamic toggling of recent category is not yet supported in the model
-        pass
-        # self.emoji_picker.model().setRecentCategory(state == Qt.CheckState.Checked.value)
-
     def _on_font_combo_changed(self, font_family: str) -> None:
-        font = QFont(font_family)
-        # setEmojiPixmapGetter handles font families
-        self.emoji_picker.setEmojiPixmapGetter(font_family)
-        self.line_edit.setFont(font)
+        QFontDatabase.addApplicationEmojiFontFamily(font_family)
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
         if state == Qt.CheckState.Checked.value:

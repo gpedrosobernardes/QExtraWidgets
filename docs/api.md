@@ -54,6 +54,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ### Delegates
 
+::: qextrawidgets.widgets.delegates.grid_icon_delegate
 ::: qextrawidgets.widgets.delegates.grouped_icon_delegate
 
 ### Dialogs
@@ -88,5 +89,6 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ::: qextrawidgets.widgets.views.filter_header_view
 ::: qextrawidgets.widgets.views.filterable_table_view
+::: qextrawidgets.widgets.views.grid_icon_view
 ::: qextrawidgets.widgets.views.grouped_icon_view
 ::: qextrawidgets.widgets.views.list_grid_view
