@@ -15,9 +15,10 @@ class QMultiFilterProxy(QSortFilterProxyModel):
         """
         super().__init__(parent)
         self._filters = {}
-        self._header_icons = {}
 
-    def setFilter(self, col: int, text_list: typing.Optional[typing.Iterable[str]]) -> None:
+    def setFilter(
+        self, col: int, text_list: typing.Optional[typing.Iterable[str]]
+    ) -> None:
         """Sets the list of allowed values for a specific column.
 
         Args:
@@ -33,12 +34,16 @@ class QMultiFilterProxy(QSortFilterProxyModel):
     def isFiltering(self) -> bool:
         """Returns True if any filter is active."""
         return bool(self._filters)
-    
+
     def isColumnFiltered(self, col: int) -> bool:
         """Returns True if the given column is filtered."""
         return col in self._filters
 
-    def filterAcceptsRow(self, source_row: int, source_parent: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
+    def filterAcceptsRow(
+        self,
+        source_row: int,
+        source_parent: typing.Union[QModelIndex, QPersistentModelIndex],
+    ) -> bool:
         """Determines if a row passes all column filters.
 
         Args:
@@ -59,31 +64,7 @@ class QMultiFilterProxy(QSortFilterProxyModel):
                 return False
         return True
 
-    # TODO: refatorar essa parte aqui
-
-    def setHeaderData(self, section: int, orientation: Qt.Orientation, value: typing.Any, role: int = Qt.ItemDataRole.EditRole) -> bool:
-        """Sets the header data for the given section and orientation.
-
-        Overrides to support DecorationRole for filter icons.
-        """
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DecorationRole:
-            self._header_icons[section] = value
-            self.headerDataChanged.emit(orientation, section, section)
-            return True
-        return super().setHeaderData(section, orientation, value, role)
-
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole) -> typing.Any:
-        """Returns the header data for the given section and orientation.
-
-        Overrides to support DecorationRole for filter icons.
-        """
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DecorationRole:
-            if section in self._header_icons:
-                return self._header_icons[section]
-        return super().headerData(section, orientation, role)
-
     def reset(self):
-        """Resets the filters and header icons."""
+        """Resets the filters."""
         self._filters = {}
-        self._header_icons = {}
         self.invalidateFilter()

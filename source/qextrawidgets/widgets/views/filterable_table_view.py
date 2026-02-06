@@ -5,7 +5,7 @@ from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import QTableView, QWidget
 
 from qextrawidgets.gui.icons.theme_responsive_icon import QThemeResponsiveIcon
-from qextrawidgets.gui.proxys import QMultiFilterProxy
+from qextrawidgets.gui.proxys import QMultiFilterProxy, QHeaderProxy
 from qextrawidgets.widgets.dialogs import QFilterPopup
 from qextrawidgets.widgets.views.filter_header_view import QFilterHeaderView
 
@@ -21,8 +21,11 @@ class QFilterableTableView(QTableView):
         """
         super().__init__(parent)
 
-        self._proxy = QMultiFilterProxy()
-        super().setModel(self._proxy)
+        self._filter_proxy = QMultiFilterProxy()
+        self._header_proxy = QHeaderProxy()
+        self._header_proxy.setSourceModel(self._filter_proxy)
+
+        super().setModel(self._header_proxy)
         self._popups: typing.Dict[int, QFilterPopup] = {}
 
         header = QFilterHeaderView(Qt.Orientation.Horizontal, self)
@@ -43,10 +46,10 @@ class QFilterableTableView(QTableView):
         if model is None:
             return
 
-        if self._proxy.sourceModel():
-            self._disconnect_model_signals(self._proxy.sourceModel())
+        if self._filter_proxy.sourceModel():
+            self._disconnect_model_signals(self._filter_proxy.sourceModel())
 
-        self._proxy.setSourceModel(model)
+        self._filter_proxy.setSourceModel(model)
 
         if model:
             self._connect_model_signals(model)
@@ -59,13 +62,14 @@ class QFilterableTableView(QTableView):
         Returns:
             QAbstractItemModel: The source model.
         """
-        return self._proxy.sourceModel()
+        return self._filter_proxy.sourceModel()
 
     # --- Popup Logic ---
 
     def _refresh_popups(self) -> None:
         """Clears and recreates filter popups for all columns."""
-        self._proxy.reset()
+        self._filter_proxy.reset()
+        self._header_proxy.reset()
 
         for popup in self._popups.values():
             popup.deleteLater()
@@ -87,7 +91,7 @@ class QFilterableTableView(QTableView):
         if logical_index in self._popups:
             return
 
-        popup = QFilterPopup(self._proxy, logical_index, self)
+        popup = QFilterPopup(self._filter_proxy, logical_index, self)
 
         popup.accepted.connect(lambda: self._apply_filter(logical_index))
 
@@ -117,7 +121,7 @@ class QFilterableTableView(QTableView):
         global_pos = self.mapToGlobal(QRect(viewport_pos, 0, 0, 0).topLeft())
 
         popup.move(global_pos.x(), global_pos.y() + header.height())
-        popup.setClearEnabled(self._proxy.isColumnFiltered(logical_index))
+        popup.setClearEnabled(self._filter_proxy.isColumnFiltered(logical_index))
         popup.exec()
 
     def _apply_filter(self, logical_index: int) -> None:
@@ -132,7 +136,7 @@ class QFilterableTableView(QTableView):
 
         if popup.isFiltering():
             filter_data = popup.getSelectedData()
-            self._proxy.setFilter(logical_index, filter_data)
+            self._filter_proxy.setFilter(logical_index, filter_data)
 
         self._update_header_icon(logical_index)
 
@@ -142,7 +146,7 @@ class QFilterableTableView(QTableView):
         Args:
             logical_index (int): Column index.
         """
-        self._proxy.setFilter(logical_index, None)
+        self._filter_proxy.setFilter(logical_index, None)
         self._update_header_icon(logical_index)
 
     def _update_header_icon(self, logical_index: int) -> None:
@@ -157,14 +161,14 @@ class QFilterableTableView(QTableView):
         # The icon reflects if there is an ACTIVE filter in the popup
         icon_name = (
             "fa6s.filter"
-            if self._proxy.isColumnFiltered(logical_index)
+            if self._filter_proxy.isColumnFiltered(logical_index)
             else "fa6s.angle-down"
         )
         icon = QThemeResponsiveIcon.fromAwesome(icon_name)
 
         # Use the proxy to set the header data. This works for QSqlTableModel and others
         # that might not support setting header icons directly or easily.
-        self._proxy.setHeaderData(
+        self._header_proxy.setHeaderData(
             logical_index,
             Qt.Orientation.Horizontal,
             icon,
