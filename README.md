@@ -42,7 +42,7 @@ A full-featured Emoji Picker.
 * **Optimized Search:** Fast filtering with recursive category matching.
 * **Emoji Replacement:** Automatically converts `:smile:` aliases or pasted unicode characters into high-quality images.
 
-![QEmojiPicker](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QEmojiPicker.gifs)
+![QEmojiPicker](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QEmojiPicker.gif)
 
 ---
 
