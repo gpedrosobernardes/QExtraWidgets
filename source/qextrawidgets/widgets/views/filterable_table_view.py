@@ -87,21 +87,13 @@ class QFilterableTableView(QTableView):
         if logical_index in self._popups:
             return
 
-        popup = QFilterPopup(self)
+        popup = QFilterPopup(self._proxy, logical_index, self)
 
-        popup.apply_button.clicked.connect(
-            lambda _, col=logical_index: self._apply_filter(col)
-        )
-        popup.order_button.clicked.connect(
-            lambda _, col=logical_index: self.sortByColumn(
-                col, Qt.SortOrder.AscendingOrder
-            )
-        )
-        popup.reverse_order_button.clicked.connect(
-            lambda _, col=logical_index: self.sortByColumn(
-                col, Qt.SortOrder.DescendingOrder
-            )
-        )
+        popup.accepted.connect(lambda: self._apply_filter(logical_index))
+
+        popup.orderChanged.connect(lambda col, order: self.sortByColumn(col, order))
+
+        popup.clearRequested.connect(lambda: self._clear_filter(logical_index))
 
         self._popups[logical_index] = popup
         self._update_header_icon(logical_index)
@@ -117,25 +109,15 @@ class QFilterableTableView(QTableView):
 
         popup = self._popups[logical_index]
 
-        # 1. Calculates which values are valid considering filters from OTHER columns
-        visible_values = self._get_unique_column_values(logical_index)
-
-        # 2. Synchronizes the Popup (Adds new and REMOVES invalid ones)
-        current_data = popup.getData()
-
-        # Adds what is missing
-        for val in visible_values - current_data:
-            popup.addData(val)
-
-        # Removes what shouldn't be there (to avoid visual inconsistency)
-        for val in current_data - visible_values:
-            popup.removeData(val)
+        # QFilterPopup now handles unique values internally via proxy.
+        # We just need to show it.
 
         header = self.horizontalHeader()
         viewport_pos = header.sectionViewportPosition(logical_index)
         global_pos = self.mapToGlobal(QRect(viewport_pos, 0, 0, 0).topLeft())
 
         popup.move(global_pos.x(), global_pos.y() + header.height())
+        popup.setClearEnabled(self._proxy.isColumnFiltered(logical_index))
         popup.exec()
 
     def _apply_filter(self, logical_index: int) -> None:
@@ -148,17 +130,19 @@ class QFilterableTableView(QTableView):
         if not popup:
             return
 
-        # Fix to avoid "lock" behavior:
-        # If the popup is NOT filtering (i.e., all visible items in the popup are checked),
-        # we remove the filter from the proxy (passing None).
-        # This prevents items hidden by other columns from being locked out of the list
-        # when other filters are cleared.
         if popup.isFiltering():
             filter_data = popup.getSelectedData()
             self._proxy.setFilter(logical_index, filter_data)
-        else:
-            self._proxy.setFilter(logical_index, None)
 
+        self._update_header_icon(logical_index)
+
+    def _clear_filter(self, logical_index: int) -> None:
+        """Clears the filter for the specified column.
+
+        Args:
+            logical_index (int): Column index.
+        """
+        self._proxy.setFilter(logical_index, None)
         self._update_header_icon(logical_index)
 
     def _update_header_icon(self, logical_index: int) -> None:
@@ -170,10 +154,12 @@ class QFilterableTableView(QTableView):
         if logical_index not in self._popups:
             return
 
-        popup = self._popups[logical_index]
-
         # The icon reflects if there is an ACTIVE filter in the popup
-        icon_name = "fa6s.filter" if popup.isFiltering() else "fa6s.angle-down"
+        icon_name = (
+            "fa6s.filter"
+            if self._proxy.isColumnFiltered(logical_index)
+            else "fa6s.angle-down"
+        )
         icon = QThemeResponsiveIcon.fromAwesome(icon_name)
 
         # Use the proxy to set the header data. This works for QSqlTableModel and others
@@ -186,52 +172,6 @@ class QFilterableTableView(QTableView):
         )
 
     # --- Smart Data Logic ---
-
-    def _get_unique_column_values(self, target_col: int, limit: int = 5000) -> typing.Set[str]:
-        """Returns unique values from a column, considering active filters in other columns.
-
-        Args:
-            target_col (int): Column to scan.
-            limit (int, optional): Maximum number of rows to scan. Defaults to 5000.
-
-        Returns:
-            Set[str]: A set of unique string values.
-        """
-        model = self.model()
-        values = set()
-
-        # 1. Captures filter state from OTHER columns
-        active_filters: typing.Dict[int, typing.Set[str]] = {}
-
-        for col_idx, popup in self._popups.items():
-            # Ignores current column to show all its options
-            if col_idx == target_col:
-                continue
-
-            if popup.isFiltering():
-                active_filters[col_idx] = popup.getSelectedData()
-
-        rows_to_scan = min(model.rowCount(), limit)
-
-        for row in range(rows_to_scan):
-            row_is_visible = True
-
-            if active_filters:
-                for filter_col, allowed_values in active_filters.items():
-                    idx = model.index(row, filter_col)
-                    val = str(model.data(idx, Qt.ItemDataRole.DisplayRole))
-
-                    if val not in allowed_values:
-                        row_is_visible = False
-                        break
-
-            if row_is_visible:
-                idx_target = model.index(row, target_col)
-                data = model.data(idx_target, Qt.ItemDataRole.DisplayRole)
-                if data is not None:
-                    values.add(str(data))
-
-        return values
 
     # --- Model Signals ---
 

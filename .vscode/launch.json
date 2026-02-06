@@ -3,7 +3,7 @@
     "configurations": [
         {
             "name": "Python: Current File",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
@@ -14,7 +14,7 @@
         },
         {
             "name": "Demo: Accordion",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/accordion.py",
             "console": "integratedTerminal",
@@ -25,7 +25,7 @@
         },
         {
             "name": "Demo: Color Button",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/color_button.py",
             "console": "integratedTerminal",
@@ -36,7 +36,7 @@
         },
         {
             "name": "Demo: Dual List",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/dual_list.py",
             "console": "integratedTerminal",
@@ -47,7 +47,7 @@
         },
         {
             "name": "Demo: Emoji Picker",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/emoji_picker.py",
             "console": "integratedTerminal",
@@ -58,7 +58,7 @@
         },
         {
             "name": "Demo: Extra Text Edit",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/extra_text_edit.py",
             "console": "integratedTerminal",
@@ -69,18 +69,19 @@
         },
         {
             "name": "Demo: Filterable Table",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/filterable_table.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
+            "justMyCode": false,
             "env": {
                 "PYTHONPATH": "${workspaceFolder}/source"
             }
         },
         {
             "name": "Demo: Icon Theme Responsive",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/icon_theme_responsive.py",
             "console": "integratedTerminal",
@@ -91,7 +92,7 @@
         },
         {
             "name": "Demo: Pager",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/pager.py",
             "console": "integratedTerminal",
@@ -102,7 +103,7 @@
         },
         {
             "name": "Demo: Password Line Edit",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/password_line_edit.py",
             "console": "integratedTerminal",
@@ -113,7 +114,7 @@
         },
         {
             "name": "Demo: Search Line Edit",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/search_line_edit.py",
             "console": "integratedTerminal",
@@ -124,7 +125,7 @@
         },
         {
             "name": "Demo: Standard Twemoji Delegate",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/demos/standard_twemoji_delegate.py",
             "console": "integratedTerminal",

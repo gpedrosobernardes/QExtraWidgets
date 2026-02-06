@@ -1,5 +1,6 @@
 from qextrawidgets.widgets.miscellaneous.accordion.accordion_header import QAccordionHeader
 import sys
+import typing
 
 from PySide6.QtCore import Qt, QEasingCurve
 from PySide6.QtWidgets import (
@@ -10,11 +11,15 @@ from PySide6.QtWidgets import (
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.widgets.miscellaneous.accordion import QAccordion
+from qextrawidgets.widgets.miscellaneous.accordion.accordion_item import QAccordionItem
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.item_long_text: typing.Optional[QAccordionItem] = None
+        self.item_form: typing.Optional[QAccordionItem] = None
+        self.accordion = QAccordion()
 
         self.setWindowTitle("QAccordion Demo")
         self.resize(900, 700)
@@ -27,7 +32,6 @@ class MainWindow(QMainWindow):
         main_layout = QHBoxLayout(main_widget)
 
         # --- 1. Accordion Creation ---
-        self.accordion = QAccordion()
         self.populate_accordion()
 
         # --- 2. Control Panel (Left Side) ---
@@ -86,10 +90,10 @@ class MainWindow(QMainWindow):
 
         rb_left = QRadioButton("Left")
         rb_left.setChecked(True)
-        rb_left.toggled.connect(lambda: self.accordion.setIconPosition(QAccordionHeader.IconPosition.LeadingPosition))
+        rb_left.toggled.connect(lambda checked: self.accordion.setIconPosition(QAccordionHeader.IconPosition.LeadingPosition) if checked else None)
 
         rb_right = QRadioButton("Right")
-        rb_right.toggled.connect(lambda: self.accordion.setIconPosition(QAccordionHeader.IconPosition.TrailingPosition))
+        rb_right.toggled.connect(lambda checked: self.accordion.setIconPosition(QAccordionHeader.IconPosition.TrailingPosition) if checked else None)
 
         bg_pos.addButton(rb_left)
         bg_pos.addButton(rb_right)
@@ -105,13 +109,13 @@ class MainWindow(QMainWindow):
 
         rb_top = QRadioButton("Top")
         rb_top.setChecked(True)
-        rb_top.toggled.connect(lambda: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignTop))
+        rb_top.toggled.connect(lambda checked: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignTop) if checked else None)
 
         rb_center = QRadioButton("Center")
-        rb_center.toggled.connect(lambda: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignVCenter))
+        rb_center.toggled.connect(lambda checked: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignVCenter) if checked else None)
 
         rb_bottom = QRadioButton("Bottom")
-        rb_bottom.toggled.connect(lambda: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignBottom))
+        rb_bottom.toggled.connect(lambda checked: self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignBottom) if checked else None)
 
         bg_align.addButton(rb_top)
         bg_align.addButton(rb_center)
@@ -143,7 +147,7 @@ class MainWindow(QMainWindow):
         # Scroll to item 4 (long text)
         btn_scroll_item = QPushButton("Scroll to Long Item")
         btn_scroll_item.clicked.connect(
-            lambda: self.accordion.scrollToItem(self.item_long_text)
+            lambda: self.item_long_text and self.accordion.scrollToItem(self.item_long_text)
         )
 
         v_scroll.addWidget(btn_scroll_top)
@@ -178,7 +182,7 @@ class MainWindow(QMainWindow):
         combo_easing.addItem("OutBounce", QEasingCurve.Type.OutBounce)
         combo_easing.addItem("OutElastic", QEasingCurve.Type.OutElastic)
         combo_easing.setCurrentIndex(2)  # InOutQuart
-        combo_easing.currentIndexChanged.connect(lambda: self.accordion.setAnimationEasing(combo_easing.currentData()))
+        combo_easing.currentIndexChanged.connect(lambda: self.accordion.setAnimationEasing(typing.cast(QEasingCurve.Type, combo_easing.currentData())))
 
         v_anim.addWidget(combo_easing)
 
@@ -192,14 +196,14 @@ class MainWindow(QMainWindow):
 
         # 1. Simple Widget
         self.accordion.insertSection("1. Introduction", QLabel(
-            "This is a dynamic Accordion in PySide6.\nUse the left panel to test."))
+            "This is a dynamic Accordion in PySide6.\\nUse the left panel to test."))
 
         # 2. Individual Configuration (Override)
         # Should this item obey global buttons if manually configured later?
         # Note: The global setIconPosition method iterates over all.
         # Here we just show that we can add and configure on the fly.
         lbl_custom = QLabel(
-            "This item was added and configured individually\nwith icon on the right initially.")
+            "This item was added and configured individually\\nwith icon on the right initially.")
         item_custom = self.accordion.insertSection("2. Manually Configured Item", lbl_custom)
         item_custom.setIconPosition(QAccordionHeader.IconPosition.TrailingPosition)
 
@@ -212,7 +216,7 @@ class MainWindow(QMainWindow):
         self.accordion.insertSection("3. Button Container", widget_actions)
 
         # 4. Long Text (To test Scroll)
-        long_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\n" * 20
+        long_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\\n" * 20
         txt_edit = QTextEdit()
         txt_edit.setPlainText(long_text)
         txt_edit.setMinimumHeight(200)  # Force height to test accordion scroll

@@ -30,6 +30,14 @@ class QMultiFilterProxy(QSortFilterProxyModel):
             self._filters.pop(col, None)
         self.invalidateFilter()
 
+    def isFiltering(self) -> bool:
+        """Returns True if any filter is active."""
+        return bool(self._filters)
+    
+    def isColumnFiltered(self, col: int) -> bool:
+        """Returns True if the given column is filtered."""
+        return col in self._filters
+
     def filterAcceptsRow(self, source_row: int, source_parent: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """Determines if a row passes all column filters.
 
@@ -50,6 +58,8 @@ class QMultiFilterProxy(QSortFilterProxyModel):
             if not any(text == value for text in text_list):
                 return False
         return True
+
+    # TODO: refatorar essa parte aqui
 
     def setHeaderData(self, section: int, orientation: Qt.Orientation, value: typing.Any, role: int = Qt.ItemDataRole.EditRole) -> bool:
         """Sets the header data for the given section and orientation.
