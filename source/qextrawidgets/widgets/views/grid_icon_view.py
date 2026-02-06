@@ -162,6 +162,39 @@ class QGridIconView(QAbstractItemView):
             if not self.verticalScrollBar().isSliderDown():
                 self.viewport().update()
 
+    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        """
+        Initialize the style option for the given index.
+
+        Args:
+            option (QStyleOptionViewItem): The option to initialize.
+            index (QModelIndex): The index of the item.
+        """
+        p_index = QPersistentModelIndex(index)
+        rect = self._item_rects.get(p_index)
+        if not rect:
+            return
+
+        scroll_y = self.verticalScrollBar().value()
+        visual_rect = rect.translated(0, -scroll_y)
+
+        # Optimization: We check intersections in paintEvent loop usually,
+        # but here we just set the rect. The caller (paintEvent) already checks visibility.
+        setattr(option, "rect", visual_rect)
+
+        state = QStyle.StateFlag.State_None
+
+        if self.isEnabled():
+            state |= QStyle.StateFlag.State_Enabled
+
+        if self.selectionModel().isSelected(index):
+            state |= QStyle.StateFlag.State_Selected
+
+        if p_index == self._hover_index:
+            state |= QStyle.StateFlag.State_MouseOver
+
+        setattr(option, "state", state)
+
     # -------------------------------------------------------------------------
     # Layout Scheduling & Cache Management
     # -------------------------------------------------------------------------
@@ -313,24 +346,7 @@ class QGridIconView(QAbstractItemView):
             if not index.isValid():
                 continue
 
-            visual_rect = rect.translated(0, -scroll_y)
-
-            if not visual_rect.intersects(region.boundingRect()):
-                continue
-
-            setattr(option, "rect", visual_rect)
-            state = QStyle.StateFlag.State_None
-
-            if self.isEnabled():
-                state |= QStyle.StateFlag.State_Enabled
-
-            if self.selectionModel().isSelected(index):
-                state |= QStyle.StateFlag.State_Selected
-
-            if p_index == self._hover_index:
-                state |= QStyle.StateFlag.State_MouseOver
-
-            setattr(option, "state", state)
+            self._init_option(option, index)
 
             self.itemDelegate(index).paint(painter, option, index)
 

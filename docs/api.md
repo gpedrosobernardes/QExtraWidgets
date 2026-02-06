@@ -6,8 +6,8 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ### Regexs
 
-::: qextrawidgets.core.regexs.emoji_color_regex
-::: qextrawidgets.core.regexs.emoji_regex
+::: qextrawidgets.core.regexes.emoji_color_regex
+::: qextrawidgets.core.regexes.emoji_regex
 
 ### Utils
 

@@ -1,4 +1,3 @@
-from PySide6.QtWidgets import QAbstractItemView
 import sys
 from PySide6.QtWidgets import (
     QApplication,

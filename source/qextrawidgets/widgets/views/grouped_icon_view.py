@@ -9,7 +9,7 @@ from PySide6.QtCore import (
     QAbstractItemModel,
 )
 from PySide6.QtGui import QMouseEvent
-from PySide6.QtWidgets import QAbstractItemView, QWidget
+from PySide6.QtWidgets import QAbstractItemView, QWidget, QStyleOptionViewItem, QStyle
 
 from qextrawidgets.widgets.delegates.grouped_icon_delegate import QGroupedIconDelegate
 from qextrawidgets.widgets.views.grid_icon_view import QGridIconView
@@ -130,6 +130,16 @@ class QGroupedIconView(QGridIconView):
     def _is_item(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """Check if the given index represents a child item."""
         return index.isValid() and index.parent().isValid()
+
+    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        """
+        Initialize the style option with expansion state.
+        """
+        super()._init_option(option, index)
+        if self._is_category(index) and self.isExpanded(index):
+            state = typing.cast(QStyle.StateFlag, option.state)
+            state |= QStyle.StateFlag.State_Open
+            setattr(option, "state", state)
 
     def _clear_cache(self, *args) -> None:
         super()._clear_cache(*args)
