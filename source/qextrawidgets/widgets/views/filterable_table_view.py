@@ -1,7 +1,10 @@
+from PySide6.QtCore import Slot
 import typing
 
 from PySide6.QtCore import Qt, QRect, QAbstractItemModel, QModelIndex
 from PySide6.QtGui import QStandardItemModel
+
+# Remove QApplication import as it is no longer used here if we moved logic to header
 from PySide6.QtWidgets import QTableView, QWidget
 
 from qextrawidgets.gui.icons.theme_responsive_icon import QThemeResponsiveIcon
@@ -29,8 +32,9 @@ class QFilterableTableView(QTableView):
         self._popups: typing.Dict[int, QFilterPopup] = {}
 
         header = QFilterHeaderView(Qt.Orientation.Horizontal, self)
-        header.setSectionsClickable(True)
-        header.sectionClicked.connect(self._on_header_clicked)
+        # header.setSectionsClickable(False) is set in header __init__
+        header.filterClicked.connect(self._on_header_clicked)
+        header.sectionClicked.connect(self._on_section_clicked)
         self.setHorizontalHeader(header)
 
         self.setModel(QStandardItemModel(self))
@@ -124,6 +128,16 @@ class QFilterableTableView(QTableView):
         popup.setClearEnabled(self._filter_proxy.isColumnFiltered(logical_index))
         popup.exec()
 
+    @Slot(int)
+    def _on_section_clicked(self, logical_index: int) -> None:
+        """Handles header clicks to show the filter popup.
+
+        Args:
+            logical_index (int): Column index clicked.
+        """
+        self.selectColumn(logical_index)
+
+    @Slot(int)
     def _apply_filter(self, logical_index: int) -> None:
         """Applies the selected filter from the popup to the proxy model.
 
@@ -140,6 +154,7 @@ class QFilterableTableView(QTableView):
 
         self._update_header_icon(logical_index)
 
+    @Slot(int)
     def _clear_filter(self, logical_index: int) -> None:
         """Clears the filter for the specified column.
 

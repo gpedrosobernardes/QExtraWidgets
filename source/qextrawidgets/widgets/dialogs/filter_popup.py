@@ -216,11 +216,14 @@ class QFilterPopup(QDialog):
         for row in range(total_count):
             column = self._proxy_model.filterKeyColumn()
             proxy_idx = self._proxy_model.index(row, column)
-            check_idx = self._proxy_model.mapToSource(proxy_idx)
-            if (
-                self._check_proxy.data(check_idx, Qt.ItemDataRole.CheckStateRole)
-                == Qt.CheckState.Checked
-            ):
+            check_state = self._proxy_model.data(
+                proxy_idx, Qt.ItemDataRole.CheckStateRole
+            )
+
+            if not isinstance(check_state, Qt.CheckState):
+                check_state = Qt.CheckState(check_state)
+
+            if check_state == Qt.CheckState.Checked:
                 checked_count += 1
 
         self._check_all_box.blockSignals(True)
@@ -232,19 +235,9 @@ class QFilterPopup(QDialog):
             self._check_all_box.setCheckState(Qt.CheckState.PartiallyChecked)
         self._check_all_box.blockSignals(False)
 
-    def _set_all_items_checked(self, checked: bool) -> None:
-        """Sets the check state of all items in the model.
-
-        Args:
-            checked (bool): True to check all items, False to uncheck all.
-        """
-        state = Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
-        self._check_proxy.setAllCheckState(
-            Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked
-        )
-
     def _on_clear_clicked(self) -> None:
         """Handles the clear filter button click."""
+        self._search_field.clear()
         self.clearRequested.emit()
         self.reject()
 
@@ -257,6 +250,10 @@ class QFilterPopup(QDialog):
         self._clear_filter_button.setEnabled(enabled)
 
     # --- Data API ---
+
+    def accept(self) -> None:
+        super().accept()
+        self._update_select_all_state()
 
     def getSelectedData(self) -> typing.Set[str]:
         """Returns all checked items in the unique check proxy that are visible in the proxy model.
