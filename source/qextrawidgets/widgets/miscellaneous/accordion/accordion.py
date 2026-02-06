@@ -26,7 +26,7 @@ class QAccordion(QWidget):
 
     def __init__(
             self,
-            parent: QWidget = None,
+            parent: typing.Optional[QWidget] = None,
             items_alignment: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignTop,
             items_flat: bool = False,
             items_icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
@@ -107,7 +107,7 @@ class QAccordion(QWidget):
         """
         self._items[index].setTitle(title)
 
-    def addSection(self, title: str, widget: QWidget, name: str = None) -> QAccordionItem:
+    def addSection(self, title: str, widget: QWidget, name: typing.Optional[str] = None) -> QAccordionItem:
         """Creates and adds a new accordion section at the end.
 
         Args:
@@ -128,7 +128,7 @@ class QAccordion(QWidget):
         """
         self.insertAccordionItem(item)
 
-    def insertSection(self, title: str, widget: QWidget, position: int = -1, expanded: bool = False, name: str = None) -> QAccordionItem:
+    def insertSection(self, title: str, widget: QWidget, position: int = -1, expanded: bool = False, name: typing.Optional[str] = None) -> QAccordionItem:
         """Creates and inserts a new accordion section.
 
         Args:
@@ -298,7 +298,7 @@ class QAccordion(QWidget):
 
     # --- Expand/Collapse Operations ---
 
-    def expandAll(self, animated: bool = None) -> None:
+    def expandAll(self, animated: bool = False) -> None:
         """Expands all accordion items.
 
         Args:
@@ -307,7 +307,7 @@ class QAccordion(QWidget):
         for item in self._items:
             item.setExpanded(True, animated=animated)
 
-    def collapseAll(self, animated: bool = None) -> None:
+    def collapseAll(self, animated: bool = False) -> None:
         """Collapses all accordion items.
 
         Args:

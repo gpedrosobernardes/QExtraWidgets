@@ -1,3 +1,4 @@
+import typing
 from PySide6.QtCore import Signal, QPropertyAnimation, QEasingCurve, QAbstractAnimation, Slot
 from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
@@ -18,7 +19,7 @@ class QAccordionItem(QWidget):
             self,
             title: str,
             content_widget: QWidget,
-            parent: QWidget = None,
+            parent: typing.Optional[QWidget] = None,
             expanded: bool = False,
             flat: bool = False,
             icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
@@ -82,7 +83,7 @@ class QAccordionItem(QWidget):
         """
         self.header().setTitle(text)
 
-    def setExpanded(self, expanded: bool, animated: bool = None) -> None:
+    def setExpanded(self, expanded: bool, animated: bool = False) -> None:
         """Sets the expanded state.
 
         Args:
@@ -90,7 +91,7 @@ class QAccordionItem(QWidget):
             animated (bool, optional): Override animation setting for this call. If None, uses the widget's setting. Defaults to None.
         """
         # Determine if we should animate
-        use_animation = self._animation_enabled if animated is None else animated
+        use_animation = self._animation_enabled and animated
 
         # Stop any running animation
         if self._animation.state() == QAbstractAnimation.State.Running:
@@ -188,7 +189,7 @@ class QAccordionItem(QWidget):
         Returns:
             QEasingCurve.Type: The easing curve.
         """
-        return self._animation.easingCurve()
+        return self._animation.easingCurve().type()
 
     # --- Style Settings ---
 

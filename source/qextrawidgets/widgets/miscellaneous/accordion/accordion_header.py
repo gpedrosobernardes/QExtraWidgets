@@ -1,4 +1,5 @@
 from enum import IntEnum, auto
+import typing
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import Qt, QMouseEvent
@@ -27,7 +28,7 @@ class QAccordionHeader(QFrame):
     def __init__(
             self,
             title: str = "",
-            parent: QWidget = None,
+            parent: typing.Optional[QWidget] = None,
             flat: bool = False,
             icon_style: IndicatorStyle = IndicatorStyle.Arrow,
             icon_position: IconPosition = IconPosition.LeadingPosition
