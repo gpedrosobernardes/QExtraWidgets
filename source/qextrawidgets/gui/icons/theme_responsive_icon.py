@@ -13,11 +13,11 @@ class QThemeResponsiveIcon(QIcon):
     The icon switches between Black and White based on the current system palette.
     """
 
-    def __init__(self, source: typing.Union[str, QPixmap, QIcon]) -> None:
+    def __init__(self, source: typing.Union[str, QPixmap, QIcon, None] = None) -> None:
         """Initializes the theme responsive icon.
 
         Args:
-            source (Union[str, QPixmap, QIcon]): Icon source.
+            source (Union[str, QPixmap, QIcon, None]): Icon source.
         """
         if isinstance(source, QIcon):
             icon = source
@@ -26,6 +26,8 @@ class QThemeResponsiveIcon(QIcon):
         elif isinstance(source, QPixmap):
             icon = QIcon()
             icon.addPixmap(source)
+        elif source is None:
+            icon = QIcon()
         else:
             raise ValueError("Invalid source type")
 
