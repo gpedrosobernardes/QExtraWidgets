@@ -124,6 +124,9 @@ class QEmojiPicker(QWidget):
 
         if model is None:
             self._model.populate()
+        else:
+            for item in self._model.categories():
+                self._on_categories_inserted(item)
 
         self._emoji_pixmap_getter: typing.Callable[[str], QPixmap]
         self.setEmojiPixmapGetter(emoji_pixmap_getter)

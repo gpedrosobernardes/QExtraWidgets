@@ -2,7 +2,7 @@ from enum import Enum
 
 from PySide6.QtCore import QT_TRANSLATE_NOOP, Signal, QModelIndex, Slot
 from PySide6.QtGui import QStandardItemModel, Qt, QIcon, QPixmap
-from emoji_data_python import emoji_data, EmojiChar
+from emoji_data_python import emoji_data
 import typing
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
@@ -236,6 +236,20 @@ class QEmojiPickerModel(QStandardItemModel):
         category_item = QEmojiCategoryItem(name, icon)
         self.appendRow(category_item)
         return True
+
+    def categories(self) -> typing.List[QEmojiCategoryItem]:
+        """
+        Get all category items in the model.
+
+        Returns:
+            List[QEmojiCategoryItem]: A list of all emoji category items.
+        """
+        category_items = []
+        for row in range(self.rowCount()):
+            item = self.item(row)
+            if isinstance(item, QEmojiCategoryItem):
+                category_items.append(item)
+        return category_items
 
     def removeCategory(self, name: str) -> bool:
         """

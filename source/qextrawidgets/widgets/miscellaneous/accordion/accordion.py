@@ -162,6 +162,17 @@ class QAccordion(QWidget):
         else:
             self._items.insert(position, item)
 
+        item.expandedChanged.connect(lambda expanded: self._on_item_toggled(item, expanded))
+
+    def _on_item_toggled(self, item: QAccordionItem, expanded: bool) -> None:
+        """Handles item toggle events.
+
+        Args:
+            item (QAccordionItem): The item that was toggled.
+            expanded (bool): Whether the item is checked (expanded).
+        """
+        self._scroll_layout.setStretchFactor(item, 1 if expanded else 0)
+
     def removeAccordionItem(self, item: QAccordionItem) -> None:
         """Removes an accordion item.
 
@@ -229,8 +240,7 @@ class QAccordion(QWidget):
         """
         self._items_alignment = alignment
         self._scroll_layout.setAlignment(alignment)
-        for item in self._items:
-            self._scroll_layout.setAlignment(item, alignment)
+        self._scroll_layout.update()
 
     def itemsAlignment(self) -> Qt.AlignmentFlag:
         """Returns the current vertical alignment of the accordion items.

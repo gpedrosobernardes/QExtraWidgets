@@ -64,6 +64,7 @@ class QAccordionItem(QWidget):
 
         self._layout.addWidget(self._header, alignment=Qt.AlignmentFlag.AlignTop)
         self._layout.addWidget(self._content, stretch=True, alignment=Qt.AlignmentFlag.AlignTop)
+        self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self._header.clicked.connect(self.toggle)
 
