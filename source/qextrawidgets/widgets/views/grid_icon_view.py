@@ -11,7 +11,8 @@ from PySide6.QtCore import (
     QAbstractItemModel,
     QTimer,
     QItemSelection,
-    QItemSelectionModel, Slot,
+    QItemSelectionModel,
+    Slot,
 )
 from PySide6.QtGui import QCursor, QPainter, QMouseEvent, QRegion, QPaintEvent
 from PySide6.QtWidgets import QAbstractItemView, QStyleOptionViewItem, QStyle, QWidget
@@ -341,6 +342,9 @@ class QGridIconView(QAbstractItemView):
         option.initFrom(self)
         setattr(option, "widget", self)
 
+        viewport_rect = self.viewport().rect()
+        rect = typing.cast(QRect, option.rect)
+
         for p_index, rect in self._item_rects.items():
             if not p_index.isValid():
                 continue
@@ -350,6 +354,11 @@ class QGridIconView(QAbstractItemView):
                 continue
 
             self._init_option(option, index)
+
+            # Optimization: Check if item is visible in viewport before painting
+            # option.rect is already translated by scroll position in _init_option
+            if not rect.intersects(viewport_rect):
+                continue
 
             self.itemDelegate(index).paint(painter, option, index)
 
