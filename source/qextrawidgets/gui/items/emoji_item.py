@@ -5,6 +5,8 @@ import typing
 from PySide6.QtGui import QStandardItem, Qt
 from emoji_data_python import EmojiChar, emoji_data, find_by_shortname
 
+from qextrawidgets.gui.items.emoji_category_item import QEmojiCategoryItem
+
 
 class EmojiSkinTone(str, Enum):
     """Skin tone modifiers (Fitzpatrick scale) supported by Unicode.
@@ -244,3 +246,15 @@ class QEmojiItem(QStandardItem):
             return self.shortNames()
 
         return super().data(role)
+
+    def parent(self) -> typing.Optional[QEmojiCategoryItem]:  # type: ignore[override]
+        """
+        Returns the parent item of the emoji item.
+
+        Returns:
+            QEmojiCategoryItem: The parent category item.
+        """
+        item = super().parent()
+        if isinstance(item, QEmojiCategoryItem):
+            return item
+        return None

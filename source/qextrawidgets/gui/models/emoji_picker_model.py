@@ -42,8 +42,8 @@ class QEmojiPickerModel(QStandardItemModel):
 
     categoryInserted = Signal(QEmojiCategoryItem)
     categoryRemoved = Signal(QEmojiCategoryItem)
-    emojiInserted = Signal(QEmojiItem)
-    emojiRemoved = Signal(QEmojiItem)
+    emojiInserted = Signal(QEmojiCategoryItem, QEmojiItem)
+    emojiRemoved = Signal(QEmojiCategoryItem, QEmojiItem)
     skinToneChanged = Signal(QModelIndex)
     _emojis_skin_modifier_compatible = {}
 
@@ -117,7 +117,7 @@ class QEmojiPickerModel(QStandardItemModel):
         for emoji_char in sorted(emoji_data, key=lambda e: e.sort_order):
             if emoji_char.category == "Component":
                 continue
-            
+
             self.addEmoji(emoji_char.category, emoji_char)
 
     def findEmojiInCategory(
@@ -333,7 +333,7 @@ class QEmojiPickerModel(QStandardItemModel):
                     child_index = self.index(row, 0, parent)
                     child_item = self.itemFromIndex(child_index)
                     if isinstance(child_item, QEmojiItem):
-                        self.emojiRemoved.emit(child_item)
+                        self.emojiRemoved.emit(parent_item, child_item)
             return
 
         for row in range(first, last + 1):
@@ -361,7 +361,7 @@ class QEmojiPickerModel(QStandardItemModel):
                     child_index = self.index(row, 0, parent)
                     child_item = self.itemFromIndex(child_index)
                     if isinstance(child_item, QEmojiItem):
-                        self.emojiInserted.emit(child_item)
+                        self.emojiInserted.emit(parent_item, child_item)
             return
 
         for row in range(first, last + 1):
