@@ -212,7 +212,7 @@ class QEmojiPicker(QWidget):
         recent_category_item = self._model.findCategory(EmojiCategory.Recents)
 
         if recent_category_item:
-            self._model.addEmoji(EmojiCategory.Recents, item.emojiChar())
+            self._model.addEmoji(EmojiCategory.Recents, item.clone())
 
     @Slot(QPoint)
     def _on_context_menu(self, position: QPoint) -> None:
@@ -250,9 +250,7 @@ class QEmojiPicker(QWidget):
                 action = menu.addAction(self.tr("Favorite"))
                 # We use item.emojiChar() here because addEmoji expects an EmojiChar object
                 action.triggered.connect(
-                    lambda: self._model.addEmoji(
-                        EmojiCategory.Favorites, item.emojiChar()
-                    )
+                    lambda: self._model.addEmoji(EmojiCategory.Favorites, item.clone())
                 )
 
             copy_alias_action = menu.addAction(self.tr("Copy alias"))

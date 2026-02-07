@@ -118,7 +118,7 @@ class QEmojiPickerModel(QStandardItemModel):
             if emoji_char.category == "Component":
                 continue
 
-            self.addEmoji(emoji_char.category, emoji_char)
+            self.addEmoji(emoji_char.category, QEmojiItem(emoji_char))
 
     def findEmojiInCategory(
         self, category_item: QEmojiCategoryItem, emoji: str
@@ -254,13 +254,13 @@ class QEmojiPickerModel(QStandardItemModel):
         self.removeRow(item.row())
         return True
 
-    def addEmoji(self, category_name: str, emoji_char: EmojiChar) -> bool:
+    def addEmoji(self, category_name: str, item: QEmojiItem) -> bool:
         """
         Add an emoji to a specific category.
 
         Args:
             category_name (str): The name of the category.
-            emoji_char (EmojiChar): The emoji data object.
+            item (QEmojiItem): The emoji item to add.
 
         Returns:
             bool: True if added, False if category not found or emoji already exists.
@@ -269,10 +269,10 @@ class QEmojiPickerModel(QStandardItemModel):
         if not category_item:
             return False
 
+        emoji_char = item.emojiChar()
         if self.findEmojiInCategory(category_item, emoji_char.char):
             return False
 
-        item = QEmojiItem(emoji_char)
         category_item.appendRow(item)
 
         # Update skin tone compatibility index if needed
