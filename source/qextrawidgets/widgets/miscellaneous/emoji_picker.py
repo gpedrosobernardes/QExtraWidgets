@@ -5,10 +5,28 @@ from qextrawidgets.gui.items.emoji_item import EmojiSkinTone
 import typing
 from functools import partial
 
-from PySide6.QtCore import QSize, QModelIndex, Signal, QPoint, Qt, QTimer, Slot, QPersistentModelIndex
+from PySide6.QtCore import (
+    QSize,
+    QModelIndex,
+    Signal,
+    QPoint,
+    Qt,
+    QTimer,
+    Slot,
+    QPersistentModelIndex,
+)
 from PySide6.QtGui import QFont, QIcon, QFontMetrics, QPixmap
-from PySide6.QtWidgets import (QLineEdit, QHBoxLayout, QLabel, QVBoxLayout,
-                               QWidget, QButtonGroup, QMenu, QToolButton, QApplication)
+from PySide6.QtWidgets import (
+    QLineEdit,
+    QHBoxLayout,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+    QButtonGroup,
+    QMenu,
+    QToolButton,
+    QApplication,
+)
 
 from qextrawidgets.widgets.delegates import QGroupedIconDelegate
 from qextrawidgets.core.utils.twemoji_image_provider import QTwemojiImageProvider
@@ -32,10 +50,13 @@ class QEmojiPicker(QWidget):
     picked = Signal(QEmojiItem)
 
     def __init__(
-            self,
-            model: typing.Optional[QEmojiPickerModel] = None,
-            emoji_pixmap_getter: typing.Union[str, QFont, typing.Callable[[str], QPixmap]] = partial(QTwemojiImageProvider.getPixmap, margin=0, size=128),
-            emoji_label_size: QSize = QSize(32, 32)) -> None:
+        self,
+        model: typing.Optional[QEmojiPickerModel] = None,
+        emoji_pixmap_getter: typing.Union[
+            str, QFont, typing.Callable[[str], QPixmap]
+        ] = partial(QTwemojiImageProvider.getPixmap, margin=0, size=128),
+        emoji_label_size: QSize = QSize(32, 32),
+    ) -> None:
         """Initializes the emoji picker.
 
         Args:
@@ -52,7 +73,7 @@ class QEmojiPicker(QWidget):
             EmojiSkinTone.MediumLight: "👏🏼",
             EmojiSkinTone.Medium: "👏🏽",
             EmojiSkinTone.MediumDark: "👏🏾",
-            EmojiSkinTone.Dark: "👏🏿"
+            EmojiSkinTone.Dark: "👏🏿",
         }
 
         if model:
@@ -66,8 +87,12 @@ class QEmojiPicker(QWidget):
         self._search_line_edit = self._create_search_line_edit()
 
         self._grouped_icon_view = QGroupedIconView(self, QSize(40, 40), 5)
-        self._grouped_icon_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
-        self._grouped_icon_view.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self._grouped_icon_view.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.CustomContextMenu
+        )
+        self._grouped_icon_view.setSelectionMode(
+            QAbstractItemView.SelectionMode.NoSelection
+        )
         self._grouped_icon_view.setModel(self._proxy)
 
         self._search_timer = QTimer(self)
@@ -134,11 +159,13 @@ class QEmojiPicker(QWidget):
 
         self._model.categoryInserted.connect(self._on_categories_inserted)
         self._model.categoryRemoved.connect(self._on_categories_removed)
-        
+
         self._grouped_icon_view.itemEntered.connect(self._on_mouse_entered_emoji)
         self._grouped_icon_view.itemExited.connect(self._on_mouse_exited_emoji)
         self._grouped_icon_view.itemClicked.connect(self._on_item_clicked)
-        self._grouped_icon_view.customContextMenuRequested.connect(self._on_context_menu)
+        self._grouped_icon_view.customContextMenuRequested.connect(
+            self._on_context_menu
+        )
 
         self._skin_tone_selector.currentDataChanged.connect(self._on_set_skin_tone)
 
@@ -182,16 +209,10 @@ class QEmojiPicker(QWidget):
 
         self.picked.emit(item)
 
-        recent_category_index = self._model.findCategory(EmojiCategory.Recents)
+        recent_category_item = self._model.findCategory(EmojiCategory.Recents)
 
-        if recent_category_index:
-            emoji = item.data(QEmojiItem.QEmojiDataRole.EmojiRole)
-            recent_item_index = self._model.findEmojiInCategory(recent_category_index, emoji)
-
-            if not recent_item_index:
-                clone_item = item.clone()
-                clone_item.setData(EmojiCategory.Recents, role=QEmojiItem.QEmojiDataRole.CategoryRole)
-                self._model.itemFromIndex(recent_category_index).appendRow(clone_item)
+        if recent_category_item:
+            self._model.addEmoji(EmojiCategory.Recents, item.emojiChar())
 
     @Slot(QPoint)
     def _on_context_menu(self, position: QPoint) -> None:
@@ -213,22 +234,26 @@ class QEmojiPicker(QWidget):
             expand_all_action.triggered.connect(self._grouped_icon_view.expandAll)
 
         elif isinstance(item, QEmojiItem):
-            favorite_category_index = self._model.findCategory(EmojiCategory.Favorites)
+            emoji_char = item.data(QEmojiItem.QEmojiDataRole.EmojiRole)
 
-            if favorite_category_index:
-                emoji = item.data(QEmojiItem.QEmojiDataRole.EmojiRole)
-                favorite_item_index = self._model.findEmojiInCategory(favorite_category_index, emoji)
-                favorite_category_item = self._model.itemFromIndex(favorite_category_index)
+            # Check if emoji exists in favorites using helper method
+            favorite_item = self._model.findEmojiInCategoryByName(
+                EmojiCategory.Favorites, emoji_char
+            )
 
-                if favorite_item_index:
-                    action = menu.addAction(self.tr("Unfavorite"))
-                    row = favorite_item_index.row()
-                    action.triggered.connect(lambda: favorite_category_item.removeRow(row))
-                else:
-                    action = menu.addAction(self.tr("Favorite"))
-                    clone_item = item.clone()
-                    clone_item.setData(EmojiCategory.Favorites, role=QEmojiItem.QEmojiDataRole.CategoryRole)
-                    action.triggered.connect(lambda: favorite_category_item.appendRow(clone_item))
+            if favorite_item:
+                action = menu.addAction(self.tr("Unfavorite"))
+                action.triggered.connect(
+                    lambda: self._model.removeEmoji(EmojiCategory.Favorites, emoji_char)
+                )
+            else:
+                action = menu.addAction(self.tr("Favorite"))
+                # We use item.emojiChar() here because addEmoji expects an EmojiChar object
+                action.triggered.connect(
+                    lambda: self._model.addEmoji(
+                        EmojiCategory.Favorites, item.emojiChar()
+                    )
+                )
 
             copy_alias_action = menu.addAction(self.tr("Copy alias"))
             clipboard = QApplication.clipboard()
@@ -252,9 +277,7 @@ class QEmojiPicker(QWidget):
         # 1. Explicitly convert to QModelIndex
         # Note: QModelIndex constructor does not accept QPersistentModelIndex directly in PySide6
         proxy_index = persistent_index.model().index(
-            persistent_index.row(),
-            persistent_index.column(),
-            persistent_index.parent()
+            persistent_index.row(), persistent_index.column(), persistent_index.parent()
         )
 
         if not proxy_index.isValid():
@@ -291,7 +314,9 @@ class QEmojiPicker(QWidget):
 
         shortcut = self._create_shortcut_button(category, icon)
         shortcut.setObjectName(category)
-        shortcut.clicked.connect(lambda: self._on_shortcut_clicked(category_item.index()))
+        shortcut.clicked.connect(
+            lambda: self._on_shortcut_clicked(category_item.index())
+        )
 
         self._shortcuts_layout.addWidget(shortcut)
         self._shortcuts_group.addButton(shortcut)
@@ -320,7 +345,11 @@ class QEmojiPicker(QWidget):
             self._paint_emoji_on_label()
             metrics = QFontMetrics(self._aliases_emoji_label.font())
             aliases_text = item.aliasesText()
-            elided_alias = metrics.elidedText(aliases_text, Qt.TextElideMode.ElideRight, self._aliases_emoji_label.width())
+            elided_alias = metrics.elidedText(
+                aliases_text,
+                Qt.TextElideMode.ElideRight,
+                self._aliases_emoji_label.width(),
+            )
             self._aliases_emoji_label.setText(elided_alias)
 
     @Slot(QModelIndex)
@@ -417,7 +446,10 @@ class QEmojiPicker(QWidget):
         """Resets the picker state."""
         self._search_line_edit.clear()
 
-    def setEmojiPixmapGetter(self, emoji_pixmap_getter: typing.Union[str, QFont, typing.Callable[[str], QPixmap]]) -> None:
+    def setEmojiPixmapGetter(
+        self,
+        emoji_pixmap_getter: typing.Union[str, QFont, typing.Callable[[str], QPixmap]],
+    ) -> None:
         """Sets the strategy for retrieving emoji pixmaps.
 
         Args:
@@ -435,9 +467,15 @@ class QEmojiPicker(QWidget):
         if font_family:
             emoji_font = QFont()
             emoji_font.setFamily(font_family)
-            self._emoji_pixmap_getter = partial(QIconGenerator.charToPixmap, font=emoji_font, target_size=QSize(100, 100))
+            self._emoji_pixmap_getter = partial(
+                QIconGenerator.charToPixmap,
+                font=emoji_font,
+                target_size=QSize(100, 100),
+            )
         else:
-            self._emoji_pixmap_getter = typing.cast(typing.Callable[[str], QPixmap], emoji_pixmap_getter)
+            self._emoji_pixmap_getter = typing.cast(
+                typing.Callable[[str], QPixmap], emoji_pixmap_getter
+            )
 
         self._paint_emoji_on_label()
         self._paint_skintones()
@@ -464,5 +502,3 @@ class QEmojiPicker(QWidget):
     def model(self) -> QEmojiPickerModel:
         """Returns the emoji picker model."""
         return self._model
-
-

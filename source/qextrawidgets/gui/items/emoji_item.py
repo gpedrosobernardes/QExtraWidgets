@@ -1,8 +1,9 @@
 from enum import Enum
+from functools import lru_cache
+import typing
 
 from PySide6.QtGui import QStandardItem, Qt
-from emoji_data_python import EmojiChar
-import typing
+from emoji_data_python import EmojiChar, emoji_data, find_by_shortname
 
 
 class EmojiSkinTone(str, Enum):
@@ -38,6 +39,30 @@ class EmojiSkinTone(str, Enum):
     Dark = "1F3FF"
 
 
+@lru_cache(maxsize=None)
+def _find_emoji_by_char(char: str) -> typing.Optional[EmojiChar]:
+    """
+    Find an EmojiChar object by its character string.
+    Cached for performance.
+    """
+    return next((e for e in emoji_data if e.char == char), None)
+
+
+@lru_cache(maxsize=None)
+def _find_emoji_by_short_name(short_name: str) -> typing.Optional[EmojiChar]:
+    """
+    Find an EmojiChar object by one of its short names.
+    Cached for performance.
+    """
+    # Remove colons if present (e.g. :smile: -> smile)
+    clean_name = short_name.strip(":")
+    matches = find_by_shortname(clean_name)
+    for emoji in matches:
+        if emoji.short_names and clean_name in emoji.short_names:
+            return emoji
+    return None
+
+
 class QEmojiItem(QStandardItem):
     """A standard item representing a single emoji in the model."""
 
@@ -63,6 +88,46 @@ class QEmojiItem(QStandardItem):
         self.setData(emoji_char, Qt.ItemDataRole.UserRole)
         self.setData(skin_tone, self.QEmojiDataRole.SkinToneRole)
         self.setEditable(False)
+
+    @classmethod
+    def fromEmoji(cls, emoji: str, skin_tone: str = "") -> "QEmojiItem":
+        """
+        Create a QEmojiItem from an emoji character string.
+
+        Args:
+            emoji (str): The emoji character.
+            skin_tone (str, optional): Skin tone modifier.
+
+        Returns:
+            QEmojiItem: The created item.
+
+        Raises:
+            ValueError: If the emoji is not found in the database.
+        """
+        emoji_char = _find_emoji_by_char(emoji)
+        if not emoji_char:
+            raise ValueError(f"Emoji '{emoji}' not found in emoji database.")
+        return cls(emoji_char, skin_tone)
+
+    @classmethod
+    def fromEmojiShortName(cls, short_name: str, skin_tone: str = "") -> "QEmojiItem":
+        """
+        Create a QEmojiItem from a short name (e.g., 'smile' or ':smile:').
+
+        Args:
+            short_name (str): The short name of the emoji.
+            skin_tone (str, optional): Skin tone modifier.
+
+        Returns:
+            QEmojiItem: The created item.
+
+        Raises:
+            ValueError: If the emoji is not found by short name.
+        """
+        emoji_char = _find_emoji_by_short_name(short_name)
+        if not emoji_char:
+            raise ValueError(f"Emoji with short name '{short_name}' not found.")
+        return cls(emoji_char, skin_tone)
 
     def emojiChar(self) -> EmojiChar:
         """
