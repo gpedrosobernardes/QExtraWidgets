@@ -343,10 +343,9 @@ class QGridIconView(QAbstractItemView):
         setattr(option, "widget", self)
 
         viewport_rect = self.viewport().rect()
-        preload_margin = (self.iconSize().height() * 2) + self.margin()
-        visible_rect = viewport_rect.adjusted(
-            0, -preload_margin, 0, preload_margin
-        )
+        # Use singleStep * 2 as a reasonable buffer based on scroll speed/granularity
+        preload_margin = self.verticalScrollBar().singleStep() * 2
+        visible_rect = viewport_rect.adjusted(0, -preload_margin, 0, preload_margin)
 
         for p_index, rect in self._item_rects.items():
             if not p_index.isValid():
