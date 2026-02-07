@@ -64,6 +64,7 @@ We follow a hybrid naming pattern to match the Qt framework we are extending:
 - **Public Methods (API):** camelCase (e.g., `setBorderColor`).
 - **Private/Internal Methods:** snake_case with a leading underscore (e.g., `_calculate_size`).
 - **Local Variables/Parameters:** snake_case (e.g., `button_width`).
+- **No Abbreviations:** Do not abbreviate variable, function, method, class, or module names. Use full descriptive names (e.g., `calculate_total_width` instead of `calc_tot_w`).
 
 ### 5. Getters, Setters, and Properties
 - **Public Variables:** Must have both a getter and a setter; direct access is discouraged.

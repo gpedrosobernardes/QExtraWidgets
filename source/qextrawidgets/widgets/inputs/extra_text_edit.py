@@ -14,7 +14,7 @@ class QExtraTextEdit(QTextEdit):
             parent (QWidget, optional): Parent widget. Defaults to None.
         """
         super().__init__(parent)
- 
+
         # Private Variables
         self._validator: typing.Optional[QValidator] = None
         self._max_height = 16777215  # QWIDGETSIZE_MAX (Qt Default)
@@ -39,14 +39,16 @@ class QExtraTextEdit(QTextEdit):
         """
         if self._responsive and self.document():
             # 1. Calculates the height of the actual content
-            doc_height = self.document().size().height()
+            document_height = self.document().size().height()
 
             # 2. Adds internal margins and frame borders
             # frameWidth() covers borders drawn by the style
             margins = self.contentsMargins()
             frame_borders = self.frameWidth() * 2
 
-            total_height = doc_height + margins.top() + margins.bottom() + frame_borders
+            total_height = (
+                document_height + margins.top() + margins.bottom() + frame_borders
+            )
 
             # 3. Limits to the defined maximum height
             final_height = min(total_height, self._max_height)
@@ -138,10 +140,14 @@ class QExtraTextEdit(QTextEdit):
 
         # 2. Manages ScrollBar visibility
         # If content is larger than max limit, we need scrollbar
-        doc_height = self.document().size().height()
-        content_margins = self.contentsMargins().top() + self.contentsMargins().bottom() + (self.frameWidth() * 2)
+        document_height = self.document().size().height()
+        content_margins = (
+            self.contentsMargins().top()
+            + self.contentsMargins().bottom()
+            + (self.frameWidth() * 2)
+        )
 
-        if (doc_height + content_margins) > self._max_height:
+        if (document_height + content_margins) > self._max_height:
             self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         else:
             self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -158,10 +164,20 @@ class QExtraTextEdit(QTextEdit):
         # Step A: Allow control keys (Backspace, Delete, Enter, Arrows, Tab, Ctrl+C, etc.)
         # If not done, the editor becomes unusable (cannot delete or navigate).
         is_control = (
-                event.key() in (Qt.Key.Key_Backspace, Qt.Key.Key_Delete, Qt.Key.Key_Return,
-                                Qt.Key.Key_Enter, Qt.Key.Key_Tab, Qt.Key.Key_Left, Qt.Key.Key_Right,
-                                Qt.Key.Key_Up, Qt.Key.Key_Down) or
-                event.modifiers() & Qt.KeyboardModifier.ControlModifier  # Allows shortcuts like Ctrl+C
+            event.key()
+            in (
+                Qt.Key.Key_Backspace,
+                Qt.Key.Key_Delete,
+                Qt.Key.Key_Return,
+                Qt.Key.Key_Enter,
+                Qt.Key.Key_Tab,
+                Qt.Key.Key_Left,
+                Qt.Key.Key_Right,
+                Qt.Key.Key_Up,
+                Qt.Key.Key_Down,
+            )
+            or event.modifiers()
+            & Qt.KeyboardModifier.ControlModifier  # Allows shortcuts like Ctrl+C
         )
 
         if is_control:
@@ -169,8 +185,12 @@ class QExtraTextEdit(QTextEdit):
 
         text = event.text()
 
-        res = self._validator.validate(text, 0)
-        state = res[0] if isinstance(res, tuple) else res
+        validation_result = self._validator.validate(text, 0)
+        state = (
+            validation_result[0]
+            if isinstance(validation_result, tuple)
+            else validation_result
+        )
 
         if state == QValidator.State.Acceptable:
             super().keyPressEvent(event)
@@ -183,9 +203,13 @@ class QExtraTextEdit(QTextEdit):
             source (QMimeData): MIME data to insert.
         """
         if source.hasText() and self._validator is not None:
-            res = self._validator.validate(source.text(), 0)
-            state = res[0] if isinstance(res, tuple) else res
-            
+            validation_result = self._validator.validate(source.text(), 0)
+            state = (
+                validation_result[0]
+                if isinstance(validation_result, tuple)
+                else validation_result
+            )
+
             if state == QValidator.State.Acceptable:
                 super().insertFromMimeData(source)
         else:

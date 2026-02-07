@@ -59,14 +59,14 @@ class DemoTextEditWindow(QMainWindow):
 
     def _init_widgets(self) -> None:
         # 1. Instructions Header
-        self.lbl_intro = QLabel(
+        self.label_intro = QLabel(
             "<h3>Test Instructions:</h3>"
             "<ul>"
             "<li>Type multiple lines to see the field grow (Responsiveness).</li>"
             "<li>Enable the <b>Validator</b> to restrict input to emojis only.</li>"
             "</ul>"
         )
-        self.lbl_intro.setWordWrap(True)
+        self.label_intro.setWordWrap(True)
 
         # 2. The Main Widget (QExtraTextEdit)
         self._text_edit = QExtraTextEdit()
@@ -78,21 +78,21 @@ class DemoTextEditWindow(QMainWindow):
         self.group_controls = QGroupBox("Real-Time Settings")
 
         # Toggle: Responsiveness (Auto-grow)
-        self._chk_responsive = QCheckBox("Enable Responsiveness (Auto-Height)")
-        self._chk_responsive.setChecked(self._text_edit.isResponsive())
+        self._checkbox_responsive = QCheckBox("Enable Responsiveness (Auto-Height)")
+        self._checkbox_responsive.setChecked(self._text_edit.isResponsive())
 
         # Control: Maximum Height
-        self._spin_max_height = QSpinBox()
-        self._spin_max_height.setRange(50, 1000)
-        self._spin_max_height.setValue(self._text_edit.maximumHeight())
-        self._spin_max_height.setSuffix(" px")
+        self._spinbox_max_height = QSpinBox()
+        self._spinbox_max_height.setRange(50, 1000)
+        self._spinbox_max_height.setValue(self._text_edit.maximumHeight())
+        self._spinbox_max_height.setSuffix(" px")
 
         # Toggle: Emoji Validator
-        self._chk_validator = QCheckBox("Enable Emoji Validator (Emojis Only)")
-        self._chk_validator.setChecked(False)
+        self._checkbox_validator = QCheckBox("Enable Emoji Validator (Emojis Only)")
+        self._checkbox_validator.setChecked(False)
 
         # Button: Async Fill
-        self._btn_fill = QPushButton("Fill with Lorem Ipsum")
+        self._button_fill = QPushButton("Fill with Lorem Ipsum")
 
     def setup_layout(self) -> None:
         # Central widget
@@ -103,14 +103,14 @@ class DemoTextEditWindow(QMainWindow):
         main_layout = QVBoxLayout(central_widget)
         main_layout.setSpacing(15)
 
-        main_layout.addWidget(self.lbl_intro)
+        main_layout.addWidget(self.label_intro)
         main_layout.addWidget(self._text_edit)
 
         layout_controls = QFormLayout(self.group_controls)
-        layout_controls.addRow(self._chk_responsive)
-        layout_controls.addRow("Maximum Height:", self._spin_max_height)
-        layout_controls.addRow(self._chk_validator)
-        layout_controls.addRow(self._btn_fill)
+        layout_controls.addRow(self._checkbox_responsive)
+        layout_controls.addRow("Maximum Height:", self._spinbox_max_height)
+        layout_controls.addRow(self._checkbox_validator)
+        layout_controls.addRow(self._button_fill)
 
         main_layout.addWidget(self.group_controls)
 
@@ -119,12 +119,12 @@ class DemoTextEditWindow(QMainWindow):
 
     def setup_connections(self) -> None:
         # Connect controls to public widget methods
-        self._chk_responsive.toggled.connect(self._text_edit.setResponsive)
-        self._spin_max_height.valueChanged.connect(self._text_edit.setMaximumHeight)
-        self._btn_fill.clicked.connect(self._start_async_fill)
+        self._checkbox_responsive.toggled.connect(self._text_edit.setResponsive)
+        self._spinbox_max_height.valueChanged.connect(self._text_edit.setMaximumHeight)
+        self._button_fill.clicked.connect(self._start_async_fill)
 
         # Connect validator
-        self._chk_validator.toggled.connect(self._toggle_validator)
+        self._checkbox_validator.toggled.connect(self._toggle_validator)
 
     def _toggle_validator(self, checked: bool):
         if checked:
@@ -147,7 +147,7 @@ class DemoTextEditWindow(QMainWindow):
         # Reset and start the timer
         self._timer_fill.start()
         # Disable button while running to prevent double clicks
-        self._btn_fill.setEnabled(False)
+        self._button_fill.setEnabled(False)
 
     def _on_fill_tick(self):
         """Called by timer to add one character."""
@@ -162,7 +162,7 @@ class DemoTextEditWindow(QMainWindow):
             self._text_edit.ensureCursorVisible()
         except StopIteration:
             self._timer_fill.stop()
-            self._btn_fill.setEnabled(True)
+            self._button_fill.setEnabled(True)
 
 
 if __name__ == "__main__":

@@ -39,6 +39,7 @@ Since this library extends Qt, we follow a hybrid pattern:
 * **Public Methods (API):** camelCase (e.g., `setBorderColor`).
 * **Private/Internal Methods:** snake_case with leading underscore (e.g., `_calculate_size`).
 * **Local Variables/Parameters:** snake_case (e.g., `button_width`).
+* **No Abbreviations:** Do not abbreviate variable, function, method, class, or module names. Use full descriptive names (e.g., `calculate_total_width` instead of `calc_tot_w`).
 
 ## 4. Getters, Setters, and Properties
 
