@@ -343,7 +343,10 @@ class QGridIconView(QAbstractItemView):
         setattr(option, "widget", self)
 
         viewport_rect = self.viewport().rect()
-        rect = typing.cast(QRect, option.rect)
+        preload_margin = (self.iconSize().height() * 2) + self.margin()
+        visible_rect = viewport_rect.adjusted(
+            0, -preload_margin, 0, preload_margin
+        )
 
         for p_index, rect in self._item_rects.items():
             if not p_index.isValid():
@@ -357,7 +360,8 @@ class QGridIconView(QAbstractItemView):
 
             # Optimization: Check if item is visible in viewport before painting
             # option.rect is already translated by scroll position in _init_option
-            if not rect.intersects(viewport_rect):
+            visual_rect = typing.cast(QRect, option.rect)
+            if not visual_rect.intersects(visible_rect):
                 continue
 
             self.itemDelegate(index).paint(painter, option, index)
