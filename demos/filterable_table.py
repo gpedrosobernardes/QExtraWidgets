@@ -6,8 +6,13 @@ from datetime import datetime, timedelta
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel,
-    QHBoxLayout, QHeaderView
+    QApplication,
+    QMainWindow,
+    QVBoxLayout,
+    QWidget,
+    QLabel,
+    QHBoxLayout,
+    QHeaderView,
 )
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
@@ -20,14 +25,16 @@ class DemoTableWindow(QMainWindow):
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
         self.resize(800, 600)
 
-        # Central Widget
-        central = QWidget()
-        self.setCentralWidget(central)
-        layout = QVBoxLayout(central)
+        self._init_widgets()
+        self.setup_layout()
+        self.setup_connections()
 
-        # 1. Header / Instructions
-        header_layout = QHBoxLayout()
-        lbl_instr = QLabel(
+        # 3. Populate Data
+        self.populate_data()
+
+    def _init_widgets(self) -> None:
+        # 1. Instructions Header
+        self.lbl_instr = QLabel(
             "<h3>Instructions:</h3>"
             "<ul>"
             "<li>Click on the <b>filter icon</b> (header) to open the Popup.</li>"
@@ -35,22 +42,34 @@ class DemoTableWindow(QMainWindow):
             "<li>Check if the popup list is sorted alphabetically.</li>"
             "</ul>"
         )
-        lbl_instr.setWordWrap(True)
-        header_layout.addWidget(lbl_instr)
-
-        layout.addLayout(header_layout)
+        self.lbl_instr.setWordWrap(True)
 
         # 2. The Filterable Table
         self.table = QFilterableTableView()
         self.table.setAlternatingRowColors(True)
 
         # Style for better visualization (Columns fill the space)
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
 
+    def setup_layout(self) -> None:
+        # Central Widget
+        central = QWidget()
+        self.setCentralWidget(central)
+        layout = QVBoxLayout(central)
+
+        # 1. Header / Instructions
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(self.lbl_instr)
+
+        layout.addLayout(header_layout)
+
+        # 2. The Filterable Table
         layout.addWidget(self.table)
 
-        # 3. Populate Data
-        self.populate_data()
+    def setup_connections(self) -> None:
+        pass
 
     def populate_data(self):
         """Creates a model with dummy data for testing."""
@@ -62,7 +81,18 @@ class DemoTableWindow(QMainWindow):
 
         # Dummy Data
         departments = ["IT", "HR", "Finance", "Sales", "Logistics"]
-        names = ["James", "John", "William", "Henry", "George", "Edward", "Thomas", "Charles", "Arthur", "Robert"]
+        names = [
+            "James",
+            "John",
+            "William",
+            "Henry",
+            "George",
+            "Edward",
+            "Thomas",
+            "Charles",
+            "Arthur",
+            "Robert",
+        ]
         statuses = ["Active", "Inactive", "Pending", "Vacation"]
         priorities = ["High", "Medium", "Low"]
 
@@ -76,7 +106,18 @@ class DemoTableWindow(QMainWindow):
             row_items.append(it_id)
 
             # Name
-            last_names = ["Smith", "Johnson", "Brown", "Taylor", "Anderson", "Thompson", "Harris", "Walker", "White", "Clark"]
+            last_names = [
+                "Smith",
+                "Johnson",
+                "Brown",
+                "Taylor",
+                "Anderson",
+                "Thompson",
+                "Harris",
+                "Walker",
+                "White",
+                "Clark",
+            ]
             name = f"{random.choice(names)} {random.choice(last_names)}"
             row_items.append(QStandardItem(name))
 

@@ -4,8 +4,16 @@ import qtawesome
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QPushButton, QLabel, QToolButton, QFrame, QGroupBox
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QPushButton,
+    QLabel,
+    QToolButton,
+    QFrame,
+    QGroupBox,
 )
 
 from qextrawidgets.core.utils.system_utils import QSystemUtils
@@ -20,63 +28,58 @@ class DemoWindow(QMainWindow):
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
         self.resize(600, 500)
 
-        # --- UI Configuration ---
-        central_widget = QWidget()
-        main_layout = QVBoxLayout(central_widget)
-        self.setCentralWidget(central_widget)
+        self._init_widgets()
+        self.setup_layout()
+        self.setup_connections()
 
+        # Initialize with light theme
+        QSystemUtils.applyLightMode()
+
+    def _init_widgets(self) -> None:
         # 1. Theme Control Section
-        btn_theme_toggle = QPushButton("Toggle Theme (Light / Dark)")
-        btn_theme_toggle.setFixedHeight(40)
-        btn_theme_toggle.setIconSize(QSize(40, 40))
+        self.btn_theme_toggle = QPushButton("Toggle Theme (Light / Dark)")
+        self.btn_theme_toggle.setFixedHeight(40)
+        self.btn_theme_toggle.setIconSize(QSize(40, 40))
         # A simple icon for the theme button
-        btn_theme_toggle.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.palette"))
-        btn_theme_toggle.clicked.connect(self.toggleTheme)
-
-        main_layout.addWidget(btn_theme_toggle)
+        self.btn_theme_toggle.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.palette"))
 
         # Visual separator
-        line = QFrame()
-        line.setFrameShape(QFrame.Shape.HLine)
-        line.setFrameShadow(QFrame.Shadow.Sunken)
-        main_layout.addWidget(line)
+        self.line = QFrame()
+        self.line.setFrameShape(QFrame.Shape.HLine)
+        self.line.setFrameShadow(QFrame.Shadow.Sunken)
 
         # 2. Standard Icons Section (QtAwesome direct)
-        group_standard = QGroupBox("Standard Icons (QtAwesome -> QAutoIcon)")
-        layout_standard = QHBoxLayout()
+        self.group_standard = QGroupBox("Standard Icons (QtAwesome -> QAutoIcon)")
 
         # Normal Button
-        btn_rocket = QPushButton("Normal Button")
-        btn_rocket.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.rocket"))
-        btn_rocket.setIconSize(QSize(32, 32))
+        self.btn_rocket = QPushButton("Normal Button")
+        self.btn_rocket.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.rocket"))
+        self.btn_rocket.setIconSize(QSize(32, 32))
 
         # ToolButton (Flat)
-        btn_gear = QToolButton()
-        btn_gear.setText("Flat ToolButton")
-        btn_gear.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.gear"))
-        btn_gear.setIconSize(QSize(32, 32))
-        btn_gear.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-        btn_gear.setAutoRaise(True)
+        self.btn_gear = QToolButton()
+        self.btn_gear.setText("Flat ToolButton")
+        self.btn_gear.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.gear"))
+        self.btn_gear.setIconSize(QSize(32, 32))
+        self.btn_gear.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+        self.btn_gear.setAutoRaise(True)
 
         # Disabled Button (Important test to see 'Disabled' color)
-        btn_disabled = QPushButton("Disabled")
-        btn_disabled.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.ban"))
-        btn_disabled.setIconSize(QSize(32, 32))
-        btn_disabled.setEnabled(False)
-
-        layout_standard.addWidget(btn_rocket)
-        layout_standard.addWidget(btn_gear)
-        layout_standard.addWidget(btn_disabled)
-        group_standard.setLayout(layout_standard)
-        main_layout.addWidget(group_standard)
+        self.btn_disabled = QPushButton("Disabled")
+        self.btn_disabled.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.ban"))
+        self.btn_disabled.setIconSize(QSize(32, 32))
+        self.btn_disabled.setEnabled(False)
 
         # 3. Multi-Pixmap Test Section (States)
-        group_multistate = QGroupBox("Multi-State Icon (On/Off)")
-        layout_multistate = QVBoxLayout()
+        self.group_multistate = QGroupBox("Multi-State Icon (On/Off)")
 
-        lbl_info = QLabel("This button changes icon when clicked (Checked/Unchecked).\n"
-                          "Both icons (empty and checked) should follow the theme color.")
-        lbl_info.setStyleSheet("color: gray; font-style: italic; margin-bottom: 10px;")
+        self.lbl_info = QLabel(
+            "This button changes icon when clicked (Checked/Unchecked).\n"
+            "Both icons (empty and checked) should follow the theme color."
+        )
+        self.lbl_info.setStyleSheet(
+            "color: gray; font-style: italic; margin-bottom: 10px;"
+        )
 
         # --- MULTI-STATE ICON CREATION ---
         # Step A: Create a normal base QIcon
@@ -90,7 +93,9 @@ class DemoWindow(QMainWindow):
         base_multi_icon.addPixmap(pix_off, QIcon.Mode.Normal, QIcon.State.Off)
 
         # ON State (Normal, On): Checked square ("fa6s.square-check" - solid style)
-        pix_on = qtawesome.icon("fa6s.square-check", color="black").pixmap(QSize(48, 48))
+        pix_on = qtawesome.icon("fa6s.square-check", color="black").pixmap(
+            QSize(48, 48)
+        )
         base_multi_icon.addPixmap(pix_on, QIcon.Mode.Normal, QIcon.State.On)
 
         # Step C: Wrap the base icon in our QAutoIcon
@@ -104,21 +109,16 @@ class DemoWindow(QMainWindow):
         self.btn_toggle_state.setIcon(auto_multi_icon)
         self.btn_toggle_state.setIconSize(QSize(48, 48))
 
-        # Connection just to change text for visual feedback
-        self.btn_toggle_state.toggled.connect(self.updateToggleBtnText)
-
-        layout_multistate.addWidget(lbl_info)
-        layout_multistate.addWidget(self.btn_toggle_state)
-        group_multistate.setLayout(layout_multistate)
-        main_layout.addWidget(group_multistate)
-
         # 4. QThemeResponsiveLabel Section
-        group_label = QGroupBox("QThemeResponsiveLabel")
-        layout_label = QVBoxLayout()
+        self.group_label = QGroupBox("QThemeResponsiveLabel")
 
-        lbl_desc = QLabel("This QLabel automatically updates its pixmap when the theme changes or it is resized.\n"
-                          "Try resizing the window to see it in action.")
-        lbl_desc.setStyleSheet("color: gray; font-style: italic; margin-bottom: 10px;")
+        self.lbl_desc = QLabel(
+            "This QLabel automatically updates its pixmap when the theme changes or it is resized.\n"
+            "Try resizing the window to see it in action."
+        )
+        self.lbl_desc.setStyleSheet(
+            "color: gray; font-style: italic; margin-bottom: 10px;"
+        )
 
         self.responsive_label = QThemeResponsiveLabel()
         self.responsive_label.setIcon(QThemeResponsiveIcon.fromAwesome("fa6s.ghost"))
@@ -126,13 +126,42 @@ class DemoWindow(QMainWindow):
         self.responsive_label.setMinimumSize(64, 64)
         self.responsive_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        layout_label.addWidget(lbl_desc)
-        layout_label.addWidget(self.responsive_label)
-        group_label.setLayout(layout_label)
-        main_layout.addWidget(group_label)
+    def setup_layout(self) -> None:
+        # --- UI Configuration ---
+        central_widget = QWidget()
+        main_layout = QVBoxLayout(central_widget)
+        self.setCentralWidget(central_widget)
 
-        # Initialize with light theme
-        QSystemUtils.applyLightMode()
+        # 1. Theme Control Section
+        main_layout.addWidget(self.btn_theme_toggle)
+        main_layout.addWidget(self.line)
+
+        # 2. Standard Icons Section (QtAwesome direct)
+        layout_standard = QHBoxLayout()
+        layout_standard.addWidget(self.btn_rocket)
+        layout_standard.addWidget(self.btn_gear)
+        layout_standard.addWidget(self.btn_disabled)
+        self.group_standard.setLayout(layout_standard)
+        main_layout.addWidget(self.group_standard)
+
+        # 3. Multi-Pixmap Test Section (States)
+        layout_multistate = QVBoxLayout()
+        layout_multistate.addWidget(self.lbl_info)
+        layout_multistate.addWidget(self.btn_toggle_state)
+        self.group_multistate.setLayout(layout_multistate)
+        main_layout.addWidget(self.group_multistate)
+
+        # 4. QThemeResponsiveLabel Section
+        layout_label = QVBoxLayout()
+        layout_label.addWidget(self.lbl_desc)
+        layout_label.addWidget(self.responsive_label)
+        self.group_label.setLayout(layout_label)
+        main_layout.addWidget(self.group_label)
+
+    def setup_connections(self) -> None:
+        self.btn_theme_toggle.clicked.connect(self.toggleTheme)
+        # Connection just to change text for visual feedback
+        self.btn_toggle_state.toggled.connect(self.updateToggleBtnText)
 
     def updateToggleBtnText(self, checked):
         state_text = "CHECKED (ON)" if checked else "UNCHECKED (OFF)"

@@ -13,15 +13,34 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("QDualList Demo")
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
 
-        items = ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5", "Item 6", "Item 7", "Item 8", "Item 9", "Item 10"]
+        self._init_widgets()
+        self.setup_layout()
+        self.setup_connections()
 
-        widget = QDualList()
-        widget.setAvailableItems(items)
+    def _init_widgets(self) -> None:
+        items = [
+            "Item 1",
+            "Item 2",
+            "Item 3",
+            "Item 4",
+            "Item 5",
+            "Item 6",
+            "Item 7",
+            "Item 8",
+            "Item 9",
+            "Item 10",
+        ]
+        self.dual_list = QDualList()
+        self.dual_list.setAvailableItems(items)
 
-        self.setCentralWidget(widget)
+    def setup_layout(self) -> None:
+        self.setCentralWidget(self.dual_list)
+
+    def setup_connections(self) -> None:
+        pass
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     window = MainWindow()

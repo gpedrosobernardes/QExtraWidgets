@@ -13,16 +13,23 @@ class MainWindow(QWidget):
         self.setWindowTitle("QSearchLineEdit Demo")
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
 
-        widget = QSearchLineEdit()
+        self._init_widgets()
+        self.setup_layout()
+        self.setup_connections()
 
+    def _init_widgets(self) -> None:
+        self.search_edit = QSearchLineEdit()
+
+    def setup_layout(self) -> None:
         layout = QHBoxLayout()
-
-        layout.addWidget(widget)
-
+        layout.addWidget(self.search_edit)
         self.setLayout(layout)
 
+    def setup_connections(self) -> None:
+        pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     window = MainWindow()

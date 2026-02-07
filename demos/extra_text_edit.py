@@ -46,21 +46,6 @@ class DemoTextEditWindow(QMainWindow):
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
         self.resize(500, 400)
 
-        # Central widget
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-
-        # Main layout
-        self._main_layout = QVBoxLayout(central_widget)
-        self._main_layout.setSpacing(15)
-
-        # Components
-        self._text_edit: QExtraTextEdit
-        self._chk_responsive: QCheckBox
-        self._chk_validator: QCheckBox
-        self._spin_max_height: QSpinBox
-        self._lbl_status: QLabel
-        self._btn_fill: QPushButton
         self._emoji_validator = QEmojiValidator()
 
         self._timer_fill = QTimer(self)
@@ -68,33 +53,29 @@ class DemoTextEditWindow(QMainWindow):
         self._timer_fill.timeout.connect(self._on_fill_tick)
         self._fill_iterator: typing.Optional[typing.Iterator[str]] = None
 
-        self._setup_ui()
-        self._connect_signals()
+        self._init_widgets()
+        self.setup_layout()
+        self.setup_connections()
 
-    def _setup_ui(self):
+    def _init_widgets(self) -> None:
         # 1. Instructions Header
-        lbl_intro = QLabel(
+        self.lbl_intro = QLabel(
             "<h3>Test Instructions:</h3>"
             "<ul>"
             "<li>Type multiple lines to see the field grow (Responsiveness).</li>"
             "<li>Enable the <b>Validator</b> to restrict input to emojis only.</li>"
             "</ul>"
         )
-        lbl_intro.setWordWrap(True)
-        self._main_layout.addWidget(lbl_intro)
+        self.lbl_intro.setWordWrap(True)
 
         # 2. The Main Widget (QExtraTextEdit)
         self._text_edit = QExtraTextEdit()
         self._text_edit.setPlaceholderText("Type here... Try :100: or paste an emoji.")
-
         # Define an initial maximum height to demonstrate scrolling
         self._text_edit.setMaximumHeight(200)
 
-        self._main_layout.addWidget(self._text_edit)
-
         # 3. Control Panel (To test APIs)
-        group_controls = QGroupBox("Real-Time Settings")
-        layout_controls = QFormLayout(group_controls)
+        self.group_controls = QGroupBox("Real-Time Settings")
 
         # Toggle: Responsiveness (Auto-grow)
         self._chk_responsive = QCheckBox("Enable Responsiveness (Auto-Height)")
@@ -110,24 +91,37 @@ class DemoTextEditWindow(QMainWindow):
         self._chk_validator = QCheckBox("Enable Emoji Validator (Emojis Only)")
         self._chk_validator.setChecked(False)
 
+        # Button: Async Fill
+        self._btn_fill = QPushButton("Fill with Lorem Ipsum")
+
+    def setup_layout(self) -> None:
+        # Central widget
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+
+        # Main layout
+        main_layout = QVBoxLayout(central_widget)
+        main_layout.setSpacing(15)
+
+        main_layout.addWidget(self.lbl_intro)
+        main_layout.addWidget(self._text_edit)
+
+        layout_controls = QFormLayout(self.group_controls)
         layout_controls.addRow(self._chk_responsive)
         layout_controls.addRow("Maximum Height:", self._spin_max_height)
         layout_controls.addRow(self._chk_validator)
-
-        # Button: Async Fill
-        self._btn_fill = QPushButton("Fill with Lorem Ipsum")
-        self._btn_fill.clicked.connect(self._start_async_fill)
         layout_controls.addRow(self._btn_fill)
 
-        self._main_layout.addWidget(group_controls)
+        main_layout.addWidget(self.group_controls)
 
         # Spacer to push everything up
-        self._main_layout.addStretch()
+        main_layout.addStretch()
 
-    def _connect_signals(self):
+    def setup_connections(self) -> None:
         # Connect controls to public widget methods
         self._chk_responsive.toggled.connect(self._text_edit.setResponsive)
         self._spin_max_height.valueChanged.connect(self._text_edit.setMaximumHeight)
+        self._btn_fill.clicked.connect(self._start_async_fill)
 
         # Connect validator
         self._chk_validator.toggled.connect(self._toggle_validator)

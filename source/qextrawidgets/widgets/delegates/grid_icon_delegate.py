@@ -57,6 +57,15 @@ class QGridIconDelegate(QStyledItemDelegate):
         """
         self._item_internal_margin_ratio = max(0.0, min(0.5, ratio))
 
+    def itemInternalMargin(self) -> float:
+        """
+        Get the internal margin ratio for the item content.
+
+        Returns:
+            float: A value between 0.0 (0%) and 0.5 (50%).
+        """
+        return self._item_internal_margin_ratio
+
     def forceReloadAll(self) -> None:
         """
         Clear the cache of ALL requested images.

@@ -66,56 +66,35 @@ class DemoWindow(QMainWindow):
         self.setWindowTitle("QGridIconView Demo")
         self.resize(1200, 800)
 
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        # central_widget.setStyleSheet("background-color: #1e1e1e; color: #e0e0e0;")
+        self._init_widgets()
+        self.setup_layout()
+        self.setup_connections()
+        self.populate_model()
 
-        # Main Layout (Horizontal)
-        main_layout = QHBoxLayout(central_widget)
-
-        # -----------------------
-        # Side Panel (Controls)
-        # -----------------------
-        side_panel = QWidget()
-        side_panel.setFixedWidth(250)
-        side_layout = QVBoxLayout(side_panel)
-        main_layout.addWidget(side_panel)
-
+    def _init_widgets(self) -> None:
         # Config Group
-        config_group = QGroupBox("View Configuration")
-        config_layout = QFormLayout(config_group)
+        self.config_group = QGroupBox("View Configuration")
 
         # Icon Width
         self.spin_width = QSpinBox()
         self.spin_width.setRange(20, 500)
         self.spin_width.setValue(100)
-        self.spin_width.valueChanged.connect(self.update_view_settings)
-        config_layout.addRow("Icon Width:", self.spin_width)
 
         # Icon Height
         self.spin_height = QSpinBox()
         self.spin_height.setRange(20, 500)
         self.spin_height.setValue(100)
-        self.spin_height.valueChanged.connect(self.update_view_settings)
-        config_layout.addRow("Icon Height:", self.spin_height)
 
         # Margin
         self.spin_margin = QSpinBox()
         self.spin_margin.setRange(0, 50)
         self.spin_margin.setValue(16)
-        self.spin_margin.valueChanged.connect(self.update_view_settings)
-        config_layout.addRow("Margin:", self.spin_margin)
 
         # Internal Margin
         self.spin_internal_margin = QDoubleSpinBox()
         self.spin_internal_margin.setRange(0.0, 0.5)
         self.spin_internal_margin.setSingleStep(0.05)
         self.spin_internal_margin.setValue(0.1)
-        self.spin_internal_margin.valueChanged.connect(self.update_view_settings)
-        config_layout.addRow("Internal Margin:", self.spin_internal_margin)
-
-        side_layout.addWidget(config_group)
-        side_layout.addStretch()
 
         # -----------------------
         # Main View
@@ -136,8 +115,39 @@ class DemoWindow(QMainWindow):
         """
         )
 
+    def setup_layout(self) -> None:
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
+        # Main Layout (Horizontal)
+        main_layout = QHBoxLayout(central_widget)
+
+        # -----------------------
+        # Side Panel (Controls)
+        # -----------------------
+        side_panel = QWidget()
+        side_panel.setFixedWidth(250)
+        side_layout = QVBoxLayout(side_panel)
+        main_layout.addWidget(side_panel)
+
+        config_layout = QFormLayout(self.config_group)
+        config_layout.addRow("Icon Width:", self.spin_width)
+        config_layout.addRow("Icon Height:", self.spin_height)
+        config_layout.addRow("Margin:", self.spin_margin)
+        config_layout.addRow("Internal Margin:", self.spin_internal_margin)
+
+        side_layout.addWidget(self.config_group)
+        side_layout.addStretch()
+
         main_layout.addWidget(self.view)
 
+    def setup_connections(self) -> None:
+        self.spin_width.valueChanged.connect(self.update_view_settings)
+        self.spin_height.valueChanged.connect(self.update_view_settings)
+        self.spin_margin.valueChanged.connect(self.update_view_settings)
+        self.spin_internal_margin.valueChanged.connect(self.update_view_settings)
+        self.view.itemClicked.connect(lambda idx: print(f"Clicked: {idx.data()}"))
+
+    def populate_model(self) -> None:
         # Create a standard model
         self.model = QStandardItemModel()
 
@@ -180,7 +190,6 @@ class DemoWindow(QMainWindow):
             self.model.appendRow(item)
 
         self.view.setModel(self.model)
-        self.view.itemClicked.connect(lambda idx: print(f"Clicked: {idx.data()}"))
 
     def update_view_settings(self):
         width = self.spin_width.value()
