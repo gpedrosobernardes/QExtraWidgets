@@ -48,86 +48,88 @@ class MainWindow(QMainWindow):
         self.accordion = QAccordion()
 
         # --- Group: Visibility ---
-        self.btn_expand = QPushButton("Expand All (expandAll)")
+        self.button_expand = QPushButton("Expand All (expandAll)")
 
-        self.btn_collapse = QPushButton("Collapse All (collapseAll)")
+        self.button_collapse = QPushButton("Collapse All (collapseAll)")
 
         # --- Group: Icon Style ---
-        self.bg_style = QButtonGroup(self)
-        self.rb_arrow = QRadioButton("Arrow")
-        self.rb_arrow.setChecked(True)
+        self.button_group_style = QButtonGroup(self)
+        self.radio_button_arrow = QRadioButton("Arrow")
+        self.radio_button_arrow.setChecked(True)
 
-        self.rb_plus = QRadioButton("Plus / Minus (+/-)")
+        self.radio_button_plus = QRadioButton("Plus / Minus (+/-)")
 
-        self.bg_style.addButton(self.rb_arrow)
-        self.bg_style.addButton(self.rb_plus)
+        self.button_group_style.addButton(self.radio_button_arrow)
+        self.button_group_style.addButton(self.radio_button_plus)
 
         # --- Group: Icon Position ---
-        self.bg_pos = QButtonGroup(self)
-        self.rb_left = QRadioButton("Left")
-        self.rb_left.setChecked(True)
+        self.button_group_position = QButtonGroup(self)
+        self.radio_button_left = QRadioButton("Left")
+        self.radio_button_left.setChecked(True)
 
-        self.rb_right = QRadioButton("Right")
+        self.radio_button_right = QRadioButton("Right")
 
-        self.bg_pos.addButton(self.rb_left)
-        self.bg_pos.addButton(self.rb_right)
+        self.button_group_position.addButton(self.radio_button_left)
+        self.button_group_position.addButton(self.radio_button_right)
 
         # --- Group: Content Alignment ---
-        self.bg_align = QButtonGroup(self)
-        self.rb_top = QRadioButton("Top")
-        self.rb_top.setChecked(True)
+        self.button_group_alignment = QButtonGroup(self)
+        self.radio_button_top = QRadioButton("Top")
+        self.radio_button_top.setChecked(True)
 
-        self.rb_center = QRadioButton("Center")
+        self.radio_button_center = QRadioButton("Center")
 
-        self.rb_bottom = QRadioButton("Bottom")
+        self.radio_button_bottom = QRadioButton("Bottom")
 
-        self.bg_align.addButton(self.rb_top)
-        self.bg_align.addButton(self.rb_center)
-        self.bg_align.addButton(self.rb_bottom)
+        self.button_group_alignment.addButton(self.radio_button_top)
+        self.button_group_alignment.addButton(self.radio_button_center)
+        self.button_group_alignment.addButton(self.radio_button_bottom)
 
         # --- Group: Appearance ---
-        self.chk_flat = QCheckBox("Flat Mode (setFlat)")
+        self.checkbox_flat = QCheckBox("Flat Mode (setFlat)")
 
         # --- Group: Scroll ---
-        self.btn_scroll_top = QPushButton("Reset Scroll (Top)")
+        self.button_scroll_top = QPushButton("Reset Scroll (Top)")
 
         # Scroll to item 4 (long text)
-        self.btn_scroll_item = QPushButton("Scroll to Long Item")
+        self.button_scroll_item = QPushButton("Scroll to Long Item")
 
         # --- Group: Animation ---
-        self.check_animation = QCheckBox("Enable Animation")
+        self.checkbox_animation = QCheckBox("Enable Animation")
 
-        self.lbl_duration = QLabel("Animation Duration")
-        self.spin_duration = QSpinBox()
-        self.spin_duration.setRange(50, 1000)
-        self.spin_duration.setValue(200)
-        self.spin_duration.setSingleStep(50)
+        self.label_duration = QLabel("Animation Duration")
+        self.spinbox_duration = QSpinBox()
+        self.spinbox_duration.setRange(50, 1000)
+        self.spinbox_duration.setValue(200)
+        self.spinbox_duration.setSingleStep(50)
 
-        self.lbl_easing = QLabel("Animation Style")
-        self.combo_easing = QComboBox()
-        self.combo_easing.addItem("Linear", QEasingCurve.Type.Linear)
-        self.combo_easing.addItem("InOutQuad", QEasingCurve.Type.InOutQuad)
-        self.combo_easing.addItem("InOutQuart (Padrão)", QEasingCurve.Type.InOutQuart)
-        self.combo_easing.addItem("OutCubic", QEasingCurve.Type.OutCubic)
-        self.combo_easing.addItem("InOutBack", QEasingCurve.Type.InOutBack)
-        self.combo_easing.addItem("OutBounce", QEasingCurve.Type.OutBounce)
-        self.combo_easing.addItem("OutElastic", QEasingCurve.Type.OutElastic)
-        self.combo_easing.setCurrentIndex(2)  # InOutQuart
+        self.label_easing = QLabel("Animation Style")
+        self.combobox_easing = QComboBox()
+        self.combobox_easing.addItem("Linear", QEasingCurve.Type.Linear)
+        self.combobox_easing.addItem("InOutQuad", QEasingCurve.Type.InOutQuad)
+        self.combobox_easing.addItem(
+            "InOutQuart (Padrão)", QEasingCurve.Type.InOutQuart
+        )
+        self.combobox_easing.addItem("OutCubic", QEasingCurve.Type.OutCubic)
+        self.combobox_easing.addItem("InOutBack", QEasingCurve.Type.InOutBack)
+        self.combobox_easing.addItem("OutBounce", QEasingCurve.Type.OutBounce)
+        self.combobox_easing.addItem("OutElastic", QEasingCurve.Type.OutElastic)
+        self.combobox_easing.setCurrentIndex(2)  # InOutQuart
 
     def setup_connections(self) -> None:
         # --- Group: Visibility ---
-        self.btn_expand.clicked.connect(self.accordion.expandAll)
-        self.btn_collapse.clicked.connect(self.accordion.collapseAll)
+        self.button_expand.clicked.connect(self.accordion.expandAll)
+        self.button_collapse.clicked.connect(self.accordion.collapseAll)
 
         # --- Group: Icon Style ---
-        self.rb_arrow.toggled.connect(
+        self.radio_button_arrow.toggled.connect(
             lambda checked: (
                 self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.Arrow)
                 if checked
                 else None
             )
         )
-        self.rb_plus.toggled.connect(
+        self.radio_button_plus.toggled.connect(
             lambda checked: (
                 self.accordion.setIconStyle(QAccordionHeader.IndicatorStyle.PlusMinus)
                 if checked
@@ -136,7 +138,7 @@ class MainWindow(QMainWindow):
         )
 
         # --- Group: Icon Position ---
-        self.rb_left.toggled.connect(
+        self.radio_button_left.toggled.connect(
             lambda checked: (
                 self.accordion.setIconPosition(
                     QAccordionHeader.IconPosition.LeadingPosition
@@ -145,7 +147,7 @@ class MainWindow(QMainWindow):
                 else None
             )
         )
-        self.rb_right.toggled.connect(
+        self.radio_button_right.toggled.connect(
             lambda checked: (
                 self.accordion.setIconPosition(
                     QAccordionHeader.IconPosition.TrailingPosition
@@ -156,21 +158,21 @@ class MainWindow(QMainWindow):
         )
 
         # --- Group: Content Alignment ---
-        self.rb_top.toggled.connect(
+        self.radio_button_top.toggled.connect(
             lambda checked: (
                 self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignTop)
                 if checked
                 else None
             )
         )
-        self.rb_center.toggled.connect(
+        self.radio_button_center.toggled.connect(
             lambda checked: (
                 self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignVCenter)
                 if checked
                 else None
             )
         )
-        self.rb_bottom.toggled.connect(
+        self.radio_button_bottom.toggled.connect(
             lambda checked: (
                 self.accordion.setItemsAlignment(Qt.AlignmentFlag.AlignBottom)
                 if checked
@@ -179,21 +181,22 @@ class MainWindow(QMainWindow):
         )
 
         # --- Group: Appearance ---
-        self.chk_flat.toggled.connect(self.accordion.setFlat)
+        self.checkbox_flat.toggled.connect(self.accordion.setFlat)
 
         # --- Group: Scroll ---
-        self.btn_scroll_top.clicked.connect(self.accordion.resetScroll)
-        self.btn_scroll_item.clicked.connect(
-            lambda: self.item_long_text
-            and self.accordion.scrollToItem(self.item_long_text)
+        self.button_scroll_top.clicked.connect(self.accordion.resetScroll)
+        self.button_scroll_item.clicked.connect(
+            lambda: (
+                self.item_long_text and self.accordion.scrollToItem(self.item_long_text)
+            )
         )
 
         # --- Group: Animation ---
-        self.check_animation.toggled.connect(self.accordion.setAnimationEnabled)
-        self.spin_duration.valueChanged.connect(self.accordion.setAnimationDuration)
-        self.combo_easing.currentIndexChanged.connect(
+        self.checkbox_animation.toggled.connect(self.accordion.setAnimationEnabled)
+        self.spinbox_duration.valueChanged.connect(self.accordion.setAnimationDuration)
+        self.combobox_easing.currentIndexChanged.connect(
             lambda: self.accordion.setAnimationEasing(
-                typing.cast(QEasingCurve.Type, self.combo_easing.currentData())
+                typing.cast(QEasingCurve.Type, self.combobox_easing.currentData())
             )
         )
 
@@ -208,63 +211,63 @@ class MainWindow(QMainWindow):
         control_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # --- Group: Visibility ---
-        grp_vis = QGroupBox("Global Visibility")
-        v_layout = QVBoxLayout()
-        v_layout.addWidget(self.btn_expand)
-        v_layout.addWidget(self.btn_collapse)
-        grp_vis.setLayout(v_layout)
-        control_layout.addWidget(grp_vis)
+        group_box_visibility = QGroupBox("Global Visibility")
+        layout_visibility = QVBoxLayout()
+        layout_visibility.addWidget(self.button_expand)
+        layout_visibility.addWidget(self.button_collapse)
+        group_box_visibility.setLayout(layout_visibility)
+        control_layout.addWidget(group_box_visibility)
 
         # --- Group: Icon Style ---
-        grp_style = QGroupBox("Icon Style (setIconStyle)")
-        v_style = QVBoxLayout()
-        v_style.addWidget(self.rb_arrow)
-        v_style.addWidget(self.rb_plus)
-        grp_style.setLayout(v_style)
-        control_layout.addWidget(grp_style)
+        group_box_style = QGroupBox("Icon Style (setIconStyle)")
+        layout_style = QVBoxLayout()
+        layout_style.addWidget(self.radio_button_arrow)
+        layout_style.addWidget(self.radio_button_plus)
+        group_box_style.setLayout(layout_style)
+        control_layout.addWidget(group_box_style)
 
         # --- Group: Icon Position ---
-        grp_pos = QGroupBox("Icon Position (setIconPosition)")
-        v_pos = QVBoxLayout()
-        v_pos.addWidget(self.rb_left)
-        v_pos.addWidget(self.rb_right)
-        grp_pos.setLayout(v_pos)
-        control_layout.addWidget(grp_pos)
+        group_box_position = QGroupBox("Icon Position (setIconPosition)")
+        layout_position = QVBoxLayout()
+        layout_position.addWidget(self.radio_button_left)
+        layout_position.addWidget(self.radio_button_right)
+        group_box_position.setLayout(layout_position)
+        control_layout.addWidget(group_box_position)
 
         # --- Group: Content Alignment ---
-        grp_align = QGroupBox("Content Alignment (setContentAlignment)")
-        v_align = QVBoxLayout()
-        v_align.addWidget(self.rb_top)
-        v_align.addWidget(self.rb_center)
-        v_align.addWidget(self.rb_bottom)
-        grp_align.setLayout(v_align)
-        control_layout.addWidget(grp_align)
+        group_box_alignment = QGroupBox("Content Alignment (setContentAlignment)")
+        layout_alignment = QVBoxLayout()
+        layout_alignment.addWidget(self.radio_button_top)
+        layout_alignment.addWidget(self.radio_button_center)
+        layout_alignment.addWidget(self.radio_button_bottom)
+        group_box_alignment.setLayout(layout_alignment)
+        control_layout.addWidget(group_box_alignment)
 
         # --- Group: Appearance ---
-        grp_look = QGroupBox("Appearance")
-        v_look = QVBoxLayout()
-        v_look.addWidget(self.chk_flat)
-        grp_look.setLayout(v_look)
-        control_layout.addWidget(grp_look)
+        group_box_appearance = QGroupBox("Appearance")
+        layout_appearance = QVBoxLayout()
+        layout_appearance.addWidget(self.checkbox_flat)
+        group_box_appearance.setLayout(layout_appearance)
+        control_layout.addWidget(group_box_appearance)
 
         # --- Group: Scroll ---
-        grp_scroll = QGroupBox("Scroll Test")
-        v_scroll = QVBoxLayout()
-        v_scroll.addWidget(self.btn_scroll_top)
-        v_scroll.addWidget(self.btn_scroll_item)
-        grp_scroll.setLayout(v_scroll)
-        control_layout.addWidget(grp_scroll)
+        group_box_scroll = QGroupBox("Scroll Test")
+        layout_scroll = QVBoxLayout()
+        layout_scroll.addWidget(self.button_scroll_top)
+        layout_scroll.addWidget(self.button_scroll_item)
+        group_box_scroll.setLayout(layout_scroll)
+        control_layout.addWidget(group_box_scroll)
 
         # --- Group: Animation ---
-        grp_anim = QGroupBox("Animation")
-        v_anim = QVBoxLayout()
-        v_anim.addWidget(self.check_animation)
-        v_anim.addWidget(self.lbl_duration)
-        v_anim.addWidget(self.spin_duration)
-        v_anim.addWidget(self.lbl_easing)
-        v_anim.addWidget(self.combo_easing)
-        grp_anim.setLayout(v_anim)
-        control_layout.addWidget(grp_anim)
+        group_box_animation = QGroupBox("Animation")
+        layout_animation = QVBoxLayout()
+        layout_animation.addWidget(self.checkbox_animation)
+        layout_animation.addWidget(self.label_duration)
+        layout_animation.addWidget(self.spinbox_duration)
+        layout_animation.addWidget(self.label_easing)
+        layout_animation.addWidget(self.combobox_easing)
+        group_box_animation.setLayout(layout_animation)
+        control_layout.addWidget(group_box_animation)
 
         # Add to layout: Controls on left (1/3), Accordion on right (2/3)
         main_layout.addWidget(control_panel, 1)
@@ -285,11 +288,11 @@ class MainWindow(QMainWindow):
         # Should this item obey global buttons if manually configured later?
         # Note: The global setIconPosition method iterates over all.
         # Here we just show that we can add and configure on the fly.
-        lbl_custom = QLabel(
+        label_custom = QLabel(
             "This item was added and configured individually\\nwith icon on the right initially."
         )
         item_custom = self.accordion.insertSection(
-            "2. Manually Configured Item", lbl_custom
+            "2. Manually Configured Item", label_custom
         )
         item_custom.setIconPosition(QAccordionHeader.IconPosition.TrailingPosition)
 
@@ -303,11 +306,11 @@ class MainWindow(QMainWindow):
 
         # 4. Long Text (To test Scroll)
         long_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\\n" * 20
-        txt_edit = QTextEdit()
-        txt_edit.setPlainText(long_text)
-        txt_edit.setMinimumHeight(200)  # Force height to test accordion scroll
+        text_edit = QTextEdit()
+        text_edit.setPlainText(long_text)
+        text_edit.setMinimumHeight(200)  # Force height to test accordion scroll
         self.item_long_text = self.accordion.insertSection(
-            "4. Long Content (Scroll Test)", txt_edit
+            "4. Long Content (Scroll Test)", text_edit
         )
 
         # 5. Complex Form
