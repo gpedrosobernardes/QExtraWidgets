@@ -74,7 +74,7 @@ class QAccordionItem(QWidget):
 
     def toggle(self) -> None:
         """Toggles the expanded state."""
-        self.setExpanded(not self.isExpanded())
+        self.setExpanded(not self.isExpanded(), animated=True)
 
     def setTitle(self, text: str) -> None:
         """Sets the item title.
