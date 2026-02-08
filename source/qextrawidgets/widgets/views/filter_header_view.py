@@ -65,6 +65,7 @@ class QFilterHeaderView(QHeaderView):
     def mousePressEvent(self, e: QMouseEvent) -> None:
         """Stores the position of the click to detect drags."""
         self._press_pos = e.pos()
+        self.viewport().update()
         super().mousePressEvent(e)
 
     def mouseReleaseEvent(self, e: QMouseEvent) -> None:
@@ -74,9 +75,13 @@ class QFilterHeaderView(QHeaderView):
         if self._press_pos is None:
             return
 
+        press_pos = self._press_pos
+        self._press_pos = None
+        self.viewport().update()
+
         # Check if it was a click (not a drag)
         moved = (
-            e.pos() - self._press_pos
+            e.pos() - press_pos
         ).manhattanLength() > QApplication.startDragDistance()
         if moved:
             return
@@ -173,7 +178,10 @@ class QFilterHeaderView(QHeaderView):
                         # Draw hover background
                         palette = typing.cast(QPalette, opt.palette)
                         hover_color = palette.text().color()
-                        hover_color.setAlphaF(0.1)
+                        if self._press_pos:
+                            hover_color.setAlphaF(0.3)
+                        else:
+                            hover_color.setAlphaF(0.1)
                         painter.setPen(Qt.PenStyle.NoPen)
                         painter.setBrush(hover_color)
                         # Adjust rect slightly to give some padding
