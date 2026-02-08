@@ -5,7 +5,9 @@ from PySide6.QtCore import Qt, Signal, QEasingCurve, Slot
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QScrollArea, QFrame
 
 from qextrawidgets.widgets.miscellaneous.accordion.accordion_item import QAccordionItem
-from qextrawidgets.widgets.miscellaneous.accordion.accordion_header import QAccordionHeader
+from qextrawidgets.widgets.miscellaneous.accordion.accordion_header import (
+    QAccordionHeader,
+)
 
 
 class QAccordion(QWidget):
@@ -25,15 +27,15 @@ class QAccordion(QWidget):
     leftSection = Signal(QAccordionItem)
 
     def __init__(
-            self,
-            parent: typing.Optional[QWidget] = None,
-            items_alignment: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignTop,
-            items_flat: bool = False,
-            items_icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
-            items_icon_position: QAccordionHeader.IconPosition = QAccordionHeader.IconPosition.LeadingPosition,
-            animation_enabled: bool = False,
-            animation_duration: int = 200,
-            animation_easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuart
+        self,
+        parent: typing.Optional[QWidget] = None,
+        items_alignment: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignTop,
+        items_flat: bool = False,
+        items_icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
+        items_icon_position: QAccordionHeader.IconPosition = QAccordionHeader.IconPosition.LeadingPosition,
+        animation_enabled: bool = False,
+        animation_duration: int = 200,
+        animation_easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuart,
     ) -> None:
         """Initializes the accordion widget.
 
@@ -74,8 +76,30 @@ class QAccordion(QWidget):
         self._items_flat = items_flat
         self._items_icon_style = items_icon_style
         self._items_icon_position = items_icon_position
+        self._auto_stretch = True
 
         self._setup_connections()
+
+    def setAutoStretch(self, enabled: bool) -> None:
+        """Sets whether expanded items should automatically stretch to fill available space.
+
+        Args:
+            enabled (bool): True to enable auto-stretch, False to disable.
+        """
+        self._auto_stretch = enabled
+        for item in self._items:
+            # Re-apply stretch logic based on current state
+            self._scroll_layout.setStretchFactor(
+                item, 1 if (self._auto_stretch and item.isExpanded()) else 0
+            )
+
+    def isAutoStretch(self) -> bool:
+        """Returns whether auto-stretch is enabled.
+
+        Returns:
+            bool: True if enabled, False otherwise.
+        """
+        return self._auto_stretch
 
     def _setup_connections(self) -> None:
         """Sets up signals and slots connections."""
@@ -89,7 +113,10 @@ class QAccordion(QWidget):
             value (int): Current scroll value.
         """
         for item in self._items:
-            if item.y() <= value <= item.y() + item.height() and item != self._active_section:
+            if (
+                item.y() <= value <= item.y() + item.height()
+                and item != self._active_section
+            ):
                 if self._active_section:
                     self.leftSection.emit(item)
                 self._active_section = item
@@ -107,7 +134,9 @@ class QAccordion(QWidget):
         """
         self._items[index].setTitle(title)
 
-    def addSection(self, title: str, widget: QWidget, name: typing.Optional[str] = None) -> QAccordionItem:
+    def addSection(
+        self, title: str, widget: QWidget, name: typing.Optional[str] = None
+    ) -> QAccordionItem:
         """Creates and adds a new accordion section at the end.
 
         Args:
@@ -128,7 +157,14 @@ class QAccordion(QWidget):
         """
         self.insertAccordionItem(item)
 
-    def insertSection(self, title: str, widget: QWidget, position: int = -1, expanded: bool = False, name: typing.Optional[str] = None) -> QAccordionItem:
+    def insertSection(
+        self,
+        title: str,
+        widget: QWidget,
+        position: int = -1,
+        expanded: bool = False,
+        name: typing.Optional[str] = None,
+    ) -> QAccordionItem:
         """Creates and inserts a new accordion section.
 
         Args:
@@ -141,7 +177,18 @@ class QAccordion(QWidget):
         Returns:
             QAccordionItem: The created accordion item.
         """
-        item = QAccordionItem(title, widget, self._scroll_content, expanded, self._items_flat, self._items_icon_style, self._items_icon_position, self._animation_enabled, self._animation_duration, self._animation_easing)
+        item = QAccordionItem(
+            title,
+            widget,
+            self._scroll_content,
+            expanded,
+            self._items_flat,
+            self._items_icon_style,
+            self._items_icon_position,
+            self._animation_enabled,
+            self._animation_duration,
+            self._animation_easing,
+        )
 
         if name:
             item.setObjectName(name)
@@ -156,13 +203,17 @@ class QAccordion(QWidget):
             item (QAccordionItem): Accordion item to insert.
             position (int, optional): Insert position (-1 for end). Defaults to -1.
         """
-        self._scroll_layout.insertWidget(position, item, alignment=self._items_alignment)
+        self._scroll_layout.insertWidget(
+            position, item, alignment=self._items_alignment
+        )
         if position == -1:
             self._items.append(item)
         else:
             self._items.insert(position, item)
 
-        item.expandedChanged.connect(lambda expanded: self._on_item_toggled(item, expanded))
+        item.expandedChanged.connect(
+            lambda expanded: self._on_item_toggled(item, expanded)
+        )
 
     def _on_item_toggled(self, item: QAccordionItem, expanded: bool) -> None:
         """Handles item toggle events.
@@ -171,7 +222,8 @@ class QAccordion(QWidget):
             item (QAccordionItem): The item that was toggled.
             expanded (bool): Whether the item is checked (expanded).
         """
-        self._scroll_layout.setStretchFactor(item, 1 if expanded else 0)
+        if self._auto_stretch:
+            self._scroll_layout.setStretchFactor(item, 1 if expanded else 0)
 
     def removeAccordionItem(self, item: QAccordionItem) -> None:
         """Removes an accordion item.

@@ -87,6 +87,8 @@ class MainWindow(QMainWindow):
 
         # --- Group: Appearance ---
         self.checkbox_flat = QCheckBox("Flat Mode (setFlat)")
+        self.checkbox_auto_stretch = QCheckBox("Auto Stretch Expanded Items")
+        self.checkbox_auto_stretch.setChecked(self.accordion.isAutoStretch())
 
         # --- Group: Scroll ---
         self.button_scroll_top = QPushButton("Reset Scroll (Top)")
@@ -182,6 +184,7 @@ class MainWindow(QMainWindow):
 
         # --- Group: Appearance ---
         self.checkbox_flat.toggled.connect(self.accordion.setFlat)
+        self.checkbox_auto_stretch.toggled.connect(self.accordion.setAutoStretch)
 
         # --- Group: Scroll ---
         self.button_scroll_top.clicked.connect(self.accordion.resetScroll)
@@ -247,6 +250,7 @@ class MainWindow(QMainWindow):
         group_box_appearance = QGroupBox("Appearance")
         layout_appearance = QVBoxLayout()
         layout_appearance.addWidget(self.checkbox_flat)
+        layout_appearance.addWidget(self.checkbox_auto_stretch)
         group_box_appearance.setLayout(layout_appearance)
         control_layout.addWidget(group_box_appearance)
 
