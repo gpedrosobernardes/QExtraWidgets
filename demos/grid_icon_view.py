@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QDoubleSpinBox,
     QGroupBox,
+    QAbstractItemView,
 )
 from PySide6.QtGui import (
     QStandardItemModel,
@@ -101,7 +102,7 @@ class DemoWindow(QMainWindow):
         # -----------------------
         # Create the view
         self.view = QGridIconView()
-        # self.view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.view.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
         self.view.setIconSize(QSize(100, 100))
         self.view.setMargin(16)
 

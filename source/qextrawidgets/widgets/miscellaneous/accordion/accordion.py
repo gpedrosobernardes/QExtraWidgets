@@ -92,6 +92,7 @@ class QAccordion(QWidget):
             self._scroll_layout.setStretchFactor(
                 item, 1 if (self._auto_stretch and item.isExpanded()) else 0
             )
+            self._update_item_alignment(item)
 
     def isAutoStretch(self) -> bool:
         """Returns whether auto-stretch is enabled.
@@ -203,13 +204,13 @@ class QAccordion(QWidget):
             item (QAccordionItem): Accordion item to insert.
             position (int, optional): Insert position (-1 for end). Defaults to -1.
         """
-        self._scroll_layout.insertWidget(
-            position, item, alignment=self._items_alignment
-        )
+        self._scroll_layout.insertWidget(position, item)
         if position == -1:
             self._items.append(item)
         else:
             self._items.insert(position, item)
+
+        self._update_item_alignment(item)
 
         item.expandedChanged.connect(
             lambda expanded: self._on_item_toggled(item, expanded)
@@ -224,6 +225,17 @@ class QAccordion(QWidget):
         """
         if self._auto_stretch:
             self._scroll_layout.setStretchFactor(item, 1 if expanded else 0)
+            item.layout().update()
+        self._update_item_alignment(item)
+
+    def _update_item_alignment(self, item: QAccordionItem) -> None:
+        """Updates the alignment for a single item based on its state."""
+        if self._auto_stretch and item.isExpanded():
+            # If expanded and stretching, remove alignment so it fills the space
+            self._scroll_layout.setAlignment(item, Qt.Alignment())
+        else:
+            # Otherwise, respect the global alignment setting
+            self._scroll_layout.setAlignment(item, self._items_alignment)
 
     def removeAccordionItem(self, item: QAccordionItem) -> None:
         """Removes an accordion item.
@@ -292,6 +304,8 @@ class QAccordion(QWidget):
         """
         self._items_alignment = alignment
         self._scroll_layout.setAlignment(alignment)
+        for item in self._items:
+            self._update_item_alignment(item)
         self._scroll_layout.update()
 
     def itemsAlignment(self) -> Qt.AlignmentFlag:

@@ -1,9 +1,17 @@
 import typing
-from PySide6.QtCore import Signal, QPropertyAnimation, QEasingCurve, QAbstractAnimation, Slot
+from PySide6.QtCore import (
+    Signal,
+    QPropertyAnimation,
+    QEasingCurve,
+    QAbstractAnimation,
+    Slot,
+)
 from PySide6.QtGui import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 
-from qextrawidgets.widgets.miscellaneous.accordion.accordion_header import QAccordionHeader
+from qextrawidgets.widgets.miscellaneous.accordion.accordion_header import (
+    QAccordionHeader,
+)
 
 
 class QAccordionItem(QWidget):
@@ -16,17 +24,17 @@ class QAccordionItem(QWidget):
     expandedChanged = Signal(bool)
 
     def __init__(
-            self,
-            title: str,
-            content_widget: QWidget,
-            parent: typing.Optional[QWidget] = None,
-            expanded: bool = False,
-            flat: bool = False,
-            icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
-            icon_position: QAccordionHeader.IconPosition = QAccordionHeader.IconPosition.LeadingPosition,
-            animation_enabled: bool = False,
-            animation_duration: int = 200,
-            animation_easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuart
+        self,
+        title: str,
+        content_widget: QWidget,
+        parent: typing.Optional[QWidget] = None,
+        expanded: bool = False,
+        flat: bool = False,
+        icon_style: QAccordionHeader.IndicatorStyle = QAccordionHeader.IndicatorStyle.Arrow,
+        icon_position: QAccordionHeader.IconPosition = QAccordionHeader.IconPosition.LeadingPosition,
+        animation_enabled: bool = False,
+        animation_duration: int = 200,
+        animation_easing: QEasingCurve.Type = QEasingCurve.Type.InOutQuart,
     ) -> None:
         """Initializes the accordion item.
 
@@ -57,14 +65,13 @@ class QAccordionItem(QWidget):
         self._animation = QPropertyAnimation(self._content, b"maximumHeight")
         self._animation.setDuration(animation_duration)
         self._animation.setEasingCurve(animation_easing)
+        self._animation.finished.connect(self._on_animation_finished)
 
         # Initial state
-        self._content.setMinimumHeight(0)
         self._content.setVisible(False)
 
-        self._layout.addWidget(self._header, alignment=Qt.AlignmentFlag.AlignTop)
-        self._layout.addWidget(self._content, stretch=True, alignment=Qt.AlignmentFlag.AlignTop)
-        self._layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self._layout.addWidget(self._header)
+        self._layout.addWidget(self._content, stretch=1)
 
         self._header.clicked.connect(self.toggle)
 
@@ -112,6 +119,9 @@ class QAccordionItem(QWidget):
                 self._animation.setStartValue(0)
                 self._animation.setEndValue(target_height)
                 self._animation.start()
+            else:
+                # Instant expand - ensure no height limit
+                self._content.setMaximumHeight(16777215)
         else:
             # Collapsing
             if use_animation:
@@ -121,7 +131,6 @@ class QAccordionItem(QWidget):
                 # Animate from current height to 0
                 self._animation.setStartValue(current_height)
                 self._animation.setEndValue(0)
-                self._animation.finished.connect(self._on_collapse_finished)
                 self._animation.start()
             else:
                 # Instant collapse
@@ -129,10 +138,14 @@ class QAccordionItem(QWidget):
         self.expandedChanged.emit(expanded)
 
     @Slot()
-    def _on_collapse_finished(self) -> None:
-        """Called when collapse animation finishes."""
-        self._animation.finished.disconnect(self._on_collapse_finished)
-        self._content.setVisible(False)
+    def _on_animation_finished(self) -> None:
+        """Called when any animation finishes."""
+        if self.isExpanded():
+            # After expand animation: remove height constraint to allow stretching
+            self._content.setMaximumHeight(16777215)
+        else:
+            # After collapse animation: hide the content
+            self._content.setVisible(False)
 
     def isExpanded(self) -> bool:
         """Returns whether the item is expanded.

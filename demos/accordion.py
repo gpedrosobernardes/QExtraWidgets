@@ -312,7 +312,7 @@ class MainWindow(QMainWindow):
         long_text = "Lorem ipsum dolor sit amet, consectetur adipiscing elit.\\n" * 20
         text_edit = QTextEdit()
         text_edit.setPlainText(long_text)
-        text_edit.setMinimumHeight(200)  # Force height to test accordion scroll
+        # text_edit.setMinimumHeight(200)  # Force height to test accordion scroll
         self.item_long_text = self.accordion.insertSection(
             "4. Long Content (Scroll Test)", text_edit
         )
