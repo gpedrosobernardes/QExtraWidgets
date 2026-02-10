@@ -1,0 +1,29 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Package (sdist & wheel)",
+            "type": "shell",
+            "command": "python -m build",
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "detail": "Gera os arquivos de distribuição na pasta /dist"
+        },
+        {
+            "label": "Publish to PyPI (Twine)",
+            "type": "shell",
+            "command": "twine upload dist/*",
+            "dependsOn": "Build Package (sdist & wheel)",
+            "problemMatcher": [],
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "detail": "Envia os arquivos da pasta /dist para o PyPI oficial"
+        }
+    ]
+}
