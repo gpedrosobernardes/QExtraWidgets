@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qextrawidgets"
-version = "0.2.5"
+version = "0.2.6"
 description = "A collection of extra widgets for PySide6 including Emoji Picker, Filterable Table, and more."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -12,7 +12,7 @@ license = {text = "MIT"}
 authors = [
   {name = "Gustavo Pedroso Bernardes", email = "gpedrosobernardes@gmail.com"},
 ]
-keywords = ["qt", "pyside6", "widgets", "emoji", "ui"]
+keywords = ["qt", "pyside6", "widgets", "ui", "accordion", "filterable table", "emoji picker"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: Desktop Environment",
 ]
 dependencies = [
-    "PySide6>=6.10.1",
+    "PySide6>=6.10.2",
     "twemoji-api>=2.0.0",
     "emoji-data-python==1.6.0",
     "qtawesome==1.4.1"
