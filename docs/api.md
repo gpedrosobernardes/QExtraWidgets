@@ -36,6 +36,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 ### Proxies
 
 ::: qextrawidgets.gui.proxys.check_state_proxy
+::: qextrawidgets.gui.proxys.decoration_role_proxy
 ::: qextrawidgets.gui.proxys.emoji_picker_proxy
 ::: qextrawidgets.gui.proxys.header_proxy
 ::: qextrawidgets.gui.proxys.multi_filter

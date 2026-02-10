@@ -1,4 +1,5 @@
 import sys
+import random
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -10,6 +11,7 @@ from PySide6.QtWidgets import (
     QDoubleSpinBox,
     QGroupBox,
     QAbstractItemView,
+    QPushButton,
 )
 from PySide6.QtGui import (
     QStandardItemModel,
@@ -97,12 +99,17 @@ class DemoWindow(QMainWindow):
         self.spin_internal_margin.setSingleStep(0.05)
         self.spin_internal_margin.setValue(0.1)
 
+        # Test Buttons for setCurrentIndex
+        self.btn_select_first = QPushButton("Select First Item")
+        self.btn_select_random = QPushButton("Select Random Item")
+        self.btn_clear_selection = QPushButton("Clear Selection")
+
         # -----------------------
         # Main View
         # -----------------------
         # Create the view
         self.view = QGridIconView()
-        self.view.setSelectionMode(QAbstractItemView.SelectionMode.NoSelection)
+        self.view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.view.setIconSize(QSize(100, 100))
         self.view.setMargin(16)
 
@@ -137,6 +144,15 @@ class DemoWindow(QMainWindow):
         config_layout.addRow("Internal Margin:", self.spin_internal_margin)
 
         side_layout.addWidget(self.config_group)
+
+        # Test Group
+        test_group = QGroupBox("Test setCurrentIndex")
+        test_layout = QVBoxLayout(test_group)
+        test_layout.addWidget(self.btn_select_first)
+        test_layout.addWidget(self.btn_select_random)
+        test_layout.addWidget(self.btn_clear_selection)
+
+        side_layout.addWidget(test_group)
         side_layout.addStretch()
 
         main_layout.addWidget(self.view)
@@ -147,6 +163,11 @@ class DemoWindow(QMainWindow):
         self.spin_margin.valueChanged.connect(self.update_view_settings)
         self.spin_internal_margin.valueChanged.connect(self.update_view_settings)
         self.view.itemClicked.connect(lambda idx: print(f"Clicked: {idx.data()}"))
+
+        # Test button connections
+        self.btn_select_first.clicked.connect(self.select_first_item)
+        self.btn_select_random.clicked.connect(self.select_random_item)
+        self.btn_clear_selection.clicked.connect(self.clear_selection)
 
     def populate_model(self) -> None:
         # Create a standard model
@@ -206,6 +227,29 @@ class DemoWindow(QMainWindow):
         if delegate:
             delegate.setItemInternalMargin(internal_margin)
             self.view.viewport().update()
+
+    def select_first_item(self):
+        """Test method: Select the first item using setCurrentIndex."""
+        if self.model.rowCount() > 0:
+            first_index = self.model.index(0, 0)
+            self.view.setCurrentIndex(first_index)
+            self.view.scrollTo(first_index)
+            print(f"Selected first item: {first_index.data()}")
+
+    def select_random_item(self):
+        """Test method: Select a random item using setCurrentIndex."""
+        row_count = self.model.rowCount()
+        if row_count > 0:
+            random_row = random.randint(0, row_count - 1)
+            random_index = self.model.index(random_row, 0)
+            self.view.setCurrentIndex(random_index)
+            self.view.scrollTo(random_index)
+            print(f"Selected random item at row {random_row}: {random_index.data()}")
+
+    def clear_selection(self):
+        """Test method: Clear the current selection."""
+        self.view.clearSelection()
+        print("Selection cleared")
 
 
 if __name__ == "__main__":
