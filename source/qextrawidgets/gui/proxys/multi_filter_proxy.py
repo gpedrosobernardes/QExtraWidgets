@@ -4,7 +4,7 @@ from PySide6.QtCore import QPersistentModelIndex
 from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QObject
 
 
-class QMultiFilterProxy(QSortFilterProxyModel):
+class QMultiFilterProxyModel(QSortFilterProxyModel):
     """A proxy model that supports multiple filters per column."""
 
     def __init__(self, parent: typing.Optional[QObject] = None) -> None:

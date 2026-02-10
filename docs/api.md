@@ -38,8 +38,9 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 ::: qextrawidgets.gui.proxys.check_state_proxy
 ::: qextrawidgets.gui.proxys.decoration_role_proxy
 ::: qextrawidgets.gui.proxys.emoji_picker_proxy
+::: qextrawidgets.gui.proxys.format_proxy
 ::: qextrawidgets.gui.proxys.header_proxy
-::: qextrawidgets.gui.proxys.multi_filter
+::: qextrawidgets.gui.proxys.multi_filter_proxy
 ::: qextrawidgets.gui.proxys.unique_values_proxy
 
 ### Validators

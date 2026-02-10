@@ -1,7 +1,8 @@
 from .check_state_proxy import QCheckStateProxyModel
 from .decoration_role_proxy import QDecorationRoleProxyModel
 from .emoji_picker_proxy import QEmojiPickerProxyModel
-from .header_proxy import QHeaderProxy
-from .multi_filter import QMultiFilterProxy
+from .format_proxy_model import QFormatProxyModel
+from .header_proxy import QHeaderProxyModel
+from .multi_filter_proxy import QMultiFilterProxyModel
 from .unique_values_proxy import QUniqueValuesProxyModel
 

@@ -6,7 +6,7 @@ from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import QTableView, QWidget
 
 from qextrawidgets.gui.icons.theme_responsive_icon import QThemeResponsiveIcon
-from qextrawidgets.gui.proxys import QMultiFilterProxy, QHeaderProxy
+from qextrawidgets.gui.proxys import QMultiFilterProxyModel, QHeaderProxyModel
 from qextrawidgets.widgets.dialogs import QFilterPopup
 from qextrawidgets.widgets.views.filter_header_view import QFilterHeaderView
 
@@ -22,8 +22,8 @@ class QFilterableTableView(QTableView):
         """
         super().__init__(parent)
 
-        self._filter_proxy = QMultiFilterProxy()
-        self._header_proxy = QHeaderProxy()
+        self._filter_proxy = QMultiFilterProxyModel()
+        self._header_proxy = QHeaderProxyModel()
         self._header_proxy.setSourceModel(self._filter_proxy)
 
         super().setModel(self._header_proxy)

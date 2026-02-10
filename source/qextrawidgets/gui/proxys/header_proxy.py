@@ -2,7 +2,7 @@ import typing
 from PySide6.QtCore import QIdentityProxyModel, Qt, QObject
 
 
-class QHeaderProxy(QIdentityProxyModel):
+class QHeaderProxyModel(QIdentityProxyModel):
     """A proxy model that handles header data customizations, such as icons."""
 
     def __init__(self, parent: typing.Optional[QObject] = None) -> None:
