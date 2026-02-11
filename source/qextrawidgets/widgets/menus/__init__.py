@@ -1,5 +1,5 @@
-from .theme_responsive_menu import QThemeResponsiveMenu
+from .emoji_picker_menu import QEmojiPickerMenu
 
 __all__ = [
-    "QThemeResponsiveMenu",
+    "QEmojiPickerMenu",
 ]
