@@ -1,0 +1,728 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+      
+        <link rel="next" href="api/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>QExtraWidgets</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#documentation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="QExtraWidgets" class="md-header__button md-logo" aria-label="QExtraWidgets" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            QExtraWidgets
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="QExtraWidgets" class="md-nav__button md-logo" aria-label="QExtraWidgets" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    QExtraWidgets
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="." class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📖 Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✨ Features &amp; Widgets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="✨ Features &amp; Widgets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-qfilterabletable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. QFilterableTable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-qemojipicker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. QEmojiPicker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-qaccordion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. QAccordion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-qthemeresponsiveicon-qthemeresponsivelabel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. QThemeResponsiveIcon &amp; QThemeResponsiveLabel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-other-useful-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Other Useful Widgets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🤝 Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📄 License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Referência da API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📖 Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📦 Installation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#features-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ✨ Features &amp; Widgets
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="✨ Features &amp; Widgets">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-qfilterabletable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. QFilterableTable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-qemojipicker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. QEmojiPicker
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-qaccordion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. QAccordion
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-qthemeresponsiveicon-qthemeresponsivelabel" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. QThemeResponsiveIcon &amp; QThemeResponsiveLabel
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-other-useful-widgets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Other Useful Widgets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🤝 Contributing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📄 License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+  <h1>Home</h1>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QExtraWidgets.png" alt="QExtraWidgets Logo" width="600">
+</p>
+
+<p><a href="https://badge.fury.io/py/qextrawidgets"><img alt="PyPI version" src="https://badge.fury.io/py/qextrawidgets.svg" /></a>
+<a href="https://opensource.org/licenses/MIT"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" /></a>
+<a href="https://pypi.org/project/qextrawidgets/"><img alt="Python Versions" src="https://img.shields.io/pypi/pyversions/qextrawidgets.svg" /></a>
+<a href="https://gpedrosobernardes.github.io/QExtraWidgets/"><img alt="Documentation Status" src="https://img.shields.io/badge/docs-stable-blue.svg" /></a></p>
+<p><strong>QExtraWidgets</strong> is a comprehensive library of modern, responsive, and feature-rich widgets for <strong>PySide6</strong> applications. It aims to fill the gaps in standard Qt widgets by providing high-level components like Excel-style filterable tables, emoji pickers, accordion menus, and theme-aware icons.</p>
+<h2 id="documentation">📖 Documentation</h2>
+<p>The complete documentation is available at: <a href="https://gpedrosobernardes.github.io/QExtraWidgets/">https://gpedrosobernardes.github.io/QExtraWidgets/</a></p>
+<h2 id="installation">📦 Installation</h2>
+<pre><code class="language-bash">pip install qextrawidgets
+</code></pre>
+<h2 id="features-widgets">✨ Features &amp; Widgets</h2>
+<h3 id="1-qfilterabletable">1. QFilterableTable</h3>
+<p>A powerful <code>QTableView</code> extension that adds Excel-like filtering capabilities to headers.</p>
+<ul>
+<li><strong>Cascading Filters:</strong> Filter options update based on other columns (drill-down).</li>
+<li><strong>Sort &amp; Search:</strong> Built-in sorting and search within the filter popup.</li>
+<li><strong>Model Agnostic:</strong> Works with <code>QSqlTableModel</code>, <code>QStandardItemModel</code>, or any custom model.</li>
+</ul>
+<p><img alt="QFilterableTable" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QFilterableTable.gif" /></p>
+<hr />
+<h3 id="2-qemojipicker">2. QEmojiPicker</h3>
+<p>A full-featured Emoji Picker.</p>
+<ul>
+<li><strong>Rich Features:</strong> Includes skin tone selector, favorites/recents management, and context menu actions (copy alias, favorite/unfavorite).</li>
+<li><strong>Optimized Search:</strong> Fast filtering with recursive category matching.</li>
+<li><strong>Emoji Replacement:</strong> Automatically converts <code>:smile:</code> aliases or pasted unicode characters into high-quality images.</li>
+</ul>
+<p><img alt="QEmojiPicker" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QEmojiPicker.gif" /></p>
+<hr />
+<h3 id="3-qaccordion">3. QAccordion</h3>
+<p>A flexible accordion widget for grouping content in collapsible sections.</p>
+<ul>
+<li><strong>Customizable:</strong> Change icon position (left/right) and animation speed.</li>
+<li><strong>Smooth Animation:</strong> Uses <code>QPropertyAnimation</code> for expanding/collapsing.</li>
+</ul>
+<p><img alt="QAccordion" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QAccordion.gif" /></p>
+<hr />
+<h3 id="4-qthemeresponsiveicon-qthemeresponsivelabel">4. QThemeResponsiveIcon &amp; QThemeResponsiveLabel</h3>
+<p>Stop worrying about Dark/Light mode icons. <code>QThemeResponsiveIcon</code> wraps <code>QtAwesome</code> to automatically invert colors (Black &lt;-&gt; White) based on the current system or application palette.</p>
+<p>For labels, <code>QThemeResponsiveLabel</code> automatically updates its pixmap when the icon theme or widget size changes.</p>
+<p><img alt="QThemeResponsiveIcon" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QThemeResponsiveIcon.gif" /></p>
+<hr />
+<h3 id="5-other-useful-widgets">5. Other Useful Widgets</h3>
+<table>
+<thead>
+<tr>
+<th>Widget</th>
+<th>Description</th>
+<th>Image</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>QPasswordLineEdit</strong></td>
+<td>A line edit with a built-in eye icon to toggle password visibility.</td>
+<td><img alt="QPasswordLineEdit" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPasswordLineEdit.png" /></td>
+</tr>
+<tr>
+<td><strong>QPager</strong></td>
+<td>A classic pagination control for navigating large datasets.</td>
+<td><img alt="QPager" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPager.png" /></td>
+</tr>
+<tr>
+<td><strong>QColorButton</strong></td>
+<td>A button that allows setting custom background colors for different states (Normal, Hover, Pressed, Checked).</td>
+<td><img alt="QColorButton" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QColorButton.png" /></td>
+</tr>
+<tr>
+<td><strong>QColorToolButton</strong></td>
+<td>A tool button that allows setting custom background colors for different states (Normal, Hover, Pressed, Checked).</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>QDualList</strong></td>
+<td>Two lists side-by-side for moving items (Select/Deselect).</td>
+<td><img alt="QDualList" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png" /></td>
+</tr>
+<tr>
+<td><strong>QSearchLineEdit</strong></td>
+<td>A search input field with a clear button and search icon.</td>
+<td><img alt="QSearchLineEdit" src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png" /></td>
+</tr>
+<tr>
+<td><strong>QIconComboBox</strong></td>
+<td>A ToolButton-style combo box optimized for icons or short text.</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>QEmojiPickerMenu</strong></td>
+<td>A menu wrapper for <code>QEmojiPicker</code> to easily attach it to buttons.</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>QThemeResponsiveLabel</strong></td>
+<td>A label that automatically updates its icon based on theme and size.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="contributing">🤝 Contributing</h2>
+<p>Contributions are welcome! Please feel free to submit a Pull Request.</p>
+<h2 id="license">📄 License</h2>
+<p>This project is licensed under the MIT License - see the LICENSE file for details.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": [], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
