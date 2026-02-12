@@ -1,10 +1,10 @@
 site_name: QExtraWidgets
-docs_dir: .
 theme:
   name: material
 
 plugins:
   - search
+  - include-markdown
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -12,5 +12,5 @@ plugins:
           paths: [source]
 
 nav:
-  - Home: README.md
-  - Referência da API: docs/api.md
+  - Home: index.md
+  - Referência da API: api.md

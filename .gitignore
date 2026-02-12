@@ -5,3 +5,4 @@ source/extra_qwidgets.egg-info
 dist
 *.egg-info
 *.pyc
+site
