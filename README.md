@@ -1,5 +1,9 @@
 # QExtraWidgets
 
+<p align="center">
+  <img src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QExtraWidgets.png" alt="QExtraWidgets Logo" width="600">
+</p>
+
 [![PyPI version](https://badge.fury.io/py/qextrawidgets.svg)](https://badge.fury.io/py/qextrawidgets)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python Versions](https://img.shields.io/pypi/pyversions/qextrawidgets.svg)](https://pypi.org/project/qextrawidgets/)

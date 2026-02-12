@@ -1,4 +1,5 @@
 site_name: QExtraWidgets
+docs_dir: .
 theme:
   name: material
 
@@ -11,5 +12,5 @@ plugins:
           paths: [source]
 
 nav:
-  - Home: index.md
-  - Referência da API: api.md
+  - Home: README.md
+  - Referência da API: docs/api.md
