@@ -266,12 +266,14 @@ class QFilterPopup(QDialog):
         for row in range(row_count):
             index = self._proxy_model.index(row, column)
 
-            if (
-                self._proxy_model.data(index, Qt.ItemDataRole.CheckStateRole)
-                == Qt.CheckState.Checked
-            ):
+            check_state = self._proxy_model.data(index, Qt.ItemDataRole.CheckStateRole)
+            if not isinstance(data, Qt.CheckState):
+                check_state = Qt.CheckState(check_state)
+
+            if check_state == Qt.CheckState.Checked:
                 val = self._proxy_model.data(index, Qt.ItemDataRole.DisplayRole)
                 data.add(str(val))
+
         return data
 
     def isFiltering(self) -> bool:
