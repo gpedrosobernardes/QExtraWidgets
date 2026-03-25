@@ -103,6 +103,7 @@ class DemoWindow(QMainWindow):
         self.btn_select_first = QPushButton("Select First Item")
         self.btn_select_random = QPushButton("Select Random Item")
         self.btn_clear_selection = QPushButton("Clear Selection")
+        self.btn_hide_selection = QPushButton("Hide Selection")
 
         # -----------------------
         # Main View
@@ -151,6 +152,7 @@ class DemoWindow(QMainWindow):
         test_layout.addWidget(self.btn_select_first)
         test_layout.addWidget(self.btn_select_random)
         test_layout.addWidget(self.btn_clear_selection)
+        test_layout.addWidget(self.btn_hide_selection)
 
         side_layout.addWidget(test_group)
         side_layout.addStretch()
@@ -168,6 +170,7 @@ class DemoWindow(QMainWindow):
         self.btn_select_first.clicked.connect(self.select_first_item)
         self.btn_select_random.clicked.connect(self.select_random_item)
         self.btn_clear_selection.clicked.connect(self.clear_selection)
+        self.btn_hide_selection.clicked.connect(self.hide_selection)
 
     def populate_model(self) -> None:
         # Create a standard model
@@ -250,6 +253,12 @@ class DemoWindow(QMainWindow):
         """Test method: Clear the current selection."""
         self.view.clearSelection()
         print("Selection cleared")
+
+    def hide_selection(self):
+        """Test method: Hide the current selection."""
+        current_selection = self.view.selectionModel()
+        for index in current_selection.selectedRows():
+            self.view.setRowHidden(index.row(), False)
 
 
 if __name__ == "__main__":
