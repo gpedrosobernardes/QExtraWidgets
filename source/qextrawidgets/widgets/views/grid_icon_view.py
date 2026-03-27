@@ -50,7 +50,7 @@ class QGridIconView(QAbstractItemView):
         # Cache using Persistent Indices
         self._item_rects: dict[QPersistentModelIndex, QRect] = {}
 
-        self._rows_visibility: dict[int, bool] = {}
+        self._hidden_rows: typing.List[int] = []
 
         # Debounce Timer for Layout Updates
         self._layout_timer = QTimer(self)
@@ -130,8 +130,17 @@ class QGridIconView(QAbstractItemView):
             row (int): The row to hide/show.
             hidden (bool): Whether the row should be hidden.
         """
-        self._rows_visibility[row] = hidden
+        if hidden:
+            if not self.isRowHidden(row):
+                self._hidden_rows.append(row)
+        else:
+            if self.isRowHidden(row):
+                self._hidden_rows.remove(row)
+
         self._schedule_layout()
+
+    def isRowHidden(self, row: int) -> bool:
+        return row in self._hidden_rows
 
     # -------------------------------------------------------------------------
     # Internal Logic Helpers
@@ -437,10 +446,8 @@ class QGridIconView(QAbstractItemView):
             if not index.isValid():
                 continue
 
-            if r in self._rows_visibility:
-                show_row = self._rows_visibility[r]
-                if not show_row:
-                    continue
+            if self.isRowHidden(r):
+                continue
 
             px = self._margin + (col_current * (item_w + self._margin))
             self._item_rects[QPersistentModelIndex(index)] = QRect(

@@ -258,7 +258,7 @@ class DemoWindow(QMainWindow):
         """Test method: Hide the current selection."""
         current_selection = self.view.selectionModel()
         for index in current_selection.selectedRows():
-            self.view.setRowHidden(index.row(), False)
+            self.view.setRowHidden(index.row(), True)
 
 
 if __name__ == "__main__":
