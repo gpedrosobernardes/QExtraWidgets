@@ -1,13 +1,18 @@
+import logging
 import typing
-from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QPersistentModelIndex, Qt
+
+from PySide6.QtCore import QSortFilterProxyModel, QModelIndex, QPersistentModelIndex, Qt, Signal, Slot
+from PySide6.QtGui import QStandardItem
 from PySide6.QtWidgets import QWidget
 
-from qextrawidgets.gui.items.emoji_item import QEmojiItem
+from qextrawidgets.gui.items import QIconCategoryItem
+from qextrawidgets.gui.items.icon_item import QIconItem
+from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
 
 
-class QEmojiPickerProxyModel(QSortFilterProxyModel):
+class QIconPickerProxyModel(QSortFilterProxyModel):
     """
-    A high-performance proxy model to filter emojis by their alias.
+    A high-performance proxy model to filter icon by their alias.
 
     Optimizations:
     1. Uses setRecursiveFilteringEnabled(True) to avoid manual O(N^2) child iteration.
@@ -67,13 +72,6 @@ class QEmojiPickerProxyModel(QSortFilterProxyModel):
         model = self.sourceModel()
         index = model.index(source_row, 0, source_parent)
 
-        # Retrieve Aliases
-        # Note: Ensure your QEmojiItem returns a list of strings for this role
-        aliases = index.data(QEmojiItem.QEmojiDataRole.ShortNamesRole)
-
-        if not aliases:
-            return False
-
         # [OPTIMIZATION]
         # Fast string check using the cached pattern.
         # Python's 'in' operator is highly optimized for str.
@@ -83,12 +81,38 @@ class QEmojiPickerProxyModel(QSortFilterProxyModel):
         is_case_sensitive = self.filterCaseSensitivity() == Qt.CaseSensitivity.CaseSensitive
         search_term = self._cached_pattern if not is_case_sensitive else self.filterRegularExpression().pattern()
 
-        for alias in aliases:
-            # Clean alias (e.g., ":smile:" -> "smile") if needed, or check directly
-            # Assuming alias data might have mixed case, we lower it only if insensitive
-            alias_check = alias if is_case_sensitive else alias.lower()
+        # Retrieve Aliases
+        # Note: Ensure your QEmojiItem returns a list of strings for this role
+        aliases = index.data(Qt.ItemDataRole.UserRole)
 
-            if search_term in alias_check:
+        if aliases:
+            for alias in aliases:
+                # Clean alias (e.g., ":smile:" -> "smile") if needed, or check directly
+                # Assuming alias data might have mixed case, we lower it only if insensitive
+                alias_check = alias if is_case_sensitive else alias.lower()
+
+                if search_term in alias_check:
+                    return True
+
+            return False
+        else:
+            icon_text = index.data(Qt.ItemDataRole.EditRole)
+
+            if not icon_text:
+                return False
+
+            if search_term in icon_text:
                 return True
 
-        return False
+            return False
+
+    def itemFromIndex(self, index: QModelIndex) -> QStandardItem:
+        source_index = self.mapToSource(index)
+        return self.sourceModel().itemFromIndex(source_index)
+
+    def sourceModel(self) -> QIconPickerModel:
+        model = super().sourceModel()
+        if isinstance(model, QIconPickerModel):
+            return model
+        else:
+            raise ValueError("Source model is not defined!")

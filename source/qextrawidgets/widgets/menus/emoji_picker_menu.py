@@ -1,13 +1,11 @@
 import typing
-from functools import partial
 
-from PySide6.QtCore import Signal, QSize
-from PySide6.QtGui import QFont, QPixmap
+from PySide6.QtCore import Signal
+from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QMenu, QWidgetAction, QWidget
 
-from qextrawidgets.core.utils.twemoji_image_provider import QTwemojiImageProvider
-from qextrawidgets.gui.items import QEmojiItem
-from qextrawidgets.gui.models.emoji_picker_model import QEmojiPickerModel
+from qextrawidgets.gui.items.icon_item import QIconItem
+from qextrawidgets.gui.models import QIconPickerModel
 from qextrawidgets.widgets.miscellaneous.emoji_picker import QEmojiPicker
 
 
@@ -18,15 +16,14 @@ class QEmojiPickerMenu(QMenu):
         picked (str): Emitted when an emoji is selected.
     """
 
-    picked = Signal(QEmojiItem)
+    picked = Signal(QIconItem)
 
     def __init__(
             self,
             parent: typing.Optional[QWidget] = None,
-            model: typing.Optional[QEmojiPickerModel] = None,
-            emoji_pixmap_getter: typing.Union[str, QFont, typing.Callable[[str], QPixmap]] = partial(
-                QTwemojiImageProvider.getPixmap, margin=0, size=128),
-            emoji_label_size: QSize = QSize(32, 32)) -> None:
+            model: typing.Optional[QIconPickerModel] = None,
+            icon_label_size: int = 32,
+            icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap] = None) -> None:
         """Initialize the emoji picker menu.
 
         Args:
@@ -37,7 +34,7 @@ class QEmojiPickerMenu(QMenu):
             emoji_label_size (QSize, optional): Size of the preview emoji label. Defaults to QSize(32, 32).
         """
         super().__init__(parent)
-        self._picker = QEmojiPicker(model, emoji_pixmap_getter, emoji_label_size)
+        self._picker = QEmojiPicker(parent, model, icon_label_size, icon_pixmap_getter)
         self._picker.picked.connect(self._on_picked)
 
         action = QWidgetAction(self)
@@ -52,11 +49,11 @@ class QEmojiPickerMenu(QMenu):
         """
         return self._picker
 
-    def _on_picked(self, item: QEmojiItem) -> None:
+    def _on_picked(self, item: QIconItem) -> None:
         """Handles the emoji picked signal.
 
         Args:
-            item (QEmojiItem): The picked emoji item.
+            item (QIconItem): The picked emoji item.
         """
         self.picked.emit(item)
         self.close()

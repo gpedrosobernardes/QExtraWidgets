@@ -1,3 +1,5 @@
+import logging
+
 from PySide6.QtGui import QFontDatabase
 import sys
 
@@ -20,15 +22,13 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 
-from qextrawidgets.core.utils.twemoji_image_provider import QTwemojiImageProvider
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.core.utils.emoji_fonts import QEmojiFonts
+from qextrawidgets.gui.items.icon_item import QIconItem
 from qextrawidgets.widgets.menus.emoji_picker_menu import QEmojiPickerMenu
-from qextrawidgets.gui.items import QEmojiCategoryItem
-from qextrawidgets.gui.items import QEmojiItem
+from qextrawidgets.gui.items import QIconCategoryItem
 
 from emoji_data_python import emoji_data
-from functools import partial
 
 
 class MainWindow(QMainWindow):
@@ -100,7 +100,6 @@ class MainWindow(QMainWindow):
     def setup_initial_state(self) -> None:
         self._on_font_combo_changed(self.font_combo.currentText())
 
-
     def setup_layout(self) -> None:
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -154,8 +153,8 @@ class MainWindow(QMainWindow):
 
         playground_layout.addWidget(input_container)
 
-    def _on_emoji_picked(self, item: QEmojiItem) -> None:
-        self.line_edit.insert(item.emoji())
+    def _on_emoji_picked(self, item: QIconItem) -> None:
+        self.line_edit.insert(item.data(Qt.ItemDataRole.EditRole))
 
     def _on_emoji_size_changed(self, value: int) -> None:
         self.emoji_picker.view().setIconSize(QSize(value, value))
@@ -178,20 +177,18 @@ class MainWindow(QMainWindow):
 
     def _on_use_pixmaps_changed(self, state: int) -> None:
         if state == Qt.CheckState.Checked.value:
-            self.emoji_picker.setEmojiPixmapGetter(
-                partial(QTwemojiImageProvider.getPixmap, margin=0, size=64, dpr=1.0)
-            )
+            self.emoji_picker.setIconPixmapGetter(self.emoji_picker.emojiPixmapGetter)
         else:
             # Revert to current font in combo
-            self.emoji_picker.setEmojiPixmapGetter(self.font_combo.currentText())
+            self.emoji_picker.setIconPixmapGetter(lambda icon: self.emoji_picker.fontEmojiPixmapGetter(self.font_combo.currentText(), icon))
 
     def _add_custom_category(self) -> None:
         icon = QThemeResponsiveIcon.fromAwesome("fa6s.rocket")
-        category_item = QEmojiCategoryItem("Custom", icon)
+        category_item = QIconCategoryItem("Custom", "Custom", icon)
         self.emoji_picker.model().appendRow(category_item)
 
         # Add some sample emojis (using first 10 from data)
-        items = [QEmojiItem(emoji_data[i]) for i in range(10)]
+        items = [QIconItem.fromEmojiChar(emoji_data[i]) for i in range(10)]
         category_item.appendRows(items)
 
         self.add_cat_btn.setEnabled(False)
@@ -207,6 +204,8 @@ class MainWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
+
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()

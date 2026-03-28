@@ -18,7 +18,8 @@ from PySide6.QtGui import QCursor, QPainter, QMouseEvent, QRegion, QPaintEvent
 from PySide6.QtWidgets import QAbstractItemView, QStyleOptionViewItem, QStyle, QWidget
 
 from qextrawidgets.widgets.delegates.grid_icon_delegate import QGridIconDelegate
-
+import logging
+import time
 
 class QGridIconView(QAbstractItemView):
     """
@@ -187,7 +188,7 @@ class QGridIconView(QAbstractItemView):
             if not self.verticalScrollBar().isSliderDown():
                 self.viewport().update()
 
-    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex, visual_rect: QRect) -> None:
         """
         Initialize the style option for the given index.
 
@@ -196,12 +197,6 @@ class QGridIconView(QAbstractItemView):
             index (QModelIndex): The index of the item.
         """
         p_index = QPersistentModelIndex(index)
-        rect = self._item_rects.get(p_index)
-        if not rect:
-            return
-
-        scroll_y = self.verticalScrollBar().value()
-        visual_rect = rect.translated(0, -scroll_y)
 
         # Optimization: We check intersections in paintEvent loop usually,
         # but here we just set the rect. The caller (paintEvent) already checks visibility.
@@ -383,6 +378,8 @@ class QGridIconView(QAbstractItemView):
         Args:
             event (QPaintEvent): The paint event.
         """
+        start = time.perf_counter()
+
         if not self._item_rects:
             return
 
@@ -404,15 +401,18 @@ class QGridIconView(QAbstractItemView):
             if not index.isValid():
                 continue
 
-            self._init_option(option, index)
+            scroll_y = self.verticalScrollBar().value()
+            visual_rect = rect.translated(0, -scroll_y)
 
-            # Optimization: Check if item is visible in viewport before painting
-            # option.rect is already translated by scroll position in _init_option
-            visual_rect = typing.cast(QRect, option.rect)
-            if not visual_rect.intersects(visible_rect):
+            if not visible_rect.contains(visual_rect):
                 continue
 
+            logging.debug(f"Paiting {index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
+            self._init_option(option, index, visual_rect)
             self.itemDelegate(index).paint(painter, option, index)
+
+        end = time.perf_counter()
+        logging.debug(f"Finished paintEvent in {end - start:.6f} seconds.")
 
     # -------------------------------------------------------------------------
     # QAbstractItemView Implementation
@@ -423,6 +423,8 @@ class QGridIconView(QAbstractItemView):
         Recalculate the layout of item rectangles and update scrollbars.
         Assumes a flat model structure.
         """
+        start = time.perf_counter()
+
         if not self.model():
             return
 
@@ -471,6 +473,8 @@ class QGridIconView(QAbstractItemView):
         self.verticalScrollBar().setSingleStep(item_h // 2)
 
         super().updateGeometries()
+        end = time.perf_counter()
+        logging.debug(f"Finished updateGeometries in {end - start:.6f} seconds.")
 
     def visualRect(
         self, index: typing.Union[QModelIndex, QPersistentModelIndex]

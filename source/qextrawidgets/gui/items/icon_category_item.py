@@ -4,19 +4,18 @@ from PySide6.QtGui import QStandardItem, QIcon, QPixmap, Qt
 from enum import Enum
 
 
-class QEmojiCategoryItem(QStandardItem):
+class QIconCategoryItem(QStandardItem):
     """
-    A standard item representing a category of emojis in the model.
+    A standard item representing a category of icons in the model.
     """
 
-    class QEmojiCategoryDataRole(int, Enum):
+    class QIconCategoryRoles(int, Enum):
         """
         Custom data roles for the category item.
         """
+        pass
 
-        CategoryRole = Qt.ItemDataRole.UserRole + 2
-
-    def __init__(self, category: str, icon: typing.Union[QIcon, QPixmap]):
+    def __init__(self, text: str, category: str, icon: typing.Union[QIcon, QPixmap]):
         """
         Initializes the category item.
 
@@ -25,11 +24,9 @@ class QEmojiCategoryItem(QStandardItem):
             icon (typing.Union[QIcon, QPixmap]): The icon representing the category.
         """
         super().__init__()
-        self.setText(category)
+        self.setText(text)
         self.setIcon(icon)
-        self.setData(
-            category, role=QEmojiCategoryItem.QEmojiCategoryDataRole.CategoryRole
-        )
+        self.setData(category, Qt.ItemDataRole.UserRole)
         self.setEditable(False)
 
     def category(self) -> str:
@@ -39,4 +36,4 @@ class QEmojiCategoryItem(QStandardItem):
         Returns:
             str: The category name.
         """
-        return self.text()
+        return self.data(Qt.ItemDataRole.UserRole)

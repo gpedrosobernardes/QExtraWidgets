@@ -1,3 +1,5 @@
+import logging
+import time
 import typing
 
 from PySide6.QtCore import (
@@ -133,11 +135,11 @@ class QGroupedIconView(QGridIconView):
         """Check if the given index represents a child item."""
         return index.isValid() and index.parent().isValid()
 
-    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex, visual_rect: QRect) -> None:
         """
         Initialize the style option with expansion state.
         """
-        super()._init_option(option, index)
+        super()._init_option(option, index, visual_rect)
         if self._is_category(index) and self.isExpanded(index):
             state = typing.cast(QStyle.StateFlag, option.state)
             state |= QStyle.StateFlag.State_Open
@@ -203,6 +205,8 @@ class QGroupedIconView(QGridIconView):
         """
         Recalculate the layout of item rectangles and update scrollbars.
         """
+        start = time.perf_counter()
+
         if not self.model():
             return
 
@@ -261,6 +265,9 @@ class QGroupedIconView(QGridIconView):
         self.verticalScrollBar().setRange(0, scroll_range)
         self.verticalScrollBar().setPageStep(self.viewport().height())
         self.verticalScrollBar().setSingleStep(self._header_height)
+
+        end = time.perf_counter()
+        logging.debug(f"Finished updateGeometries in {end - start:.6f} seconds.")
 
         # We don't call super().updateGeometries() because we fully implemented it here for the grouped view
 

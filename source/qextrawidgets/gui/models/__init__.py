@@ -1,5 +1,5 @@
-from .emoji_picker_model import QEmojiPickerModel
+from .icon_picker_model import QIconPickerModel
 
 __all__ = [
-    "QEmojiPickerModel",
+    "QIconPickerModel",
 ]

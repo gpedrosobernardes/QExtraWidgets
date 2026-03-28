@@ -1,6 +1,6 @@
 from .check_state_proxy import QCheckStateProxyModel
 from .decoration_role_proxy import QDecorationRoleProxyModel
-from .emoji_picker_proxy import QEmojiPickerProxyModel
+from .icon_picker_proxy import QIconPickerProxyModel
 from .format_proxy import QFormatProxyModel
 from .header_proxy import QHeaderProxyModel
 from .multi_filter_proxy import QMultiFilterProxyModel
@@ -9,7 +9,7 @@ from .unique_values_proxy import QUniqueValuesProxyModel
 __all__ = [
     "QCheckStateProxyModel",
     "QDecorationRoleProxyModel",
-    "QEmojiPickerProxyModel",
+    "QIconPickerProxyModel",
     "QFormatProxyModel",
     "QHeaderProxyModel",
     "QMultiFilterProxyModel",
