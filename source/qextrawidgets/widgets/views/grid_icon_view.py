@@ -246,28 +246,22 @@ class QGridIconView(QAbstractItemView):
             return
 
         if current_model:
-            try:
-                current_model.layoutChanged.disconnect(self._on_layout_changed)
-                current_model.modelReset.disconnect(self._on_model_reset)
-                current_model.rowsInserted.disconnect(self._on_rows_inserted)
-                current_model.rowsRemoved.disconnect(self._on_rows_removed)
-                current_model.dataChanged.disconnect(self._on_data_changed)
+            current_model.layoutChanged.disconnect(self._on_layout_changed)
+            current_model.modelReset.disconnect(self._on_model_reset)
+            current_model.rowsInserted.disconnect(self._on_rows_inserted)
+            current_model.rowsRemoved.disconnect(self._on_rows_removed)
+            current_model.dataChanged.disconnect(self._on_data_changed)
 
-                current_model.layoutAboutToBeChanged.disconnect(self._clear_cache)
-                current_model.rowsAboutToBeRemoved.disconnect(self._clear_cache)
-            except Exception:
-                pass
+            current_model.layoutAboutToBeChanged.disconnect(self._clear_cache)
+            current_model.rowsAboutToBeRemoved.disconnect(self._clear_cache)
 
         # Disconnect from old selection model
         old_selection_model = self.selectionModel()
         if old_selection_model:
-            try:
-                old_selection_model.selectionChanged.disconnect(
-                    self._on_selection_changed
-                )
-                old_selection_model.currentChanged.disconnect(self._on_current_changed)
-            except Exception:
-                pass
+            old_selection_model.selectionChanged.disconnect(
+                self._on_selection_changed
+            )
+            old_selection_model.currentChanged.disconnect(self._on_current_changed)
 
         super().setModel(model)
 

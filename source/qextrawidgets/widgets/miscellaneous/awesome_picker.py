@@ -10,11 +10,11 @@ from qextrawidgets.widgets.miscellaneous.icon_picker import QIconPicker
 
 
 class QAwesomePicker(QIconPicker):
-    def __init__(self, parent = None, model: typing.Optional[QIconPickerModel] = None):
+    def __init__(self, parent = None, model: typing.Optional[QIconPickerModel] = None, icon_label_size: int = 32):
         if model is None:
             model = QIconPickerModel(QIconPickerModel.PopulateMethod.AwesomeIcons)
 
-        super().__init__(parent, model)
+        super().__init__(parent, model, icon_label_size)
 
         qtawesome._instance()
         font_maps = qtawesome._resource["iconic"].charmap
