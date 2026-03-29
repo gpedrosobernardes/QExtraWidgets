@@ -1,4 +1,5 @@
 import logging
+import time
 import typing
 
 from PySide6.QtCore import QSize, QTimer, Slot, QPoint, QPersistentModelIndex, QModelIndex, Signal
@@ -257,6 +258,8 @@ class QIconPicker(QWidget):
         Args:
             persistent_index (QPersistentModelIndex): The persistent index of the item needing an image.
         """
+        start = time.perf_counter()
+
         if not persistent_index.isValid():
             return
 
@@ -292,6 +295,9 @@ class QIconPicker(QWidget):
 
             # Set the icon (This triggers dataChanged in model -> proxy -> view)
             item.setIcon(pixmap)
+
+        end = time.perf_counter()
+        logging.debug(f"Requested image for {item.data(Qt.ItemDataRole.EditRole)} in {end - start:.6f} seconds")
 
     def _paint_emoji_on_label(self) -> None:
         """Updates the preview label with the current emoji pixmap."""

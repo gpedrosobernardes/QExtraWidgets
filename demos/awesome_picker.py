@@ -3,17 +3,14 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QSize
+from PySide6.QtCore import QSize
 from PySide6.QtWidgets import (
     QMainWindow,
     QApplication,
     QWidget,
-    QHBoxLayout, QGroupBox, QVBoxLayout, QFormLayout, QToolButton, QSpinBox, QDoubleSpinBox, QLineEdit, QLabel,
-)
+    QHBoxLayout, QGroupBox, QVBoxLayout, QFormLayout, QSpinBox, QDoubleSpinBox, QLineEdit, )
 
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from qextrawidgets.gui.items.icon_item import QIconItem
-from qextrawidgets.widgets.menus.awesome_picker_menu import QAwesomePickerMenu
 from qextrawidgets.widgets.miscellaneous.awesome_picker import QAwesomePicker
 
 

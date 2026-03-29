@@ -54,7 +54,7 @@ class QGroupedIconDelegate(QGridIconDelegate):
         self,
         painter: QPainter,
         option: QStyleOptionViewItem,
-        index: typing.Union[QModelIndex, QPersistentModelIndex],
+        index: QPersistentModelIndex,
     ) -> None:
         """
         Paint the item.
@@ -81,7 +81,7 @@ class QGroupedIconDelegate(QGridIconDelegate):
         self,
         painter: QPainter,
         option: QStyleOptionViewItem,
-        index: typing.Union[QModelIndex, QPersistentModelIndex],
+        index: QPersistentModelIndex,
     ) -> None:
         """
         Draw a category header item.

@@ -90,7 +90,7 @@ class QGridIconDelegate(QStyledItemDelegate):
         self,
         painter: QPainter,
         option: QStyleOptionViewItem,
-        index: typing.Union[QModelIndex, QPersistentModelIndex],
+        index: QPersistentModelIndex,
     ) -> None:
         """
         Paint the item.
@@ -108,7 +108,7 @@ class QGridIconDelegate(QStyledItemDelegate):
         self,
         painter: QPainter,
         option: QStyleOptionViewItem,
-        index: typing.Union[QModelIndex, QPersistentModelIndex],
+        index: QPersistentModelIndex,
     ) -> None:
         """
         Draw a child item in the grid used for lazy loading check.

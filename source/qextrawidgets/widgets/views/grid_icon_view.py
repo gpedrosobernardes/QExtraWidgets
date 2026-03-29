@@ -188,7 +188,7 @@ class QGridIconView(QAbstractItemView):
             if not self.verticalScrollBar().isSliderDown():
                 self.viewport().update()
 
-    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex, visual_rect: QRect) -> None:
+    def _init_option(self, option: QStyleOptionViewItem, index: QPersistentModelIndex, visual_rect: QRect) -> None:
         """
         Initialize the style option for the given index.
 
@@ -196,8 +196,6 @@ class QGridIconView(QAbstractItemView):
             option (QStyleOptionViewItem): The option to initialize.
             index (QModelIndex): The index of the item.
         """
-        p_index = QPersistentModelIndex(index)
-
         # Optimization: We check intersections in paintEvent loop usually,
         # but here we just set the rect. The caller (paintEvent) already checks visibility.
         setattr(option, "rect", visual_rect)
@@ -210,7 +208,7 @@ class QGridIconView(QAbstractItemView):
         if self.selectionModel().isSelected(index):
             state |= QStyle.StateFlag.State_Selected
 
-        if p_index == self._hover_index:
+        if index == self._hover_index:
             state |= QStyle.StateFlag.State_MouseOver
 
         setattr(option, "state", state)
@@ -382,28 +380,28 @@ class QGridIconView(QAbstractItemView):
         option.initFrom(self)
         setattr(option, "widget", self)
 
+        vertical_scroll_bar = self.verticalScrollBar()
+
         viewport_rect = self.viewport().rect()
         # Use singleStep * 2 as a reasonable buffer based on scroll speed/granularity
-        preload_margin = self.verticalScrollBar().singleStep() * 2
+        preload_margin = vertical_scroll_bar.singleStep() * 2
         visible_rect = viewport_rect.adjusted(0, -preload_margin, 0, preload_margin)
 
+        item_delegate = self.itemDelegate()
+
         for p_index, rect in self._item_rects.items():
-            if not p_index.isValid():
-                continue
-
-            index = self._persistent_to_index(p_index)
-            if not index.isValid():
-                continue
-
-            scroll_y = self.verticalScrollBar().value()
+            scroll_y = vertical_scroll_bar.value()
             visual_rect = rect.translated(0, -scroll_y)
 
             if not visible_rect.contains(visual_rect):
                 continue
 
-            logging.debug(f"Paiting {index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
-            self._init_option(option, index, visual_rect)
-            self.itemDelegate(index).paint(painter, option, index)
+            if not p_index.isValid():
+                continue
+
+            logging.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
+            self._init_option(option, p_index, visual_rect)
+            item_delegate.paint(painter, option, p_index)
 
         end = time.perf_counter()
         logging.debug(f"Finished paintEvent in {end - start:.6f} seconds.")

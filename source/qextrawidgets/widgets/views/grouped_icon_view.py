@@ -84,22 +84,16 @@ class QGroupedIconView(QGridIconView):
         """
         return self._header_height
 
-    def isExpanded(self, index: QModelIndex) -> bool:
+    def isExpanded(self, index: QPersistentModelIndex) -> bool:
         """Return True if the category at index is expanded."""
-        if not index.isValid():
-            return False
-        return QPersistentModelIndex(index) in self._expanded_items
+        return index in self._expanded_items
 
-    def setExpanded(self, index: QModelIndex, expanded: bool) -> None:
+    def setExpanded(self, index: QPersistentModelIndex, expanded: bool) -> None:
         """Set the expansion state of the category at index."""
-        if not index.isValid():
-            return
-
-        p_index = QPersistentModelIndex(index)
         if expanded:
-            self._expanded_items.add(p_index)
+            self._expanded_items.add(index)
         else:
-            self._expanded_items.discard(p_index)
+            self._expanded_items.discard(index)
 
         self._schedule_layout()
 
@@ -128,19 +122,15 @@ class QGroupedIconView(QGridIconView):
         index: typing.Union[QModelIndex, QPersistentModelIndex]
     ) -> bool:
         """Check if the given index represents a category (header)."""
-        return index.isValid() and not index.parent().isValid()
+        return not index.parent().isValid()
 
-    @staticmethod
-    def _is_item(index: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
-        """Check if the given index represents a child item."""
-        return index.isValid() and index.parent().isValid()
-
-    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex, visual_rect: QRect) -> None:
+    def _init_option(self, option: QStyleOptionViewItem, index: QPersistentModelIndex, visual_rect: QRect) -> None:
         """
         Initialize the style option with expansion state.
         """
         super()._init_option(option, index, visual_rect)
-        if self._is_category(index) and self.isExpanded(index):
+
+        if self.isExpanded(index):
             state = typing.cast(QStyle.StateFlag, option.state)
             state |= QStyle.StateFlag.State_Open
             setattr(option, "state", state)
@@ -183,17 +173,13 @@ class QGroupedIconView(QGridIconView):
             return
 
         index = self.indexAt(event.position().toPoint())
+        persistent_index = QPersistentModelIndex(index)
 
-        if index.isValid() and event.button() == Qt.MouseButton.LeftButton:
-            if self._is_category(index):
-                self.setExpanded(index, not self.isExpanded(index))
+        if persistent_index.isValid() and event.button() == Qt.MouseButton.LeftButton:
+            if self._is_category(persistent_index):
+                self.setExpanded(persistent_index, not self.isExpanded(persistent_index))
                 event.accept()
                 return
-            elif self._is_item(index):
-                # The base class emits itemClicked, but we also want to handle it here explicitly if needed.
-                # Actually base class handles itemClicked emission.
-                # But we just return if handled category.
-                pass
 
         super().mousePressEvent(event)
 
@@ -206,43 +192,47 @@ class QGroupedIconView(QGridIconView):
         Recalculate the layout of item rectangles and update scrollbars.
         """
         start = time.perf_counter()
+        model = self.model()
 
-        if not self.model():
+        if not model:
             return
 
         self._item_rects.clear()
         width = self.viewport().width()
         y = 0
 
-        item_w = self.iconSize().width()
-        item_h = self.iconSize().height()
+        icon_size = self.iconSize()
+        item_w = icon_size.width()
+        item_h = icon_size.height()
 
         effective_width = width - (2 * self._margin)
         cols = max(1, effective_width // (item_w + self._margin))
         root = self.rootIndex()
 
-        row_count = self.model().rowCount(root)
+        row_count = model.rowCount(root)
 
         for r in range(row_count):
-            cat_index = self.model().index(r, 0, root)
+            cat_index = model.index(r, 0, root)
             if not cat_index.isValid():
                 continue
 
-            is_expanded = self.isExpanded(cat_index)
+            cat_persistent_index = QPersistentModelIndex(cat_index)
 
-            self._item_rects[QPersistentModelIndex(cat_index)] = QRect(
+            is_expanded = self.isExpanded(cat_persistent_index)
+
+            self._item_rects[cat_persistent_index] = QRect(
                 0, y, width, self._header_height
             )
             y += self._header_height
 
             if is_expanded:
-                child_count = self.model().rowCount(cat_index)
+                child_count = model.rowCount(cat_index)
                 if child_count > 0:
                     y += self._margin
                     col_current = 0
 
                     for c_row in range(child_count):
-                        child = self.model().index(c_row, 0, cat_index)
+                        child = model.index(c_row, 0, cat_index)
                         if not child.isValid():
                             continue
 
@@ -262,9 +252,11 @@ class QGroupedIconView(QGridIconView):
         content_height = y
         scroll_range = max(0, content_height - self.viewport().height())
 
-        self.verticalScrollBar().setRange(0, scroll_range)
-        self.verticalScrollBar().setPageStep(self.viewport().height())
-        self.verticalScrollBar().setSingleStep(self._header_height)
+        vertical_scroll_bar = self.verticalScrollBar()
+
+        vertical_scroll_bar.setRange(0, scroll_range)
+        vertical_scroll_bar.setPageStep(self.viewport().height())
+        vertical_scroll_bar.setSingleStep(self._header_height)
 
         end = time.perf_counter()
         logging.debug(f"Finished updateGeometries in {end - start:.6f} seconds.")
@@ -311,4 +303,4 @@ class QGroupedIconView(QGridIconView):
             return False
 
         # Check if parent category is expanded
-        return not self.isExpanded(index.parent())
+        return not self.isExpanded(QPersistentModelIndex(index.parent()))
