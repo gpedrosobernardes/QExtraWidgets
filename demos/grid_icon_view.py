@@ -1,5 +1,9 @@
+from datetime import datetime
+import logging
 import sys
 import random
+from pathlib import Path
+
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -199,7 +203,7 @@ class DemoWindow(QMainWindow):
             "#607d8b",
         ]
 
-        for i in range(50):
+        for i in range(1000):
             color_hex = palette[i % len(palette)]
             base_color = QColor(color_hex)
 
@@ -262,6 +266,20 @@ class DemoWindow(QMainWindow):
 
 
 if __name__ == "__main__":
+    logs_folder = Path("../logs")
+    logs_folder.mkdir(parents=True, exist_ok=True)
+
+    file_name = datetime.now().strftime("../logs/log_%Y-%m-%d.log")
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(file_name, encoding='utf-8'),
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+
     app = QApplication(sys.argv)
     window = DemoWindow()
     window.show()

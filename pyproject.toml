@@ -28,7 +28,7 @@ classifiers = [
     "Topic :: Desktop Environment",
 ]
 dependencies = [
-    "PySide6>=6.10.2",
+    "PySide6>=6.11.0",
     "twemoji-api>=2.0.0",
     "emoji-data-python==1.6.0",
     "qtawesome==1.4.1"

@@ -108,14 +108,8 @@ if __name__ == "__main__":
 
     file_name = datetime.now().strftime("../logs/log_%Y-%m-%d.log")
 
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler(file_name, encoding='utf-8'),
-            logging.StreamHandler(sys.stdout)
-        ]
-    )
+    # logger = logging.getLogger(f"qextrawidgets.widgets.views.grouped_icon_view.QGroupedIconView.indexAt")
+    # logger.setLevel(logging.DEBUG)
 
     app = QApplication(sys.argv)
     window = MainWindow()

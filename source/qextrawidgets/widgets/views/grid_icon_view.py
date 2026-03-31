@@ -50,6 +50,7 @@ class QGridIconView(QAbstractItemView):
 
         # Cache using Persistent Indices
         self._item_rects: dict[QPersistentModelIndex, QRect] = {}
+        self._item_indexes: dict[int, dict[int, typing.Tuple[QPersistentModelIndex, QRect]]] = {}
 
         self._hidden_rows: typing.List[int] = []
 
@@ -147,16 +148,6 @@ class QGridIconView(QAbstractItemView):
     # Internal Logic Helpers
     # -------------------------------------------------------------------------
 
-    @staticmethod
-    def _persistent_to_index(persistent: QPersistentModelIndex) -> QModelIndex:
-        """Helper to convert QPersistentModelIndex to QModelIndex (workaround for PySide6)."""
-        if not persistent.isValid():
-            return QModelIndex()
-        model = persistent.model()
-        if not model:
-            return QModelIndex()
-        return model.index(persistent.row(), persistent.column(), persistent.parent())
-
     @Slot()
     def _on_scroll_value_changed(self) -> None:
         self._recalculate_hover()
@@ -178,12 +169,12 @@ class QGridIconView(QAbstractItemView):
 
         if new_persistent != self._hover_index:
             if self._hover_index.isValid():
-                self.itemExited.emit(self._persistent_to_index(self._hover_index))
+                self.itemExited.emit(QPersistentModelIndex(self._hover_index))
 
             self._hover_index = new_persistent
 
             if self._hover_index.isValid():
-                self.itemEntered.emit(self._persistent_to_index(self._hover_index))
+                self.itemEntered.emit(QPersistentModelIndex(self._hover_index))
 
             if not self.verticalScrollBar().isSliderDown():
                 self.viewport().update()
@@ -213,6 +204,61 @@ class QGridIconView(QAbstractItemView):
 
         setattr(option, "state", state)
 
+    def _get_coordinates_at(self, point: QPoint) -> typing.Tuple[int, int]:
+        logging.debug(f"Looking for index at {point}")
+        item_w = self.iconSize().width()
+        item_h = self.iconSize().height()
+
+        col = point.x() // (item_w + self._margin)
+        row = point.y() // (item_h + self._margin)
+        return row, col
+
+    def _rows(self, parent_index: QModelIndex) -> typing.Generator[QPersistentModelIndex]:
+        row_count = self.model().rowCount(parent_index)
+        for r in range(row_count):
+            index = self.model().index(r, 0, parent_index)
+            if index.isValid() and not self.isRowHidden(r):
+                yield QPersistentModelIndex(index)
+
+    def _visible_items(self) -> typing.Generator[typing.Tuple[QPersistentModelIndex, QRect]]:
+        viewport_rect = self.viewport().rect()
+        viewport_rect.translate(QPoint(0, self.verticalScrollBar().value()))
+
+        first_row, _ = self._get_coordinates_at(viewport_rect.topLeft())
+        last_row, _ = self._get_coordinates_at(viewport_rect.bottomRight())
+
+        for i in range(first_row, last_row + 1):
+            columns_values = self._item_indexes.get(i)
+            if columns_values:
+                yield from columns_values.values()
+
+    def _populate_grid_caches(self, row: int, persistent_index: QPersistentModelIndex, grid: dict, y_offset: int = 0) -> None:
+        icon_size = self.iconSize()
+
+        item_w = icon_size.width()
+        item_h = icon_size.height()
+
+        cols = self.virtualColumns()
+
+        col_current = row % cols
+        virtual_row = row // cols
+
+        px = self._margin + (col_current * (item_w + self._margin))
+        y = self._calculate_rows_height(virtual_row)
+
+        rect = QRect(px, y + y_offset, item_w, item_h)
+        self._item_rects[persistent_index] = rect
+
+        if virtual_row not in grid:
+            grid[virtual_row] = {}
+
+        grid[virtual_row][col_current] = (persistent_index, rect)
+
+    def _calculate_rows_height(self, rows: int):
+        icon_size = self.iconSize()
+        item_h = icon_size.height()
+        return self._margin + ((item_h + self._margin) * rows)
+
     # -------------------------------------------------------------------------
     # Layout Scheduling & Cache Management
     # -------------------------------------------------------------------------
@@ -227,6 +273,7 @@ class QGridIconView(QAbstractItemView):
 
     def _clear_cache(self, *args) -> None:
         self._item_rects.clear()
+        self._item_indexes.clear()
         self._hover_index = QPersistentModelIndex()
         self.viewport().update()
 
@@ -357,7 +404,7 @@ class QGridIconView(QAbstractItemView):
             event (QEvent): The leave event.
         """
         if self._hover_index.isValid():
-            self.itemExited.emit(self._persistent_to_index(self._hover_index))
+            self.itemExited.emit(QPersistentModelIndex(self._hover_index))
         self._hover_index = QPersistentModelIndex()
         self.viewport().update()
         super().leaveEvent(event)
@@ -370,6 +417,8 @@ class QGridIconView(QAbstractItemView):
         Args:
             event (QPaintEvent): The paint event.
         """
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.paintEvent")
+
         start = time.perf_counter()
 
         if not self._item_rects:
@@ -381,92 +430,67 @@ class QGridIconView(QAbstractItemView):
         setattr(option, "widget", self)
 
         vertical_scroll_bar = self.verticalScrollBar()
-
-        viewport_rect = self.viewport().rect()
-        # Use singleStep * 2 as a reasonable buffer based on scroll speed/granularity
-        preload_margin = vertical_scroll_bar.singleStep() * 2
-        visible_rect = viewport_rect.adjusted(0, -preload_margin, 0, preload_margin)
+        scroll_y = vertical_scroll_bar.value()
 
         item_delegate = self.itemDelegate()
 
-        for p_index, rect in self._item_rects.items():
-            scroll_y = vertical_scroll_bar.value()
+        for p_index, rect in self._visible_items():
             visual_rect = rect.translated(0, -scroll_y)
 
-            if not visible_rect.contains(visual_rect):
-                continue
-
-            if not p_index.isValid():
-                continue
-
-            logging.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
+            logger.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
             self._init_option(option, p_index, visual_rect)
             item_delegate.paint(painter, option, p_index)
 
         end = time.perf_counter()
-        logging.debug(f"Finished paintEvent in {end - start:.6f} seconds.")
+        logger.debug(f"Finished paintEvent in {end - start:.6f} seconds.")
 
     # -------------------------------------------------------------------------
     # QAbstractItemView Implementation
     # -------------------------------------------------------------------------
+
+    def virtualColumns(self) -> int:
+        width = self.viewport().width()
+        item_w = self.iconSize().width()
+        effective_width = width - (2 * self._margin)
+        return max(1, effective_width // (item_w + self._margin))
 
     def updateGeometries(self) -> None:
         """
         Recalculate the layout of item rectangles and update scrollbars.
         Assumes a flat model structure.
         """
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.updateGeometries")
+
         start = time.perf_counter()
 
         if not self.model():
             return
 
+        icon_size = self.iconSize()
+        item_h = icon_size.height()
+
         self._item_rects.clear()
-        width = self.viewport().width()
+        self._item_indexes.clear()
 
-        item_w = self.iconSize().width()
-        item_h = self.iconSize().height()
+        rows = list(self._rows(self.rootIndex()))
 
-        effective_width = width - (2 * self._margin)
-        cols = max(1, effective_width // (item_w + self._margin))
-        root = self.rootIndex()
+        for row, persistent_index in enumerate(rows):
+            self._populate_grid_caches(row, persistent_index, self._item_indexes)
 
-        row_count = self.model().rowCount(root)
+        rows_count = max(self._item_indexes.keys()) + 1
+        content_height = self._calculate_rows_height(rows_count)
 
-        col_current = 0
-        y = self._margin
-
-        for r in range(row_count):
-            index = self.model().index(r, 0, root)
-            if not index.isValid():
-                continue
-
-            if self.isRowHidden(r):
-                continue
-
-            px = self._margin + (col_current * (item_w + self._margin))
-            self._item_rects[QPersistentModelIndex(index)] = QRect(
-                px, y, item_w, item_h
-            )
-
-            col_current += 1
-            if col_current >= cols:
-                col_current = 0
-                y += item_h + self._margin
-
-        if col_current != 0:
-            y += item_h + self._margin
-
-        content_height = y
         scroll_range = max(0, content_height - self.viewport().height())
 
-        self.verticalScrollBar().setRange(0, scroll_range)
-        self.verticalScrollBar().setPageStep(self.viewport().height())
-        # Set a reasonable single step, maybe icon height or a fraction of it
-        self.verticalScrollBar().setSingleStep(item_h // 2)
+        vertical_scroll_bar = self.verticalScrollBar()
+
+        vertical_scroll_bar.setRange(0, scroll_range)
+        vertical_scroll_bar.setPageStep(self.viewport().height())
+        vertical_scroll_bar.setSingleStep(item_h // 2)
 
         super().updateGeometries()
         end = time.perf_counter()
-        logging.debug(f"Finished updateGeometries in {end - start:.6f} seconds.")
+        logger.debug(f"Finished updateGeometries in {end - start:.6f} seconds.")
 
     def visualRect(
         self, index: typing.Union[QModelIndex, QPersistentModelIndex]
@@ -496,14 +520,24 @@ class QGridIconView(QAbstractItemView):
         Returns:
             QModelIndex: The index at the given point, or valid if not found.
         """
-        if not self._item_rects:
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.indexAt")
+
+        point.setY(point.y() + self.verticalScrollBar().value())
+        row, col = self._get_coordinates_at(point)
+        logger.debug(f"Looking for index at {row}, {col}")
+
+        cols_p_index = self._item_indexes.get(row)
+        if not cols_p_index:
             return QModelIndex()
 
-        real_point = point + QPoint(0, self.verticalScrollBar().value())
-        for p_index, rect in self._item_rects.items():
-            if rect.contains(real_point):
-                return self._persistent_to_index(p_index)
+        result = cols_p_index.get(col)
+        if result:
+            p_index, _ = result
+            logger.debug(f"Found index {p_index}")
+            return QModelIndex(p_index)
+
         return QModelIndex()
+
 
     def scrollTo(
         self,
@@ -589,7 +623,7 @@ class QGridIconView(QAbstractItemView):
                 continue
 
             if item_rect.intersects(logical_rect):
-                index = self._persistent_to_index(p_index)
+                index = QPersistentModelIndex(p_index)
                 if index.isValid():
                     selection.select(index, index)
 
