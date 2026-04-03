@@ -26,8 +26,8 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ### Items
 
-::: qextrawidgets.gui.items.emoji_category_item
-::: qextrawidgets.gui.items.emoji_item
+::: qextrawidgets.gui.items.icon_category_item
+::: qextrawidgets.gui.items.icon_item
 
 ### Models
 
@@ -84,6 +84,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 ::: qextrawidgets.widgets.miscellaneous.accordion.accordion_header
 ::: qextrawidgets.widgets.miscellaneous.accordion.accordion_item
 ::: qextrawidgets.widgets.miscellaneous.accordion.accordion
+::: qextrawidgets.widgets.miscellaneous.awesome_picker
 ::: qextrawidgets.widgets.miscellaneous.dual_list
 ::: qextrawidgets.widgets.miscellaneous.emoji_picker
 ::: qextrawidgets.widgets.miscellaneous.icon_picker
