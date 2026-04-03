@@ -11,8 +11,17 @@ from qextrawidgets.widgets.miscellaneous.icon_picker import QIconPicker
 
 class QAwesomePicker(QIconPicker):
     def __init__(self, parent = None, model: typing.Optional[QIconPickerModel] = None, icon_label_size: int = 32):
+        """
+        Initialize the QAwesomePicker class.
+        Fill the color selector with a bunch of color options of a random icon.
+
+        Args:
+            parent (QWidget, optional): The parent widget.
+            model (QIconPickerModel, optional): The QIconPickerModel instance. Uses a populated QIconPickerModel with QtAwesome icons if None.
+            icon_label_size (int, optional): The size of the icon label. Defaults to 32.
+        """
         if model is None:
-            model = QIconPickerModel(QIconPickerModel.PopulateMethod.AwesomeIcons)
+            model = QIconPickerModel(QIconPickerModel.PopulateSource.AwesomeIcons)
 
         super().__init__(parent, model, icon_label_size)
 
@@ -46,6 +55,7 @@ class QAwesomePicker(QIconPicker):
             self.addColorOption(qtawesome.icon(random_icon, color=color), color)
 
     def iconPixmapGetter(self) -> typing.Callable[[QIconItem], QPixmap]:
+        """Define the icon getter that returns the icon pixmap from QtAwesome."""
         view = self.view()
         def getter(item: QIconItem) -> QPixmap:
             name = item.data(Qt.ItemDataRole.EditRole)

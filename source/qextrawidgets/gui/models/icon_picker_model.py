@@ -44,7 +44,7 @@ class QIconPickerModel(QStandardItemModel):
         Flags = QT_TRANSLATE_NOOP("EmojiCategory", "Flags")
 
 
-    class PopulateMethod(int, Enum):
+    class PopulateSource(int, Enum):
         Emojis = auto()
         AwesomeIcons = auto()
 
@@ -54,7 +54,7 @@ class QIconPickerModel(QStandardItemModel):
     iconRemoved = Signal(QIconCategoryItem, QIconItem)
     colorChanged = Signal(QModelIndex)
 
-    def __init__(self, populate_method: typing.Optional[QIconPickerModel.PopulateMethod] = None):
+    def __init__(self, populate_method: typing.Optional[QIconPickerModel.PopulateSource] = None):
         """
         Initialize the QIconPickerModel.
         """
@@ -122,18 +122,41 @@ class QIconPickerModel(QStandardItemModel):
                 self.categoryInserted.emit(item)
 
     def populate(self,
-                 method: QIconPickerModel.PopulateMethod,
+                 source: QIconPickerModel.PopulateSource,
                  recent_category: bool = True,
                  favorite_category: bool = True,
-                 ignored_categories: typing.Optional[typing.List[str]] = None):
+                 ignored_categories: typing.Optional[typing.List[str]] = None) -> None:
+        """
+        Populates the model with the specified method and base categories if required.
+
+        Args:
+            source: Source used to populate the model.
+            recent_category: Append recent categories if True.
+            favorite_category: Append favorite categories if True.
+            ignored_categories: Categories to ignore.
+
+        Returns:
+            None
+        """
         self.populate_base_categories(recent_category, favorite_category)
 
-        if method == QIconPickerModel.PopulateMethod.Emojis:
+        if source == QIconPickerModel.PopulateSource.Emojis:
             self.populate_with_emoji_icons(ignored_categories)
-        elif method == QIconPickerModel.PopulateMethod.AwesomeIcons:
+        elif source == QIconPickerModel.PopulateSource.AwesomeIcons:
             self.populate_with_awesome_icons(ignored_categories)
 
-    def populate_base_categories(self, recent_category: bool = True, favorite_category: bool = True):
+    def populate_base_categories(self, recent_category: bool = True, favorite_category: bool = True) -> None:
+        """
+        Populate the base categories, recent and favorite categories.
+
+        Args:
+            recent_category: Append recent categories if True.
+            favorite_category: Append favorite categories if True.
+
+        Returns:
+            None
+        """
+
         if recent_category:
             icon = QThemeResponsiveIcon.fromAwesome(
                 "fa6s.clock-rotate-left", options=[{"scale_factor": 0.9}]
@@ -145,7 +168,17 @@ class QIconPickerModel(QStandardItemModel):
             )
             self.addCategory(QIconPickerModel.BaseCategory.Favorites, QIconPickerModel.BaseCategory.Favorites, icon)
 
-    def populate_with_awesome_icons(self, ignored_categories: typing.Optional[typing.List[str]] = None):
+    # noinspection PyProtectedMember
+    def populate_with_awesome_icons(self, ignored_categories: typing.Optional[typing.List[str]] = None) -> None:
+        """
+        Populates the model with icons from 'qtawesome' package.
+
+        Args:
+            ignored_categories: Categories to ignore.
+
+        Returns:
+            None
+        """
         qtawesome._instance()
         font_maps = qtawesome._resource["iconic"].charmap
         font_names = qtawesome._resource["iconic"].fontname
@@ -398,7 +431,17 @@ class QIconPickerModel(QStandardItemModel):
 
         return True
 
-    def setColorModifier(self, color_modifier: str):
+    def setColorModifier(self, color_modifier: str) -> None:
+        """
+        Applies a color modifier to each QIconItem in the model. Emits the color modifier role.
+
+        Args:
+            color_modifier: The color modifier to apply.
+
+        Returns:
+            None
+        """
+
         start = time.perf_counter()
 
         for row in range(self.rowCount()):

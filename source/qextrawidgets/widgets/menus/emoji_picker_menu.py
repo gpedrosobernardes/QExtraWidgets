@@ -13,7 +13,7 @@ class QEmojiPickerMenu(QMenu):
     """A menu that displays a QEmojiPicker.
 
     Signals:
-        picked (str): Emitted when an emoji is selected.
+        picked (QIconItem): Emitted when an emoji is selected.
     """
 
     picked = Signal(QIconItem)
@@ -23,15 +23,15 @@ class QEmojiPickerMenu(QMenu):
             parent: typing.Optional[QWidget] = None,
             model: typing.Optional[QIconPickerModel] = None,
             icon_label_size: int = 32,
-            icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap] = None) -> None:
+            icon_pixmap_getter: typing.Optional[typing.Callable[[QIconItem], QPixmap]] = None) -> None:
         """Initialize the emoji picker menu.
 
         Args:
             parent (QWidget, optional): The parent widget.
             model (QEmojiPickerModel, optional): Custom emoji model. Defaults to None.
-            emoji_pixmap_getter (Union[str, QFont, Callable[[str], QPixmap]], optional):
-                Method or font to generate emoji pixmaps. Defaults to EmojiImageProvider.getPixmap.
-            emoji_label_size (QSize, optional): Size of the preview emoji label. Defaults to QSize(32, 32).
+            icon_label_size (int): Size of the preview emoji label. Defaults to 32.
+            icon_pixmap_getter (QIconItem[[str], QPixmap], optional):
+                Method to generate emoji pixmaps. Defaults to EmojiImageProvider.getPixmap.
         """
         super().__init__(parent)
         self._picker = QEmojiPicker(parent, model, icon_label_size, icon_pixmap_getter)

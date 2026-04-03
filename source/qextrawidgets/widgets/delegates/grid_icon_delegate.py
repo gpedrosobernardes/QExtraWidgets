@@ -156,17 +156,15 @@ class QGridIconDelegate(QStyledItemDelegate):
         # If no valid data is found, trigger the signal
         is_data_valid = False
         if item_data is not None:
-            if isinstance(item_data, QIcon) and not item_data.isNull():
-                is_data_valid = True
-            elif isinstance(item_data, (QPixmap, QImage)) and not item_data.isNull():
+            if isinstance(item_data, (QIcon, QPixmap, QImage)) and not item_data.isNull():
                 is_data_valid = True
 
         # Check if we already requested this index to avoid spamming the signal in the paint loop
         p_index = QPersistentModelIndex(index)
         if p_index not in self._requested_indices:
             self._requested_indices.add(p_index)
-            # Emit asynchronously to not block painting
-            QTimer.singleShot(0, lambda: self.requestImage.emit(p_index))
+            self.requestImage.emit(p_index)
+            is_data_valid = False
 
         if not is_data_valid:
             # Optional: Draw a placeholder (e.g., a simple loading circle or gray box)

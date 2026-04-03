@@ -18,7 +18,7 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
-        self.setWindowTitle("QEmojiPicker Demo")
+        self.setWindowTitle("QAwesomePicker Demo")
         self.resize(800, 600)
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
 
@@ -35,16 +35,18 @@ class MainWindow(QMainWindow):
 
         self.icon_size_spin = QSpinBox()
         self.icon_size_spin.setRange(16, 128)
+        self.icon_size_spin.setSingleStep(5)
         self.icon_size_spin.setValue(emoji_picker_view.iconSize().width())
 
         self.icon_margin_spin = QDoubleSpinBox()
         self.icon_margin_spin.setRange(0.10, 0.50)
-        self.icon_margin_spin.setSingleStep(0.01)
+        self.icon_margin_spin.setSingleStep(0.05)
         self.icon_margin_spin.setDecimals(2)
         self.icon_margin_spin.setValue(emoji_picker_delegate.itemInternalMargin())
 
         self.grid_spacing_spin = QSpinBox()
         self.grid_spacing_spin.setRange(0, 50)
+        self.grid_spacing_spin.setSingleStep(5)
         self.grid_spacing_spin.setValue(emoji_picker_view.margin())
 
         # Input Widgets

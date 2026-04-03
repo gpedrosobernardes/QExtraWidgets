@@ -9,10 +9,10 @@ from qextrawidgets.widgets.miscellaneous.awesome_picker import QAwesomePicker
 
 
 class QAwesomePickerMenu(QMenu):
-    """A menu that displays a QEmojiPicker.
+    """A menu that displays a QAwesomePicker.
 
     Signals:
-        picked (str): Emitted when an emoji is selected.
+        picked (QIconItem): Emitted when an icon is selected.
     """
 
     picked = Signal(QIconItem)
@@ -22,14 +22,12 @@ class QAwesomePickerMenu(QMenu):
             parent: typing.Optional[QWidget] = None,
             model: typing.Optional[QIconPickerModel] = None,
             icon_label_size: int = 32) -> None:
-        """Initialize the emoji picker menu.
+        """Initialize the qt awesome icon picker menu.
 
         Args:
             parent (QWidget, optional): The parent widget.
-            model (QEmojiPickerModel, optional): Custom emoji model. Defaults to None.
-            emoji_pixmap_getter (Union[str, QFont, Callable[[str], QPixmap]], optional):
-                Method or font to generate emoji pixmaps. Defaults to EmojiImageProvider.getPixmap.
-            emoji_label_size (QSize, optional): Size of the preview emoji label. Defaults to QSize(32, 32).
+            model (QIconPickerModel, optional): Different icon model. Defaults to None.
+            icon_label_size (int): Size of the preview icon label. Defaults to 32.
         """
         super().__init__(parent)
         self._picker = QAwesomePicker(parent, model, icon_label_size)
@@ -40,10 +38,10 @@ class QAwesomePickerMenu(QMenu):
         self.addAction(action)
 
     def picker(self) -> QAwesomePicker:
-        """Returns the internal emoji picker widget.
+        """Returns the internal qt awesome picker widget.
 
         Returns:
-            QAwesomePickerMenu: The emoji picker widget.
+            QAwesomePickerMenu: The qt awesome picker widget.
         """
         return self._picker
 
@@ -51,7 +49,7 @@ class QAwesomePickerMenu(QMenu):
         """Handles the emoji picked signal.
 
         Args:
-            item (QIconItem): The picked emoji item.
+            item (QIconItem): The picked icon item.
         """
         self.picked.emit(item)
         self.close()

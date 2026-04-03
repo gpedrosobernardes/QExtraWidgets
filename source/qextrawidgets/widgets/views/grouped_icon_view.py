@@ -137,6 +137,7 @@ class QGroupedIconView(QGridIconView):
             setattr(option, "state", state)
 
     def _clear_cache(self, *args) -> None:
+        """Clear geometries cache."""
         super()._clear_cache(*args)
         # Clean up invalid persistent indices from expansion set
         self._expanded_items = {pi for pi in self._expanded_items if pi.isValid()}
@@ -154,10 +155,18 @@ class QGroupedIconView(QGridIconView):
         self._expanded_items.clear()
 
     def _on_model_reset(self) -> None:
+        """Handle model reset to visual updates."""
         self._expanded_items.clear()
         super()._on_model_reset()
 
     def _visible_items(self) -> typing.Generator[typing.Tuple[QPersistentModelIndex, QRect]]:
+        """
+        Generates visible items in the viewport.
+        Uses viewport edges coordinates to get respective row and get visible items.
+
+        Returns:
+            typing.Generator[typing.Tuple[QPersistentModelIndex, QRect]]: Generator of index and rect for visible items.
+        """
         logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}._visible_items")
 
         viewport_rect = self.viewport().rect()
@@ -168,7 +177,7 @@ class QGroupedIconView(QGridIconView):
             category_rect = self._item_rects[category_index]
             # logger.debug(f"Category {category_index.data(Qt.ItemDataRole.EditRole)} rect: {category_rect}")
 
-            if viewport_rect.contains(category_rect):
+            if viewport_rect.intersects(category_rect):
                 yield category_index, category_rect
 
             if self.isExpanded(category_index) and grid:

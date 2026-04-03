@@ -4,8 +4,7 @@ import typing
 from enum import Enum
 from functools import lru_cache
 
-import qtawesome
-from PySide6.QtGui import QPixmap, QColorConstants, Qt, QColor, QFont, QIcon
+from PySide6.QtGui import QPixmap, Qt, QFont, QIcon
 from emoji_data_python import EmojiChar, emoji_data
 
 from qextrawidgets.core.utils import QTwemojiImageProvider, QIconGenerator
@@ -56,6 +55,15 @@ def _find_emoji_by_char(char: str) -> typing.Optional[EmojiChar]:
     return next((e for e in emoji_data if e.char == char), None)
 
 def support_skin_tones(char: EmojiChar) -> bool:
+    """
+    Checks if the specified EmojiChar supports skin tones.
+
+    Args:
+        char: The EmojiChar instance to check.
+
+    Returns:
+        If it supports skin tones, returns True.
+    """
     if char.skin_variations:
         return all(skin_tone in char.skin_variations for skin_tone in EmojiSkinTone if skin_tone != "")
 
@@ -68,8 +76,17 @@ class QEmojiPicker(QIconPicker):
                  model: typing.Optional[QIconPickerModel] = None,
                  icon_label_size: int = 32,
                  icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap] = None):
+        """
+        Initialize the QEmojiPicker class.
+        Fill the color selector with a random emoji with all the skin tones supported.
+
+        Args:
+            parent (QWidget, optional): The parent widget.
+            model (QIconPickerModel, optional): The QIconPickerModel instance. Uses a populated QIconPickerModel with emojis if None.
+            icon_label_size (int, optional): The size of the emoji label. Defaults to 32.
+        """
         if model is None:
-            model = QIconPickerModel(QIconPickerModel.PopulateMethod.Emojis)
+            model = QIconPickerModel(QIconPickerModel.PopulateSource.Emojis)
 
         if icon_pixmap_getter is None:
             icon_pixmap_getter = self.emojiPixmapGetter
@@ -86,6 +103,15 @@ class QEmojiPicker(QIconPicker):
             self.addColorOption(QIcon(self.iconPixmapGetter()(icon_item)), color_modifier)
 
     def emojiPixmapGetter(self, icon: QIconItem) -> QPixmap:
+        """
+        Helper emoji pixmap getter based on read emoji icons from local source.
+
+        Args:
+            icon: The QIconItem instance which have the emoji.
+
+        Returns:
+            Emoji pixmap getter function.
+        """
         emoji = self.resolveEmojiColorByIcon(icon)
         if emoji is None:
             return QPixmap()
@@ -93,6 +119,16 @@ class QEmojiPicker(QIconPicker):
         return QTwemojiImageProvider.getPixmap(emoji, 0, self.view().iconSize().height())
 
     def fontEmojiPixmapGetter(self, font: typing.Union[str, QFont], icon: QIconItem) -> QPixmap:
+        """
+        Helper emoji pixmap getter based on extract emoji icons from specified font.
+
+        Args:
+            font: The source emoji font.
+            icon: The QIconItem instance which have the emoji.
+
+        Returns:
+            Emoji pixmap getter function.
+        """
         if isinstance(font, QFont):
             emoji_font = font
         else:
@@ -105,9 +141,28 @@ class QEmojiPicker(QIconPicker):
         return QIconGenerator.charToPixmap(emoji, self.view().iconSize(), emoji_font)
 
     def resolveEmojiColorByIcon(self, icon: QIconItem) -> str:
+        """
+        Apply the skin tone color to the current emoji of the icon.
+
+        Args:
+            icon: The QIconItem instance.
+
+        Returns:
+            The colored emoji.
+        """
         return self.resolveEmojiColor(icon.data(Qt.ItemDataRole.EditRole), icon.data(QIconItem.QIconItemDataRole.ColorModifierRole))
 
     def resolveEmojiColor(self, emoji: str, color_modifier: str) -> str:
+        """
+        Apply the skin tone color to an emoji.
+
+        Args:
+            emoji: Emoji string.
+            color_modifier: Emoji skin tone.
+
+        Returns:
+            The colored emoji.
+        """
         emoji_char = _find_emoji_by_char(emoji)
         if emoji_char is None:
             return ""

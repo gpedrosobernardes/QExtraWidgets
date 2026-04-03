@@ -55,14 +55,26 @@ class QIconPicker(QWidget):
         else:
             self.setIconPixmapGetter(icon_pixmap_getter)
 
-    def _init_models(self, model):
+    def _init_models(self, model: typing.Optional[QIconPickerModel]):
+        """
+        Initialize the icon picker model.
+
+        Args:
+            model: Optional QIconPickerModel instance.
+        """
         self._grouped_icon_view.setModel(self._proxy)
 
         if model is None:
             model = QIconPickerModel()
         self.setModel(model)
 
-    def _init_view(self, icon_label_size):
+    def _init_view(self, icon_label_size: int) -> None:
+        """
+        Initialize the internal widgets of the view.
+
+        Args:
+            icon_label_size: Size of the icon label.
+        """
         self._search_line_edit = self._create_search_line_edit()
 
         self._color_modifier_selector = QIconComboBox()
@@ -184,7 +196,7 @@ class QIconPicker(QWidget):
         """Handles skin tone changes from the model.
 
         Args:
-            source_index (QModelIndex): The index in the source model that changed.
+            index (QModelIndex): The index in the source model that changed.
         """
         logging.debug("Requesting image again for {}".format(index.data(Qt.ItemDataRole.EditRole)))
         proxy_index = self._proxy.mapFromSource(index)
@@ -319,7 +331,7 @@ class QIconPicker(QWidget):
         """
         proxy_index = self._proxy.mapFromSource(source_index)
         self._grouped_icon_view.scrollTo(proxy_index)
-        self._grouped_icon_view.setExpanded(proxy_index, True)
+        self._grouped_icon_view.setExpanded(QPersistentModelIndex(proxy_index), True)
 
     @Slot(QIconCategoryItem)
     def _on_categories_inserted(self, category_item: QIconCategoryItem) -> None:
@@ -342,6 +354,11 @@ class QIconPicker(QWidget):
 
     @Slot(QIconCategoryItem)
     def _on_categories_removed(self, category_item: QIconCategoryItem) -> None:
+        """Handles the removal of categories into the model.
+
+        Args:
+            category_item (QIconCategoryItem): The removed category item.
+        """
         category = category_item.category()
         button = self._shortcuts_container.findChild(QToolButton, category)
 
@@ -350,7 +367,9 @@ class QIconPicker(QWidget):
             self._shortcuts_group.removeButton(button)
             button.deleteLater()
 
+    @Slot()
     def _on_model_reset(self):
+        """Handles the reset of the model."""
         for button in self._shortcuts_group.buttons():
             self._shortcuts_layout.removeWidget(button)
             self._shortcuts_group.removeButton(button)

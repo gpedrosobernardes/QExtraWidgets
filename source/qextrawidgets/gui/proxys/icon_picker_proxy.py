@@ -106,11 +106,13 @@ class QIconPickerProxyModel(QSortFilterProxyModel):
 
             return False
 
-    def itemFromIndex(self, index: QModelIndex) -> QStandardItem:
-        source_index = self.mapToSource(index)
-        return self.sourceModel().itemFromIndex(source_index)
-
     def sourceModel(self) -> QIconPickerModel:
+        """
+        Getter for source model. Override the original method to return a QIconPickerModel.
+
+        Returns:
+            QIconPickerModel
+        """
         model = super().sourceModel()
         if isinstance(model, QIconPickerModel):
             return model

@@ -142,6 +142,15 @@ class QGridIconView(QAbstractItemView):
         self._schedule_layout()
 
     def isRowHidden(self, row: int) -> bool:
+        """
+        Check if the given row is hidden.
+
+        Args:
+            row: Row index to check.
+
+        Returns:
+            If its hidden, return True.
+        """
         return row in self._hidden_rows
 
     # -------------------------------------------------------------------------
@@ -150,10 +159,12 @@ class QGridIconView(QAbstractItemView):
 
     @Slot()
     def _on_scroll_value_changed(self) -> None:
+        """Handle the scroll value changing."""
         self._recalculate_hover()
         self.viewport().update()
 
     def _recalculate_hover(self) -> None:
+        """Calculates the hover index and cache it in the class instance."""
         if not self._item_rects:
             return
 
@@ -205,6 +216,15 @@ class QGridIconView(QAbstractItemView):
         setattr(option, "state", state)
 
     def _get_coordinates_at(self, point: QPoint) -> typing.Tuple[int, int]:
+        """
+        Translates a point into row and column coordinates.
+
+        Args:
+            point: QPoint instance.
+
+        Returns:
+            A Tuple of row and column.
+        """
         logging.debug(f"Looking for index at {point}")
         item_w = self.iconSize().width()
         item_h = self.iconSize().height()
@@ -214,6 +234,16 @@ class QGridIconView(QAbstractItemView):
         return row, col
 
     def _rows(self, parent_index: QModelIndex) -> typing.Generator[QPersistentModelIndex]:
+        """
+        Generator of the row indices. Gets only valid and visible rows.
+
+        Args:
+            parent_index: Parent index of the rows.
+
+        Returns:
+            Generator of row indices.
+        """
+
         row_count = self.model().rowCount(parent_index)
         for r in range(row_count):
             index = self.model().index(r, 0, parent_index)
@@ -221,6 +251,12 @@ class QGridIconView(QAbstractItemView):
                 yield QPersistentModelIndex(index)
 
     def _visible_items(self) -> typing.Generator[typing.Tuple[QPersistentModelIndex, QRect]]:
+        """
+        Generator of the visible items. Calculates the first and last row visible to get directly what is visible.
+
+        Returns:
+            Generator of tuples of (QPersistentModelIndex, QRect).
+        """
         viewport_rect = self.viewport().rect()
         viewport_rect.translate(QPoint(0, self.verticalScrollBar().value()))
 
@@ -233,6 +269,15 @@ class QGridIconView(QAbstractItemView):
                 yield from columns_values.values()
 
     def _populate_grid_caches(self, row: int, persistent_index: QPersistentModelIndex, grid: dict, y_offset: int = 0) -> None:
+        """
+        Helper to fill the cache with all the data of a given row.
+
+        Args:
+            row: The row.
+            persistent_index: QPersistentModelIndex instance for the row.
+            grid: Grid dictionary to caching.
+            y_offset: Y offset to apply.
+        """
         icon_size = self.iconSize()
 
         item_w = icon_size.width()
@@ -254,7 +299,16 @@ class QGridIconView(QAbstractItemView):
 
         grid[virtual_row][col_current] = (persistent_index, rect)
 
-    def _calculate_rows_height(self, rows: int):
+    def _calculate_rows_height(self, rows: int) -> int:
+        """
+        Calculates what the height for a given number of rows.
+
+        Args:
+            rows: Quantity to calculate.
+
+        Returns:
+            The height.
+        """
         icon_size = self.iconSize()
         item_h = icon_size.height()
         return self._margin + ((item_h + self._margin) * rows)
@@ -264,14 +318,17 @@ class QGridIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def _schedule_layout(self) -> None:
+        """Schedule to update the layout."""
         if not self._layout_timer.isActive():
             self._layout_timer.start()
 
     def _execute_delayed_layout(self) -> None:
+        """Update the layout."""
         self.updateGeometries()
         self.viewport().update()
 
     def _clear_cache(self, *args) -> None:
+        """Clear all the cached variables."""
         self._item_rects.clear()
         self._item_indexes.clear()
         self._hover_index = QPersistentModelIndex()
@@ -328,18 +385,22 @@ class QGridIconView(QAbstractItemView):
 
     @Slot()
     def _on_layout_changed(self) -> None:
+        """Handle layout changes to update visual feedback."""
         self._schedule_layout()
 
     @Slot()
     def _on_model_reset(self) -> None:
+        """Handle model reset to update visual feedback."""
         self._schedule_layout()
 
     @Slot()
     def _on_rows_inserted(self):
+        """Handle rows inserted to update visual feedback."""
         self._schedule_layout()
 
     @Slot()
     def _on_rows_removed(self):
+        """Handle rows removed to update visual feedback."""
         self._schedule_layout()
 
     def _on_data_changed(
@@ -348,6 +409,7 @@ class QGridIconView(QAbstractItemView):
         _: QModelIndex,
         roles: typing.Optional[list[int]] = None,
     ) -> None:
+        """Handle data changes to update visual feedback."""
         if roles is None:
             roles = []
 
@@ -449,6 +511,12 @@ class QGridIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def virtualColumns(self) -> int:
+        """
+        Calculate the current number of columns.
+
+        Returns:
+            Columns count.
+        """
         width = self.viewport().width()
         item_w = self.iconSize().width()
         effective_width = width - (2 * self._margin)

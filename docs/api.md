@@ -4,7 +4,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ## Core
 
-### Regexs
+### Regexes
 
 ::: qextrawidgets.core.regexes.emoji_color_regex
 ::: qextrawidgets.core.regexes.emoji_regex
@@ -31,15 +31,15 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ### Models
 
-::: qextrawidgets.gui.models.emoji_picker_model
+::: qextrawidgets.gui.models.icon_picker_model
 
 ### Proxies
 
 ::: qextrawidgets.gui.proxys.check_state_proxy
 ::: qextrawidgets.gui.proxys.decoration_role_proxy
-::: qextrawidgets.gui.proxys.emoji_picker_proxy
 ::: qextrawidgets.gui.proxys.format_proxy
 ::: qextrawidgets.gui.proxys.header_proxy
+::: qextrawidgets.gui.proxys.icon_picker_proxy
 ::: qextrawidgets.gui.proxys.multi_filter_proxy
 ::: qextrawidgets.gui.proxys.unique_values_proxy
 
@@ -76,6 +76,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ### Menus
 
+::: qextrawidgets.widgets.menus.awesome_picker_menu
 ::: qextrawidgets.widgets.menus.emoji_picker_menu
 
 ### Miscellaneous
@@ -85,6 +86,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 ::: qextrawidgets.widgets.miscellaneous.accordion.accordion
 ::: qextrawidgets.widgets.miscellaneous.dual_list
 ::: qextrawidgets.widgets.miscellaneous.emoji_picker
+::: qextrawidgets.widgets.miscellaneous.icon_picker
 ::: qextrawidgets.widgets.miscellaneous.pager
 
 ### Views
