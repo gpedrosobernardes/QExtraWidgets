@@ -34,19 +34,20 @@ A powerful `QTableView` extension that adds Excel-like filtering capabilities to
 * **Sort & Search:** Built-in sorting and search within the filter popup.
 * **Model Agnostic:** Works with `QSqlTableModel`, `QStandardItemModel`, or any custom model.
 
-![QFilterableTable](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QFilterableTable.gif)
+https://github.com/user-attachments/assets/821f9d80-ac9d-4503-9055-f70412ef8c7d
 
 ---
 
-### 2. QEmojiPicker
+### 2. QEmojiPicker & QAwesomePicker
 
-A full-featured Emoji Picker.
+A full-featured Emoji and Icon Picker.
 
-* **Rich Features:** Includes skin tone selector, favorites/recents management, and context menu actions (copy alias, favorite/unfavorite).
+* **Rich Features:** Includes skin tone/color selector, favorites/recents management, and context menu actions (copy alias, favorite/unfavorite).
 * **Optimized Search:** Fast filtering with recursive category matching.
-* **Emoji Replacement:** Automatically converts `:smile:` aliases or pasted unicode characters into high-quality images.
 
-![QEmojiPicker](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QEmojiPicker.gif)
+https://github.com/user-attachments/assets/2992a3cb-133f-495d-8d55-649c0b37639a
+
+https://github.com/user-attachments/assets/d159a659-2c32-4f3e-8c8d-735618a5d4de
 
 ---
 
@@ -57,7 +58,7 @@ A flexible accordion widget for grouping content in collapsible sections.
 * **Customizable:** Change icon position (left/right) and animation speed.
 * **Smooth Animation:** Uses `QPropertyAnimation` for expanding/collapsing.
 
-![QAccordion](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QAccordion.gif)
+https://github.com/user-attachments/assets/6c406347-a355-4a2a-b058-291a10a897c4
 
 ---
 
@@ -67,7 +68,8 @@ Stop worrying about Dark/Light mode icons. `QThemeResponsiveIcon` wraps `QtAweso
 
 For labels, `QThemeResponsiveLabel` automatically updates its pixmap when the icon theme or widget size changes.
 
-![QThemeResponsiveIcon](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/gifs/QThemeResponsiveIcon.gif)
+https://github.com/user-attachments/assets/e1439bc9-089d-4621-8597-850af43f6f99
+
 
 ---
 
@@ -75,12 +77,12 @@ For labels, `QThemeResponsiveLabel` automatically updates its pixmap when the ic
 
 | Widget                    | Description                                                                                                        | Image                                                                                                                            |
 |---------------------------|--------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| **QPasswordLineEdit**     | A line edit with a built-in eye icon to toggle password visibility.                                                | ![QPasswordLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPasswordLineEdit.png) |
-| **QPager**                | A classic pagination control for navigating large datasets.                                                        | ![QPager](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QPager.png)                       |
-| **QColorButton**          | A button that allows setting custom background colors for different states (Normal, Hover, Pressed, Checked).      | ![QColorButton](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QColorButton.png)           |
+| **QPasswordLineEdit**     | A line edit with a built-in eye icon to toggle password visibility.                                                | ![QPasswordLineEdit](https://github.com/user-attachments/assets/5eef9d4b-e61d-4af2-b87c-bb62a821aac2)                            |
+| **QPager**                | A classic pagination control for navigating large datasets.                                                        | ![QPager](https://github.com/user-attachments/assets/e8ec0e97-bb65-4828-aacc-3b38cd61fc63)                                       |
+| **QColorButton**          | A button that allows setting custom background colors for different states (Normal, Hover, Pressed, Checked).      | ![QColorButton](https://github.com/user-attachments/assets/b7a5d400-5864-4b65-a8d4-cce951e09426)                                 |
 | **QColorToolButton**      | A tool button that allows setting custom background colors for different states (Normal, Hover, Pressed, Checked). |                                                                                                                                  |
-| **QDualList**             | Two lists side-by-side for moving items (Select/Deselect).                                                         | ![QDualList](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QDualList.png)                 |
-| **QSearchLineEdit**       | A search input field with a clear button and search icon.                                                          | ![QSearchLineEdit](https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QSearchLineEdit.png)     |
+| **QDualList**             | Two lists side-by-side for moving items (Select/Deselect).                                                         | ![QDualList](https://github.com/user-attachments/assets/3fa65713-8c2c-46db-8037-e248fe9721bb)                                    |
+| **QSearchLineEdit**       | A search input field with a clear button and search icon.                                                          | ![QSearchLineEdit](https://github.com/user-attachments/assets/cc553dea-5c60-4f32-9cfb-31fb57f36b62)                              |
 | **QIconComboBox**         | A ToolButton-style combo box optimized for icons or short text.                                                    |                                                                                                                                  |
 | **QEmojiPickerMenu**      | A menu wrapper for `QEmojiPicker` to easily attach it to buttons.                                                  |                                                                                                                                  |
 | **QThemeResponsiveLabel** | A label that automatically updates its icon based on theme and size.                                               |                                                                                                                                  |
