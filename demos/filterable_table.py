@@ -1,10 +1,11 @@
+from qextrawidgets.core.utils import QSystemUtils
 from qextrawidgets.widgets.views.filterable_table_view import QFilterableTableView
 import sys
 import random
 from datetime import datetime, timedelta
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -69,7 +70,8 @@ class DemoTableWindow(QMainWindow):
         layout.addWidget(self.table)
 
     def setup_connections(self) -> None:
-        pass
+        obs_shortcut = QShortcut(QKeySequence("F12"), self)
+        obs_shortcut.activated.connect(lambda: print(QSystemUtils.getObsRect(self)))
 
     def populate_data(self):
         """Creates a model with dummy data for testing."""
@@ -152,5 +154,6 @@ class DemoTableWindow(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = DemoTableWindow()
+    window.setGeometry(100, 100, 800, 600)
     window.show()
     sys.exit(app.exec())

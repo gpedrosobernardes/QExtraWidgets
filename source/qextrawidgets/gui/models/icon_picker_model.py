@@ -61,6 +61,11 @@ class QIconPickerModel(QStandardItemModel):
         super().__init__()
         if populate_method:
             self.populate(populate_method)
+        self.setup_connections()
+
+    def setup_connections(self):
+        self.rowsInserted.connect(self._on_rows_inserted)
+        self.rowsAboutToBeRemoved.connect(self._on_rows_removed)
 
     @Slot(QModelIndex, int, int)
     def _on_rows_removed(self, parent: QModelIndex, first: int, last: int):
@@ -76,8 +81,8 @@ class QIconPickerModel(QStandardItemModel):
             last (int): The last removed row.
         """
         if parent.isValid():
+            parent_item = self.itemFromIndex(parent)
 
-            parent_item = self.sourceModel()
             if isinstance(parent_item, QIconCategoryItem):
                 for row in range(first, last + 1):
                     # Since this is connected to rowsAboutToBeRemoved, the items still exist

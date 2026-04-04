@@ -1,3 +1,6 @@
+from PySide6.QtGui import QShortcut, QKeySequence
+
+from qextrawidgets.core.utils import QSystemUtils
 from qextrawidgets.widgets.miscellaneous.accordion.accordion_header import (
     QAccordionHeader,
 )
@@ -32,10 +35,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("QAccordion Demo")
-        self.resize(900, 700)
-
-        # Try to load icon, fallback if utility is not configured
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
+        self.resize(900, 700)
 
         self._init_widgets()
         self.setup_layout()
@@ -89,12 +90,6 @@ class MainWindow(QMainWindow):
         self.checkbox_flat = QCheckBox("Flat Mode (setFlat)")
         self.checkbox_auto_stretch = QCheckBox("Auto Stretch Expanded Items")
         self.checkbox_auto_stretch.setChecked(self.accordion.isAutoStretch())
-
-        # --- Group: Scroll ---
-        self.button_scroll_top = QPushButton("Reset Scroll (Top)")
-
-        # Scroll to item 4 (long text)
-        self.button_scroll_item = QPushButton("Scroll to Long Item")
 
         # --- Group: Animation ---
         self.checkbox_animation = QCheckBox("Enable Animation")
@@ -186,14 +181,6 @@ class MainWindow(QMainWindow):
         self.checkbox_flat.toggled.connect(self.accordion.setFlat)
         self.checkbox_auto_stretch.toggled.connect(self.accordion.setAutoStretch)
 
-        # --- Group: Scroll ---
-        self.button_scroll_top.clicked.connect(self.accordion.resetScroll)
-        self.button_scroll_item.clicked.connect(
-            lambda: (
-                self.item_long_text and self.accordion.scrollToItem(self.item_long_text)
-            )
-        )
-
         # --- Group: Animation ---
         self.checkbox_animation.toggled.connect(self.accordion.setAnimationEnabled)
         self.spinbox_duration.valueChanged.connect(self.accordion.setAnimationDuration)
@@ -202,6 +189,9 @@ class MainWindow(QMainWindow):
                 typing.cast(QEasingCurve.Type, self.combobox_easing.currentData())
             )
         )
+
+        obs_shortcut = QShortcut(QKeySequence("F12"), self)
+        obs_shortcut.activated.connect(lambda: print(QSystemUtils.getObsRect(self)))
 
     def setup_layout(self) -> None:
         main_widget = QWidget()
@@ -253,14 +243,6 @@ class MainWindow(QMainWindow):
         layout_appearance.addWidget(self.checkbox_auto_stretch)
         group_box_appearance.setLayout(layout_appearance)
         control_layout.addWidget(group_box_appearance)
-
-        # --- Group: Scroll ---
-        group_box_scroll = QGroupBox("Scroll Test")
-        layout_scroll = QVBoxLayout()
-        layout_scroll.addWidget(self.button_scroll_top)
-        layout_scroll.addWidget(self.button_scroll_item)
-        group_box_scroll.setLayout(layout_scroll)
-        control_layout.addWidget(group_box_scroll)
 
         # --- Group: Animation ---
         group_box_animation = QGroupBox("Animation")
@@ -338,6 +320,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     window = MainWindow()
+    window.setGeometry(100, 100, 900, 700)
     window.show()
 
     sys.exit(app.exec())

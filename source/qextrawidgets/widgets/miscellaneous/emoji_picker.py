@@ -96,11 +96,11 @@ class QEmojiPicker(QIconPicker):
         emojis_with_color = [emoji_char.char for emoji_char in emoji_data if support_skin_tones(emoji_char)]
         random_color_emoji = random.choice(emojis_with_color)
 
-        super().__init__(parent, model, icon_label_size, icon_pixmap_getter)
+        super().__init__(parent, model, icon_label_size, icon_pixmap_getter, ":{alias}:")
 
         for color_modifier in skin_tones:
             icon_item = QIconItem(random_color_emoji, True, None, color_modifier)
-            self.addColorOption(QIcon(self.iconPixmapGetter()(icon_item)), color_modifier)
+            self.addColorOption(icon_item)
 
     def emojiPixmapGetter(self, icon: QIconItem) -> QPixmap:
         """

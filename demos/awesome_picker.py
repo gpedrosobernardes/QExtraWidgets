@@ -4,12 +4,14 @@ from datetime import datetime
 from pathlib import Path
 
 from PySide6.QtCore import QSize
+from PySide6.QtGui import QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QMainWindow,
     QApplication,
     QWidget,
     QHBoxLayout, QGroupBox, QVBoxLayout, QFormLayout, QSpinBox, QDoubleSpinBox, QLineEdit, )
 
+from qextrawidgets.core.utils import QSystemUtils
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.widgets.miscellaneous.awesome_picker import QAwesomePicker
 
@@ -57,6 +59,9 @@ class MainWindow(QMainWindow):
         self.icon_size_spin.valueChanged.connect(self._on_icon_size_changed)
         self.icon_margin_spin.valueChanged.connect(self._on_icon_margin_changed)
         self.grid_spacing_spin.valueChanged.connect(self._on_grid_spacing_changed)
+
+        obs_shortcut = QShortcut(QKeySequence("F12"), self)
+        obs_shortcut.activated.connect(lambda: print(QSystemUtils.getObsRect(self)))
 
     def setup_layout(self) -> None:
         central_widget = QWidget()
@@ -115,5 +120,6 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     window = MainWindow()
+    window.setGeometry(100, 100, 800, 600)
     window.show()
     sys.exit(app.exec())

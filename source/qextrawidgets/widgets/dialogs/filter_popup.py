@@ -1,5 +1,6 @@
 import typing
 
+from PySide6 import QtCore
 from PySide6.QtCore import Qt, QSortFilterProxyModel, QAbstractItemModel, Slot
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (

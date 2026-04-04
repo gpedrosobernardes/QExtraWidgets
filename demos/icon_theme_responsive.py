@@ -2,7 +2,7 @@ import sys
 
 import qtawesome
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QShortcut, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -165,6 +165,9 @@ class DemoWindow(QMainWindow):
         # Connection just to change text for visual feedback
         self.button_toggle_state.toggled.connect(self.updateToggleButtonText)
 
+        obs_shortcut = QShortcut(QKeySequence("F12"), self)
+        obs_shortcut.activated.connect(lambda: print(QSystemUtils.getObsRect(self)))
+
     def updateToggleButtonText(self, checked):
         state_text = "CHECKED (ON)" if checked else "UNCHECKED (OFF)"
         self.button_toggle_state.setText(f"Click to Toggle State - {state_text}")
@@ -182,5 +185,6 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
 
     window = DemoWindow()
+    window.setGeometry(100, 100, 600, 500)
     window.show()
     sys.exit(app.exec())

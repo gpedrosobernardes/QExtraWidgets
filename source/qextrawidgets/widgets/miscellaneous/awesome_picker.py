@@ -2,7 +2,7 @@ import random
 import typing
 
 import qtawesome
-from PySide6.QtGui import QPixmap, QColorConstants, Qt
+from PySide6.QtGui import QPixmap, Qt
 
 from qextrawidgets.gui.items.icon_item import QIconItem
 from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
@@ -52,7 +52,8 @@ class QAwesomePicker(QIconPicker):
         ]
 
         for color in colors:
-            self.addColorOption(qtawesome.icon(random_icon, color=color), color)
+            icon_item = QIconItem(random_icon, True, color_modifier=color)
+            self.addColorOption(icon_item)
 
     def iconPixmapGetter(self) -> typing.Callable[[QIconItem], QPixmap]:
         """Define the icon getter that returns the icon pixmap from QtAwesome."""

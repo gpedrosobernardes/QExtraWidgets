@@ -22,6 +22,7 @@ class QIconPicker(QWidget):
     Features categories, search, recent and favorites.
 
     Signals:
+        picked: Emitted when a QIcon item is clicked.
     """
 
     picked = Signal(QIconItem)
@@ -30,9 +31,18 @@ class QIconPicker(QWidget):
                  parent=None,
                  model: typing.Optional[QIconPickerModel] = None,
                  icon_label_size: int = 32,
-                 icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap] = None):
+                 icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap] = None,
+                 alias_format: str = "{alias}") -> None:
         """
+        Initialize QIconPicker widget.
+        Setup widgets, layout and models.
 
+        Args:
+            parent: Parent widget.
+            model: Optional QIconPickerModel instance.
+            icon_label_size: Size of the icon label.
+            icon_pixmap_getter: Optional function that takes an icon item and returns the pixmap.
+            alias_format: Format of the alias icon label.
         """
         super().__init__(parent)
 
@@ -54,6 +64,8 @@ class QIconPicker(QWidget):
             self._icon_pixmap_getter = None
         else:
             self.setIconPixmapGetter(icon_pixmap_getter)
+
+        self.setAliasFormat(alias_format)
 
     def _init_models(self, model: typing.Optional[QIconPickerModel]):
         """
@@ -203,14 +215,15 @@ class QIconPicker(QWidget):
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.forceReload(proxy_index)
 
-    @Slot(str)
-    def _on_set_color_modifier(self, skin_tone: str) -> None:
+    @Slot(QIconItem)
+    def _on_set_color_modifier(self, icon_item: QIconItem) -> None:
         """Updates the skin tone of the emojis.
 
         Args:
-            skin_tone (str): Skin tone modifier.
+            icon_item (QIconItem): QIconItem instance representing the color_modifier.
         """
-        self.model().setColorModifier(skin_tone)
+        color_modifier = icon_item.data(QIconItem.QIconItemDataRole.ColorModifierRole)
+        self.model().setColorModifier(color_modifier)
 
     # Connections
     @Slot(QPoint)
@@ -320,7 +333,11 @@ class QIconPicker(QWidget):
 
     def _paint_skintones(self) -> None:
         """Updates the skin tone selector icons."""
-        pass
+        for index in range(self._color_modifier_selector.count()):
+            icon_item = self._color_modifier_selector.itemData(index)
+            icon = self.iconPixmapGetter()(icon_item)
+            if icon:
+                self._color_modifier_selector.setItemIcon(index, icon)
 
     @Slot(QModelIndex)
     def _on_shortcut_clicked(self, source_index: QModelIndex) -> None:
@@ -393,13 +410,11 @@ class QIconPicker(QWidget):
         if isinstance(item, QIconItem):
             self._icon_on_label = item
             self._paint_emoji_on_label()
-            metrics = QFontMetrics(self._aliases_icon_label.font())
-            aliases = item.data(Qt.ItemDataRole.UserRole)
-            if aliases:
-                aliases_text = " ".join(aliases)
-            else:
-                aliases_text = item.data(Qt.ItemDataRole.EditRole)
 
+            aliases = item.data(Qt.ItemDataRole.UserRole) or [item.data(Qt.ItemDataRole.EditRole)]
+            aliases_text = " ".join(self._alias_format.format(alias=alias) for alias in aliases)
+
+            metrics = QFontMetrics(self._aliases_icon_label.font())
             elided_alias = metrics.elidedText(
                 aliases_text,
                 Qt.TextElideMode.ElideRight,
@@ -441,8 +456,19 @@ class QIconPicker(QWidget):
         self._proxy.setFilterFixedString(text)
 
     # Public methods
-    def addColorOption(self, icon: QIcon, color_modifier: str):
-        self._color_modifier_selector.addItem(icon=icon, data=color_modifier)
+    def addColorOption(self, data: QIconItem):
+        """
+        Adds a color option to the color selector in the icon picker.
+
+        Args:
+            data: QIconItem instance.
+        """
+        icon_pixmap_getter = self.iconPixmapGetter()
+        if icon_pixmap_getter:
+            icon = icon_pixmap_getter(data)
+        else:
+            icon = QIcon()
+        self._color_modifier_selector.addItem(icon=icon, data=data)
 
     def setIconPixmapGetter(
         self,
@@ -506,6 +532,15 @@ class QIconPicker(QWidget):
             size(int): The size of the icon label
         """
         self._icon_label.setFixedSize(QSize(size, size))
+
+    def setAliasFormat(self, alias_format: str):
+        """
+        Setter for alias format.
+
+        Args:
+            alias_format: Alias format.
+        """
+        self._alias_format = alias_format
 
     def translateUI(self) -> None:
         """Translates the UI components."""

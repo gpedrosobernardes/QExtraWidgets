@@ -1,6 +1,6 @@
 import logging
 
-from PySide6.QtGui import QFontDatabase
+from PySide6.QtGui import QFontDatabase, QShortcut, QKeySequence
 import sys
 
 from PySide6.QtCore import Qt, QSize
@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 
+from qextrawidgets.core.utils import QSystemUtils
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.core.utils.emoji_fonts import QEmojiFonts
 from qextrawidgets.gui.items.icon_item import QIconItem
@@ -59,23 +60,25 @@ class MainWindow(QMainWindow):
 
         self.emoji_size_spin = QSpinBox()
         self.emoji_size_spin.setRange(16, 128)
+        self.emoji_size_spin.setSingleStep(5)
         self.emoji_size_spin.setValue(emoji_picker_view.iconSize().width())
 
         self.emoji_margin_spin = QDoubleSpinBox()
         self.emoji_margin_spin.setRange(0.10, 0.50)
-        self.emoji_margin_spin.setSingleStep(0.01)
+        self.emoji_margin_spin.setSingleStep(0.05)
         self.emoji_margin_spin.setDecimals(2)
         self.emoji_margin_spin.setValue(emoji_picker_delegate.itemInternalMargin())
 
         self.grid_spacing_spin = QSpinBox()
         self.grid_spacing_spin.setRange(0, 50)
+        self.grid_spacing_spin.setSingleStep(5)
         self.grid_spacing_spin.setValue(emoji_picker_view.margin())
-
-        self.font_combo = QComboBox()
-        self.font_combo.addItem(QEmojiFonts.loadTwemojiFont())
 
         self.use_pixmaps_check = QCheckBox()
         self.use_pixmaps_check.setChecked(True)
+
+        self.font_combo = QComboBox()
+        self.font_combo.addItems(self._get_emoji_fonts())
 
         # Category Widgets
         self.add_cat_btn = QPushButton("Add 'Custom' Category")
@@ -93,12 +96,15 @@ class MainWindow(QMainWindow):
         self.emoji_margin_spin.valueChanged.connect(self._on_emoji_margin_changed)
         self.grid_spacing_spin.valueChanged.connect(self._on_grid_spacing_changed)
         self.font_combo.currentTextChanged.connect(self._on_font_combo_changed)
-        self.use_pixmaps_check.stateChanged.connect(self._on_use_pixmaps_changed)
+        self.use_pixmaps_check.stateChanged.connect(self._on_use_pixmap_changed)
         self.add_cat_btn.clicked.connect(self._add_custom_category)
         self.remove_cat_btn.clicked.connect(self._remove_custom_category)
 
+        obs_shortcut = QShortcut(QKeySequence("F12"), self)
+        obs_shortcut.activated.connect(lambda: print(QSystemUtils.getObsRect(self)))
+
     def setup_initial_state(self) -> None:
-        self._on_font_combo_changed(self.font_combo.currentText())
+        self._on_use_pixmap_changed(self.use_pixmaps_check.checkState())
 
     def setup_layout(self) -> None:
         central_widget = QWidget()
@@ -118,10 +124,16 @@ class MainWindow(QMainWindow):
         config_form.addRow("Emoji Size:", self.emoji_size_spin)
         config_form.addRow("Emoji Internal Margin:", self.emoji_margin_spin)
         config_form.addRow("Grid Spacing:", self.grid_spacing_spin)
-        config_form.addRow("Emoji Font:", self.font_combo)
-        config_form.addRow("Use Pixmaps:", self.use_pixmaps_check)
 
         controls_layout.addWidget(config_group)
+
+        # Source group
+        source_group = QGroupBox("Source")
+        source_form = QFormLayout(source_group)
+        source_form.addRow("Use Pixmaps:", self.use_pixmaps_check)
+        source_form.addRow("Emoji Font:", self.font_combo)
+
+        controls_layout.addWidget(source_group)
 
         # Categories Group
         cat_group = QGroupBox("Custom Categories")
@@ -154,7 +166,7 @@ class MainWindow(QMainWindow):
         playground_layout.addWidget(input_container)
 
     def _on_emoji_picked(self, item: QIconItem) -> None:
-        self.line_edit.insert(item.data(Qt.ItemDataRole.EditRole))
+        self.line_edit.insert(self.emoji_picker.resolveEmojiColorByIcon(item))
 
     def _on_emoji_size_changed(self, value: int) -> None:
         self.emoji_picker.view().setIconSize(QSize(value, value))
@@ -172,15 +184,21 @@ class MainWindow(QMainWindow):
         self.emoji_picker.view().setMargin(value)
 
     def _on_font_combo_changed(self, font_family: str) -> None:
-        QFontDatabase.addApplicationEmojiFontFamily(font_family)
-        self._on_use_pixmaps_changed(self.use_pixmaps_check.checkState().value)
+        self.emoji_picker.setIconPixmapGetter(
+            lambda icon: self.emoji_picker.fontEmojiPixmapGetter(font_family, icon))
+        QFontDatabase.setApplicationEmojiFontFamilies([font_family])
+        self.line_edit.setFont(QApplication.font())
 
-    def _on_use_pixmaps_changed(self, state: int) -> None:
-        if state == Qt.CheckState.Checked.value:
+    def _on_use_pixmap_changed(self, state: Qt.CheckState) -> None:
+        if Qt.CheckState(state) == Qt.CheckState.Checked:
+            self.font_combo.setDisabled(True)
             self.emoji_picker.setIconPixmapGetter(self.emoji_picker.emojiPixmapGetter)
+            QFontDatabase.setApplicationEmojiFontFamilies(["Twemoji"])
+            self.line_edit.setFont("Twemoji")
         else:
             # Revert to current font in combo
-            self.emoji_picker.setIconPixmapGetter(lambda icon: self.emoji_picker.fontEmojiPixmapGetter(self.font_combo.currentText(), icon))
+            self.font_combo.setDisabled(False)
+            self._on_font_combo_changed(self.font_combo.currentText())
 
     def _add_custom_category(self) -> None:
         icon = QThemeResponsiveIcon.fromAwesome("fa6s.rocket")
@@ -202,11 +220,23 @@ class MainWindow(QMainWindow):
         self.add_cat_btn.setEnabled(True)
         self.remove_cat_btn.setEnabled(False)
 
+    @staticmethod
+    def _get_emoji_fonts():
+        all_fonts = set(QFontDatabase.families())
+        emoji_fonts = {"DejaVu Sans", "Noto Color Emoji"}
+
+        supported_emoji_fonts = list(all_fonts.intersection(emoji_fonts))
+        twemoji_font = QEmojiFonts.loadTwemojiFont()
+        supported_emoji_fonts.append(twemoji_font)
+
+        return supported_emoji_fonts
+
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
 
     app = QApplication(sys.argv)
     window = MainWindow()
+    window.setGeometry(100, 500, 800, 600)
     window.show()
     sys.exit(app.exec())
