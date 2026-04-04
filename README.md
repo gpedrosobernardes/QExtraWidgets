@@ -1,7 +1,7 @@
 # QExtraWidgets
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/gpedrosobernardes/QExtraWidgets/main/assets/images/QExtraWidgets.png" alt="QExtraWidgets Logo" width="600">
+  <img src="https://github.com/user-attachments/assets/4fa4f56a-6afc-434b-8478-4b750199f6d6" alt="QExtraWidgets Logo" width="600">
 </p>
 
 [![PyPI version](https://badge.fury.io/py/qextrawidgets.svg)](https://badge.fury.io/py/qextrawidgets)
