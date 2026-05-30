@@ -1,179 +1,120 @@
-import logging
 import random
 import typing
-from enum import Enum
-from functools import lru_cache
 
-from PySide6.QtGui import QPixmap, Qt, QFont, QIcon
-from emoji_data_python import EmojiChar, emoji_data
+from PySide6.QtCore import QSize
+from PySide6.QtGui import QPixmap, QScreen
 
-from qextrawidgets.core.utils import QTwemojiImageProvider, QIconGenerator
+from qextrawidgets.core.utils.emojis.emoji_image_provider import QEmojiImageProvider
+from qextrawidgets.core.utils.emojis.emoji_utils import EmojiSkinTone, QEmojiUtils
 from qextrawidgets.gui.items.icon_item import QIconItem
 from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
+from qextrawidgets.widgets.delegates import QGroupedIconDelegate
 from qextrawidgets.widgets.miscellaneous.icon_picker import QIconPicker
 
 
-class EmojiSkinTone(str, Enum):
-    """Skin tone modifiers (Fitzpatrick scale) supported by Unicode.
-
-    Inherits from 'str' to facilitate direct concatenation with base emojis.
-
-    Attributes:
-        Default: Default skin tone (usually yellow/neutral). No modifier.
-        Light: Type 1-2: Light skin tone.
-        MediumLight: Type 3: Medium-light skin tone.
-        Medium: Type 4: Medium skin tone.
-        MediumDark: Type 5: Medium-dark skin tone.
-        Dark: Type 6: Dark skin tone.
-    """
-
-    # Default (Generally Yellow/Neutral) - Adds no code
-    Default = ""
-
-    # Type 1-2: Light Skin
-    Light = "1F3FB"
-
-    # Type 3: Medium-Light Skin
-    MediumLight = "1F3FC"
-
-    # Type 4: Medium Skin
-    Medium = "1F3FD"
-
-    # Type 5: Medium-Dark Skin
-    MediumDark = "1F3FE"
-
-    # Type 6: Dark Skin
-    Dark = "1F3FF"
-
-
-@lru_cache(maxsize=None)
-def _find_emoji_by_char(char: str) -> typing.Optional[EmojiChar]:
-    """
-    Find an EmojiChar object by its character string.
-    Cached for performance.
-    """
-    return next((e for e in emoji_data if e.char == char), None)
-
-def support_skin_tones(char: EmojiChar) -> bool:
-    """
-    Checks if the specified EmojiChar supports skin tones.
-
-    Args:
-        char: The EmojiChar instance to check.
-
-    Returns:
-        If it supports skin tones, returns True.
-    """
-    if char.skin_variations:
-        return all(skin_tone in char.skin_variations for skin_tone in EmojiSkinTone if skin_tone != "")
-
-    return False
-
-
 class QEmojiPicker(QIconPicker):
+    """A widget for picking emojis, supporting different skin tones and dynamic scaling.
+
+    Inherits from QIconPicker to provide a specialized grid for emoji selection.
+    """
+
     def __init__(self,
-                 parent = None,
+                 parent=None,
                  model: typing.Optional[QIconPickerModel] = None,
                  icon_label_size: int = 32,
-                 icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap] = None):
-        """
-        Initialize the QEmojiPicker class.
-        Fill the color selector with a random emoji with all the skin tones supported.
+                 icon_pixmap_getter: typing.Optional[typing.Callable[[QIconItem], QPixmap]] = None):
+        """Initializes the QEmojiPicker class.
+
+        Fills the color selector with a random emoji demonstrating all supported skin tones.
 
         Args:
-            parent (QWidget, optional): The parent widget.
-            model (QIconPickerModel, optional): The QIconPickerModel instance. Uses a populated QIconPickerModel with emojis if None.
-            icon_label_size (int, optional): The size of the emoji label. Defaults to 32.
+            parent (QWidget, optional): The parent widget. Defaults to None.
+            model (QIconPickerModel, optional): The model containing icon data. If None,
+                a populated QIconPickerModel with emojis will be instantiated. Defaults to None.
+            icon_label_size (int, optional): The size of the emoji label in pixels. Defaults to 32.
+            icon_pixmap_getter (Callable[[QIconItem], QPixmap], optional): Custom callback to
+                retrieve pixmaps. If None, the default QEmojiImageProvider is used. Defaults to None.
         """
+        self._emoji_image_provider = None
+
         if model is None:
             model = QIconPickerModel(QIconPickerModel.PopulateSource.Emojis)
 
-        if icon_pixmap_getter is None:
-            icon_pixmap_getter = self.emojiPixmapGetter
-
         skin_tones = list(EmojiSkinTone)
 
-        emojis_with_color = [emoji_char.char for emoji_char in emoji_data if support_skin_tones(emoji_char)]
+        emojis_with_color = QEmojiUtils.emojisWithSkinTones()
         random_color_emoji = random.choice(emojis_with_color)
 
-        super().__init__(parent, model, icon_label_size, icon_pixmap_getter, ":{alias}:")
+        super().__init__(parent, model, icon_label_size, None, ":{alias}:")
+
+        if icon_pixmap_getter is None:
+            self._emoji_image_provider = QEmojiImageProvider(icon_label_size, self.devicePixelRatioF())
+            self._emoji_image_provider.sourceChanged.connect(self._on_image_provider_settings_changed)
+            self._emoji_image_provider.sizeChanged.connect(self._on_image_provider_settings_changed)
+            self._emoji_image_provider.devicePixelRatioChanged.connect(self._on_image_provider_settings_changed)
+
+            view = self.view()
+            view.iconSizeChanged.connect(self._on_icon_size_changed)
+
+            self.setIconPixmapGetter(self._emoji_image_provider.getPixmapFromIconItem)
+        else:
+            self._emoji_image_provider = None
+            self.setIconPixmapGetter(icon_pixmap_getter)
 
         for color_modifier in skin_tones:
             icon_item = QIconItem(random_color_emoji, True, None, color_modifier)
             self.addColorOption(icon_item)
 
-    def emojiPixmapGetter(self, icon: QIconItem) -> QPixmap:
-        """
-        Helper emoji pixmap getter based on read emoji icons from local source.
+    def _on_image_provider_settings_changed(self):
+        """Handles changes in the image provider's source, size, or pixel ratio.
 
-        Args:
-            icon: The QIconItem instance which have the emoji.
+        Forces a full reload of all items in the underlying grouped icon view delegate
+        so the UI reflects the new image properties.
+        """
+        delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
+        delegate.forceReloadAll()
+
+    def getEmojiImageProvider(self) -> typing.Optional[QEmojiImageProvider]:
+        """Retrieves the current emoji image provider instance.
 
         Returns:
-            Emoji pixmap getter function.
+            typing.Optional[QEmojiImageProvider]: The internal QEmojiImageProvider if using
+                the default pixmap getter, or None if a custom getter was provided.
         """
-        emoji = self.resolveEmojiColorByIcon(icon)
-        if emoji is None:
-            return QPixmap()
+        return self._emoji_image_provider
 
-        return QTwemojiImageProvider.getPixmap(emoji, 0, self.view().iconSize().height())
-
-    def fontEmojiPixmapGetter(self, font: typing.Union[str, QFont], icon: QIconItem) -> QPixmap:
-        """
-        Helper emoji pixmap getter based on extract emoji icons from specified font.
+    def showEvent(self, event):
+        """Handles the show event to initialize window-specific signal connections.
 
         Args:
-            font: The source emoji font.
-            icon: The QIconItem instance which have the emoji.
-
-        Returns:
-            Emoji pixmap getter function.
+            event (QShowEvent): The show event object.
         """
-        if isinstance(font, QFont):
-            emoji_font = font
-        else:
-            emoji_font = QFont(font)
+        # Always call the parent class implementation first
+        super().showEvent(event)
 
-        emoji = self.resolveEmojiColorByIcon(icon)
-        if emoji is None:
-            return QPixmap()
+        # At this point, the native window already exists and the windowHandle is not None
+        win_handle = self.window().windowHandle()
+        if win_handle:
+            # Connect the QWindow's screenChanged signal to our handler method
+            win_handle.screenChanged.connect(self._on_screen_changed)
 
-        return QIconGenerator.charToPixmap(emoji, self.view().iconSize(), emoji_font)
+    def _on_screen_changed(self, screen: QScreen):
+        """Triggered whenever the window is moved to a different monitor or the system scale changes.
 
-    def resolveEmojiColorByIcon(self, icon: QIconItem) -> str:
-        """
-        Apply the skin tone color to the current emoji of the icon.
+        Updates the device pixel ratio of the image provider to ensure emojis render
+        sharply on the new screen.
 
         Args:
-            icon: The QIconItem instance.
-
-        Returns:
-            The colored emoji.
+            screen (QScreen): The new QScreen object the window was moved to.
         """
-        return self.resolveEmojiColor(icon.data(Qt.ItemDataRole.EditRole), icon.data(QIconItem.QIconItemDataRole.ColorModifierRole))
+        if self._emoji_image_provider is not None:
+            self._emoji_image_provider.setDevicePixelRatio(self.devicePixelRatio())
 
-    def resolveEmojiColor(self, emoji: str, color_modifier: str) -> str:
-        """
-        Apply the skin tone color to an emoji.
+    def _on_icon_size_changed(self, size: QSize) -> None:
+        """Handles the iconSizeChanged signal to set a new size for the emoji icons.
 
         Args:
-            emoji: Emoji string.
-            color_modifier: Emoji skin tone.
-
-        Returns:
-            The colored emoji.
+            size (QSize): The new width and height for the icons.
         """
-        emoji_char = _find_emoji_by_char(emoji)
-        if emoji_char is None:
-            return ""
-
-        if color_modifier:
-            color_emoji = emoji_char.skin_variations.get(color_modifier)
-            if color_emoji is None:
-                logging.debug(f"Color {color_modifier} not found for emoji {emoji}")
-            else:
-                return color_emoji.char
-
-        return emoji
-
-
+        if self._emoji_image_provider is not None:
+            self._emoji_image_provider.setSize(size.width())

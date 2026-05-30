@@ -11,12 +11,21 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ### Utils
 
+#### Emojis
+
+::: qextrawidgets.core.utils.emojis.emoji_finder
+::: qextrawidgets.core.utils.emojis.emoji_fonts
+::: qextrawidgets.core.utils.emojis.emoji_image_provider
+::: qextrawidgets.core.utils.emojis.emoji_utils
+
+#### Images
+
+::: qextrawidgets.core.images.icon_generator
+
+#### Others
+
 ::: qextrawidgets.core.utils.color_utils
-::: qextrawidgets.core.utils.emoji_finder
-::: qextrawidgets.core.utils.emoji_fonts
-::: qextrawidgets.core.utils.icon_generator
 ::: qextrawidgets.core.utils.system_utils
-::: qextrawidgets.core.utils.twemoji_image_provider
 
 ## GUI
 

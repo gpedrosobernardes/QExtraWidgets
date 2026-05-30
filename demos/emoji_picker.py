@@ -1,5 +1,3 @@
-import logging
-
 from PySide6.QtGui import QFontDatabase, QShortcut, QKeySequence
 import sys
 
@@ -23,8 +21,9 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.core.utils import QSystemUtils
+from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from qextrawidgets.core.utils.emoji_fonts import QEmojiFonts
+from qextrawidgets.core.utils.emojis import QEmojiFonts
 from qextrawidgets.gui.items.icon_item import QIconItem
 from qextrawidgets.widgets.menus.emoji_picker_menu import QEmojiPickerMenu
 from qextrawidgets.gui.items import QIconCategoryItem
@@ -49,6 +48,7 @@ class MainWindow(QMainWindow):
         # Picker Configuration Widgets
         self.emoji_picker_menu = QEmojiPickerMenu(self)
         self.emoji_picker = self.emoji_picker_menu.picker()
+        self.emoji_image_provider = self.emoji_picker.getEmojiImageProvider()
 
         emoji_picker_view = self.emoji_picker.view()
         emoji_picker_delegate = self.emoji_picker.delegate()
@@ -166,7 +166,9 @@ class MainWindow(QMainWindow):
         playground_layout.addWidget(input_container)
 
     def _on_emoji_picked(self, item: QIconItem) -> None:
-        self.line_edit.insert(self.emoji_picker.resolveEmojiColorByIcon(item))
+        emoji_char = QEmojiUtils.getEmojiWithSkinToneByIconItem(item)
+        if emoji_char is not None:
+            self.line_edit.insert(emoji_char.char)
 
     def _on_emoji_size_changed(self, value: int) -> None:
         self.emoji_picker.view().setIconSize(QSize(value, value))
@@ -184,15 +186,14 @@ class MainWindow(QMainWindow):
         self.emoji_picker.view().setMargin(value)
 
     def _on_font_combo_changed(self, font_family: str) -> None:
-        self.emoji_picker.setIconPixmapGetter(
-            lambda icon: self.emoji_picker.fontEmojiPixmapGetter(font_family, icon))
+        self.emoji_image_provider.setSource(font_family)
         QFontDatabase.setApplicationEmojiFontFamilies([font_family])
         self.line_edit.setFont(QApplication.font())
 
     def _on_use_pixmap_changed(self, state: Qt.CheckState) -> None:
         if Qt.CheckState(state) == Qt.CheckState.Checked:
             self.font_combo.setDisabled(True)
-            self.emoji_picker.setIconPixmapGetter(self.emoji_picker.emojiPixmapGetter)
+            self.emoji_image_provider.setSource("png")
             QFontDatabase.setApplicationEmojiFontFamilies(["Twemoji"])
             self.line_edit.setFont("Twemoji")
         else:
