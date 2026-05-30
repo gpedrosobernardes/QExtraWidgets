@@ -101,6 +101,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ### Views
 
+::: qextrawidgets.widgets.views.emoji_view
 ::: qextrawidgets.widgets.views.filter_header_view
 ::: qextrawidgets.widgets.views.filterable_table_view
 ::: qextrawidgets.widgets.views.grid_icon_view

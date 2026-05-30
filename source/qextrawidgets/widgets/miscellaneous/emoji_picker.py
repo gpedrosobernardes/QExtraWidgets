@@ -48,7 +48,7 @@ class QEmojiPicker(QIconPicker):
         super().__init__(parent, model, icon_label_size, None, ":{alias}:")
 
         if icon_pixmap_getter is None:
-            self._emoji_image_provider = QEmojiImageProvider(icon_label_size, self.devicePixelRatioF())
+            self._emoji_image_provider = QEmojiImageProvider(32, self.devicePixelRatio())
             self._emoji_image_provider.sourceChanged.connect(self._on_image_provider_settings_changed)
             self._emoji_image_provider.sizeChanged.connect(self._on_image_provider_settings_changed)
             self._emoji_image_provider.devicePixelRatioChanged.connect(self._on_image_provider_settings_changed)

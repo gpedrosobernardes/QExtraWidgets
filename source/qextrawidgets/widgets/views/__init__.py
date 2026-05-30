@@ -3,8 +3,10 @@ from .filterable_table_view import QFilterableTableView
 from .grid_icon_view import QGridIconView
 from .grouped_icon_view import QGroupedIconView
 from .list_grid_view import QListView
+from .emoji_view import QEmojiView
 
 __all__ = [
+    "QEmojiView",
     "QFilterHeaderView",
     "QFilterableTableView",
     "QGridIconView",
