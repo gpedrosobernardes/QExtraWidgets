@@ -196,19 +196,27 @@ class QGridIconDelegate(QStyledItemDelegate):
                 else:
                     pixmap = item_data
 
+                dpr = pixmap.devicePixelRatio()
+
+                # Scale using physical pixels so the backing-store resolution is
+                # preserved on HiDPI screens.  target_rect is in logical pixels,
+                # so we multiply by dpr to get the physical target size.
+                physical_target = target_rect.size() * dpr
                 scaled_pixmap = pixmap.scaled(
-                    target_rect.size(),
+                    physical_target,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
+                scaled_pixmap.setDevicePixelRatio(dpr)
 
-                x = target_rect.x() + (target_rect.width() - scaled_pixmap.width()) // 2
-                y = (
-                    target_rect.y()
-                    + (target_rect.height() - scaled_pixmap.height()) // 2
-                )
+                # Center using logical sizes (deviceIndependentSize) so the
+                # arithmetic stays in the same coordinate space as target_rect.
+                logical_w = scaled_pixmap.deviceIndependentSize().width()
+                logical_h = scaled_pixmap.deviceIndependentSize().height()
+                x = target_rect.x() + (target_rect.width() - logical_w) / 2
+                y = target_rect.y() + (target_rect.height() - logical_h) / 2
 
                 if not (current_state & QStyle.StateFlag.State_Enabled):
                     painter.setOpacity(0.5)
 
-                painter.drawPixmap(x, y, scaled_pixmap)
+                painter.drawPixmap(int(x), int(y), scaled_pixmap)
