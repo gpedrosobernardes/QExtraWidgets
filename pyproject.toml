@@ -32,7 +32,6 @@ dependencies = [
     "twemoji-api>=2.0.0",
     "emoji-data-python==1.6.0",
     "qtawesome==1.4.2",
-    "numpy==2.4.6"
 ]
 
 [project.urls]

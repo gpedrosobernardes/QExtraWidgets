@@ -18,10 +18,6 @@ Key design decisions
   obtain smooth antialiasing equivalent to sub-pixel rendering without relying on
   platform-specific font hinting.
 """
-
-from functools import lru_cache
-
-import numpy as np
 import qtawesome
 from PySide6.QtCore import Qt, QSize, QRect
 from PySide6.QtGui import (
@@ -29,7 +25,7 @@ from PySide6.QtGui import (
     QPainter,
     QFont,
     QColor,
-    QPainterPath,
+    QPainterPath, QRegion,
 )
 from PySide6.QtWidgets import QStyle
 
@@ -69,198 +65,29 @@ class QIconGenerator:
     # Private helpers
     # ------------------------------------------------------------------
 
-    @staticmethod
-    @lru_cache(maxsize=512)
-    def _getGlyphCropRatio(char: str, font_family: str) -> tuple[float, float, float, float]:
-        """Return the normalised ink bounding box of a glyph as crop ratios.
+    @classmethod
+    def charToPixmap(
+            cls,
+            char: str,
+            target_size: QSize,
+            font: QFont = QFont("Arial"),
+            dpr: float = 1.0,
+            color: QColor = QColor(Qt.GlobalColor.black),
+    ) -> QPixmap:
+        if target_size.isEmpty():
+            return QPixmap()
 
-        This is the only reliable way to measure the *actual drawn area* of a
-        character on Windows with DPR = 1.0.  ``QFontMetrics`` APIs
-        (``boundingRect``, ``tightBoundingRect``, ``horizontalAdvance``) are
-        intentionally avoided here because of Qt bug **QTBUG-51024**: on Windows
-        at 100% display scale, those methods return values of 0 or 1 for color
-        fonts (Segoe UI Emoji, Noto Color Emoji, etc.), making any ratio
-        calculation collapse to the base size.
+        # 1 - Gera a imagem grande 512x512
+        BASE_SIZE = 128
+        CANVAS_SIZE = BASE_SIZE * 4  # 512 × 512
 
-        Strategy
-        --------
-        1. Render the character at a fixed ``BASE_SIZE`` (128 px) onto a canvas
-           that is 4× larger (512 × 512 px), centred via ``AlignCenter``.  The
-           oversized canvas ensures no glyph is clipped regardless of descenders,
-           side-bearings, or color-font bounding boxes that exceed the em-square.
-        2. Convert the pixmap to a raw ARGB byte buffer and pass it to NumPy.
-        3. Locate the first and last row/column whose alpha channel contains at
-           least one non-zero pixel (vectorised — O(n) in C, not Python).
-        4. Normalise all coordinates by ``CANVAS_SIZE`` so the returned ratios are
-           independent of any specific resolution or DPR value.
+        render_font = QFont(font)
+        render_font.setPixelSize(BASE_SIZE)
 
-        The result is cached indefinitely by ``lru_cache`` keyed on
-        ``(char, font_family)``.  Subsequent calls for the same combination are
-        O(1) dictionary lookups, so the expensive pixel scan runs at most once
-        per glyph per session.
-
-        Args:
-            char:        Unicode character to measure (including multi-code-point
-                         emoji sequences).
-            font_family: Font family name (plain string, not a ``QFont`` object —
-                         ``lru_cache`` requires hashable arguments).
-
-        Returns:
-            A 4-tuple ``(x_ratio, y_ratio, w_ratio, h_ratio)`` where each value
-            is in the range ``[0.0, 1.0]`` and represents a fraction of
-            ``CANVAS_SIZE``:
-
-            - ``x_ratio`` — left edge of the ink bounding box.
-            - ``y_ratio`` — top edge of the ink bounding box.
-            - ``w_ratio`` — width of the ink bounding box.
-            - ``h_ratio`` — height of the ink bounding box.
-
-            Returns ``(0.0, 0.0, 1.0, 1.0)`` (full canvas) if no ink pixels are
-            found, which is a safe fallback that prevents division-by-zero
-            downstream.
-        """
-        BASE_SIZE   = 128
-        CANVAS_SIZE = BASE_SIZE * 4  # 512 × 512 — generous margin on all sides
-
-        font = QFont(font_family)
-        font.setPixelSize(BASE_SIZE)
-
-        # Render onto an oversized canvas to avoid any clipping
         pixmap = QPixmap(CANVAS_SIZE, CANVAS_SIZE)
         pixmap.fill(Qt.GlobalColor.transparent)
 
         painter = QPainter(pixmap)
-        painter.setFont(font)
-        painter.setPen(Qt.GlobalColor.black)
-        painter.drawText(
-            QRect(0, 0, CANVAS_SIZE, CANVAS_SIZE),
-            Qt.AlignmentFlag.AlignCenter,
-            char,
-        )
-        painter.end()
-
-        # Convert pixmap to a NumPy ARGB array — no Python-level pixel loop
-        image = pixmap.toImage()
-        ptr   = image.bits()
-        arr   = np.frombuffer(ptr, dtype=np.uint8).reshape(CANVAS_SIZE, CANVAS_SIZE, 4)
-
-        # Channel index 3 is alpha in Qt's default ARGB32 layout
-        rows = np.any(arr[:, :, 3] > 0, axis=1)   # True for each row that has ink
-        cols = np.any(arr[:, :, 3] > 0, axis=0)   # True for each col that has ink
-
-        if not rows.any():
-            # No ink found — return full-canvas fallback
-            return 0.0, 0.0, 1.0, 1.0
-
-        min_y, max_y = int(np.where(rows)[0][[0, -1]][0]), int(np.where(rows)[0][[0, -1]][1])
-        min_x, max_x = int(np.where(cols)[0][[0, -1]][0]), int(np.where(cols)[0][[0, -1]][1])
-
-        return (
-            min_x / CANVAS_SIZE,
-            min_y / CANVAS_SIZE,
-            (max_x - min_x + 1) / CANVAS_SIZE,
-            (max_y - min_y + 1) / CANVAS_SIZE,
-        )
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
-
-    @classmethod
-    def charToPixmap(
-        cls,
-        char: str,
-        target_size: QSize,
-        font: QFont = QFont("Arial"),
-        dpr: float = 1.0,
-        color: QColor = QColor(Qt.GlobalColor.black),
-    ) -> QPixmap:
-        """Render a Unicode character into a transparent, HiDPI-aware ``QPixmap``.
-
-        Supports all Unicode characters including color-font emoji (Segoe UI Emoji,
-        Noto Color Emoji, Apple Color Emoji) on any platform and at any Windows
-        display scale factor.
-
-        Rendering pipeline
-        ------------------
-        1. **Measure** — call :meth:`_getGlyphCropRatio` to obtain the normalised
-           ink bounding box of the glyph (result is cached after the first call).
-        2. **Supersample** — compute a font pixel size that renders the glyph at
-           ``SUPERSAMPLE × physical_size`` (4× by default).  Rendering at higher
-           resolution and then downscaling produces noticeably sharper edges than
-           rendering at the target size directly.
-        3. **Draw** — paint the character onto an oversized canvas (``4 ×
-           optimal_size``) centred with ``AlignCenter``.
-        4. **Crop** — extract the exact ink region using the pre-computed ratios,
-           eliminating all whitespace around the glyph.
-        5. **Downscale** — reduce the cropped region to ``physical_size`` with
-           ``SmoothTransformation``, which applies box-filter antialiasing.
-        6. **Composite** — centre the scaled crop on the final physical canvas.
-        7. **Tag DPR** — call ``setDevicePixelRatio(dpr)`` after all painting is
-           complete so Qt maps the physical pixels to the correct logical size.
-
-        Args:
-            char:        The Unicode character to render (e.g. ``"A"``, ``"😀"``).
-            target_size: Logical output size in pixels (the pixmap is square only
-                         if ``target_size.width() == target_size.height()``).
-            font:        Base font used for rendering.  The pixel size is ignored
-                         and recalculated internally based on ``target_size`` and
-                         ``dpr``.  For emoji, pass the system color emoji font.
-                         Defaults to ``QFont("Arial")``.
-            dpr:         Device pixel ratio of the target screen (e.g. ``2.0`` for
-                         Retina / 4K displays).  Defaults to ``1.0``.
-            color:       Foreground color applied via ``QPainter.setPen()``.  Only
-                         affects non-color glyphs; color fonts render their own
-                         colors regardless of this value.  Defaults to black.
-
-        Returns:
-            A transparent ``QPixmap`` at physical resolution
-            ``(target_size.width() * dpr) × (target_size.height() * dpr)`` with
-            ``devicePixelRatio`` set to ``dpr``.  The glyph is centred and scaled
-            to fill the available space while preserving its aspect ratio.
-            Returns an empty ``QPixmap`` if ``target_size.isEmpty()``.
-
-        Example::
-
-            pixmap = QIconGenerator.charToPixmap(
-                "😀", QSize(48, 48), dpr=screen.devicePixelRatio()
-            )
-            label.setPixmap(pixmap)
-        """
-        if target_size.isEmpty():
-            return QPixmap()
-
-        physical_w = int(target_size.width()  * dpr)
-        physical_h = int(target_size.height() * dpr)
-
-        x_ratio, y_ratio, w_ratio, h_ratio = cls._getGlyphCropRatio(char, font.family())
-
-        # Supersample factor: render at 4× physical size, then downscale.
-        # Downscaling from 4× is equivalent to 4× SSAA and produces much
-        # smoother edges than rendering at the exact target size.
-        SUPERSAMPLE   = 4
-        BASE_FRACTION = 1.0 / 4.0  # BASE_SIZE / CANVAS_SIZE ratio used in _getGlyphCropRatio
-
-        render_w = physical_w * SUPERSAMPLE
-        render_h = physical_h * SUPERSAMPLE
-
-        # Derive the font pixel size that makes the glyph's ink area fill
-        # the supersampled canvas exactly (limited by the tighter dimension).
-        optimal_size = max(1, int(
-            min(render_w / w_ratio, render_h / h_ratio) * BASE_FRACTION
-        ))
-
-        # Canvas is 4× the font size — matches the ratio used during measurement
-        # in _getGlyphCropRatio, so the crop coordinates map correctly.
-        CANVAS_SIZE = optimal_size * 4
-
-        render_font = QFont(font)
-        render_font.setPixelSize(optimal_size)
-
-        canvas = QPixmap(CANVAS_SIZE, CANVAS_SIZE)
-        canvas.fill(Qt.GlobalColor.transparent)
-
-        painter = QPainter(canvas)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
         painter.setFont(render_font)
@@ -272,39 +99,36 @@ class QIconGenerator:
         )
         painter.end()
 
-        # Crop the exact ink bounding box using the cached normalised ratios.
-        # max(1, ...) prevents a zero-size QRect if the ratio rounds down to 0.
-        ink_x = int(x_ratio * CANVAS_SIZE)
-        ink_y = int(y_ratio * CANVAS_SIZE)
-        ink_w = max(1, int(w_ratio * CANVAS_SIZE))
-        ink_h = max(1, int(h_ratio * CANVAS_SIZE))
-        ink_pixmap = canvas.copy(QRect(ink_x, ink_y, ink_w, ink_h))
+        # ---------------------------------------------------------
+        # 2 - Acha os limites reais da tinta usando a API nativa
+        # ---------------------------------------------------------
 
-        # Downscale the supersampled crop to the target physical size.
-        # KeepAspectRatio ensures the glyph is never distorted.
-        # SmoothTransformation applies a box filter equivalent to SSAA.
-        scaled = ink_pixmap.scaled(
+        # Extrai o canal alpha como um mapa de bits preto e branco (rápido, em C++)
+        alpha_mask = pixmap.mask()
+
+        # Cria uma região baseada nessa máscara e pede a caixa delimitadora
+        ink_rect = QRegion(alpha_mask).boundingRect()
+
+        if ink_rect.isEmpty() or ink_rect.width() == 0 or ink_rect.height() == 0:
+            return QPixmap()
+
+        # Corta a imagem nativamente usando o QRect encontrado
+        cropped_pixmap = pixmap.copy(ink_rect)
+
+        # ---------------------------------------------------------
+        # 3 - Dimensiona para o tamanho pedido
+        # ---------------------------------------------------------
+        physical_w = int(target_size.width() * dpr)
+        physical_h = int(target_size.height() * dpr)
+
+        final_pixmap = cropped_pixmap.scaled(
             QSize(physical_w, physical_h),
             Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation,
+            Qt.TransformationMode.SmoothTransformation
         )
 
-        # Centre the scaled glyph on the final physical canvas
-        final = QPixmap(physical_w, physical_h)
-        final.fill(Qt.GlobalColor.transparent)
-
-        offset_x = (physical_w - scaled.width())  // 2
-        offset_y = (physical_h - scaled.height()) // 2
-
-        painter = QPainter(final)
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-        painter.drawPixmap(offset_x, offset_y, scaled)
-        painter.end()
-
-        # Tag DPR after all painting — tells Qt to display these physical pixels
-        # at the correct logical size without any additional scaling.
-        final.setDevicePixelRatio(dpr)
-        return final
+        final_pixmap.setDevicePixelRatio(dpr)
+        return final_pixmap
 
     @staticmethod
     def getCircularPixmap(pixmap: QPixmap, size: int, dpr: float = 1.0) -> QPixmap:

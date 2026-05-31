@@ -23,7 +23,7 @@ Model Architecture:
 Execution:
     python demo_emoji_view.py
 """
-
+import logging
 import sys
 import unicodedata
 
@@ -406,6 +406,8 @@ class EmojiDemoWindow(QMainWindow):
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    logging.basicConfig(level=logging.DEBUG)
+
     app = QApplication(sys.argv)
     app.setApplicationName("QEmojiView Demo")
     app.setStyle("Fusion")
