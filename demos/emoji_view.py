@@ -46,6 +46,7 @@ from PySide6.QtWidgets import (
     QToolButton,
 )
 
+from qextrawidgets.core.utils.emojis import QEmojiImageProvider
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.gui.proxys import QDecorationRoleProxyModel
 from qextrawidgets.widgets.views import QEmojiView
@@ -373,7 +374,14 @@ class EmojiDemoWindow(QMainWindow):
         if not emoji:
             return
 
-        pixmap = index.data(Qt.ItemDataRole.DecorationRole)
+        pixmap_image_provider = self._emoji_view.emojiImageProvider()
+
+        if pixmap_image_provider is None:
+            return
+
+        size = self._preview_label.size().height()
+        dpr = self._preview_label.devicePixelRatio()
+        pixmap = QEmojiImageProvider.getPixmapBy(emoji, size, dpr, pixmap_image_provider.getSource())
 
         self._selected_emoji = emoji
         self._preview_label.setPixmap(pixmap)
@@ -406,7 +414,9 @@ class EmojiDemoWindow(QMainWindow):
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    logging.basicConfig(level=logging.DEBUG)
+    # logger = logging.getLogger(f"qextrawidgets.widgets.views.emoji_view.QEmojiView._on_request_image")
+    logger = logging.getLogger(f"qextrawidgets.widgets.views.grid_icon_view.QEmojiView.paintEvent")
+    logger.setLevel(logging.DEBUG)
 
     app = QApplication(sys.argv)
     app.setApplicationName("QEmojiView Demo")

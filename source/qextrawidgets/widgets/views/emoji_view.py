@@ -107,6 +107,9 @@ class QEmojiView(QGridIconView):
         """
         return self._icon_pixmap_getter
 
+    def emojiImageProvider(self) -> typing.Optional[QEmojiImageProvider]:
+        return self._emoji_image_provider
+
     # -------------------------------------------------------------------------
     # Internal Slots & Callbacks
     # -------------------------------------------------------------------------
@@ -119,6 +122,8 @@ class QEmojiView(QGridIconView):
         Args:
             persistent_index (QPersistentModelIndex): The persistent index of the item needing an image.
         """
+        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}._on_request_image")
+
         start = time.perf_counter()
 
         if not persistent_index.isValid():
@@ -139,7 +144,7 @@ class QEmojiView(QGridIconView):
         proxy.setData(persistent_index, pixmap, Qt.ItemDataRole.DecorationRole)
 
         end = time.perf_counter()
-        logging.debug(f"Requested image for {emoji} in {end - start:.6f} seconds")
+        logger.debug(f"Requested image for {emoji} in {end - start:.6f} seconds")
 
     @Slot(QSize)
     def _on_icon_size_changed(self, size: QSize) -> None:
