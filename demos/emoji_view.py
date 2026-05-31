@@ -234,9 +234,8 @@ class EmojiDemoWindow(QMainWindow):
 
         # Detail Panel Widgets
         self._detail_group = QGroupBox("Selected emoji")
-        self._preview_label = QLabel("—")
+        self._preview_label = QLabel()
         self._preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._preview_label.setStyleSheet("font-size: 48px;")
         self._preview_label.setFixedSize(72, 72)
 
         self._char_label = QLabel("No emoji selected")
@@ -279,7 +278,7 @@ class EmojiDemoWindow(QMainWindow):
         # Main Layout assembly
         root_layout.addWidget(self._controls_widget)
         root_layout.addWidget(self._sep_frame)
-        root_layout.addWidget(self._emoji_view)
+        root_layout.addWidget(self._emoji_view, stretch=1)
 
         # Detail Panel Layout
         detail_layout = QHBoxLayout(self._detail_group)
@@ -374,8 +373,10 @@ class EmojiDemoWindow(QMainWindow):
         if not emoji:
             return
 
+        pixmap = index.data(Qt.ItemDataRole.DecorationRole)
+
         self._selected_emoji = emoji
-        self._preview_label.setText(emoji)
+        self._preview_label.setPixmap(pixmap)
 
         codepoints = " ".join(f"U+{ord(c):04X}" for c in emoji if c != "\uFE0F")
         self._codepoint_label.setText(f"Codepoints: {codepoints}")
