@@ -1,26 +1,26 @@
 """
 demo_emoji_view.py
 ==================
-Demo interativo para QEmojiView.
+Interactive demo for QEmojiView.
 
-Funcionalidades demonstradas:
-- Exibição de emojis em grade via QEmojiView
-- Filtragem em tempo real por texto (busca no EditRole)
-- Filtro por categoria (via QSortFilterProxyModel customizado)
-- Alternância entre fontes de renderização (PNG / SVG / Fonte do sistema)
-- Ajuste dinâmico do tamanho dos ícones
-- Seleção de emoji com exibição do caractere e codepoint
+Demonstrated Features:
+- Emoji grid display via QEmojiView
+- Real-time text filtering (searching EditRole)
+- Category filtering (via custom QSortFilterProxyModel)
+- Rendering source switching (PNG / SVG / System Font)
+- Dynamic icon size adjustment
+- Emoji selection displaying character and codepoint
 
-Arquitetura dos modelos:
-    QStandardItemModel          <- dados brutos (emoji + categoria)
+Model Architecture:
+    QStandardItemModel          <- Raw data (emoji + category)
         |
-    EmojiFilterProxyModel       <- filtra por texto e/ou categoria
+    EmojiFilterProxyModel       <- Filters by text and/or category
         |
-    QDecorationRoleProxyModel   <- armazena pixmaps sem tocar no modelo fonte
+    QDecorationRoleProxyModel   <- Caches pixmaps without touching the source model
         |
-    QEmojiView                  <- renderiza a grade
+    QEmojiView                  <- Renders the grid
 
-Execução:
+Execution:
     python demo_emoji_view.py
 """
 
@@ -46,45 +46,46 @@ from PySide6.QtWidgets import (
     QToolButton,
 )
 
+from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.gui.proxys import QDecorationRoleProxyModel
 from qextrawidgets.widgets.views import QEmojiView
 
 
 # ---------------------------------------------------------------------------
-# Role customizada para categoria
+# Custom category role
 # ---------------------------------------------------------------------------
 
 CATEGORY_ROLE = Qt.ItemDataRole.UserRole + 1
 
 
 # ---------------------------------------------------------------------------
-# Proxy de filtro customizado — filtra por texto (EditRole) e categoria
+# Custom filter proxy — filters by text (EditRole) and category
 # ---------------------------------------------------------------------------
 
 class EmojiFilterProxyModel(QSortFilterProxyModel):
-    """Filtra emojis por texto de busca e/ou categoria.
+    """Filters emojis by search text and/or category.
 
-    O filtro de texto compara contra o EditRole (caractere emoji).
-    O filtro de categoria compara contra o CATEGORY_ROLE.
+    The text filter compares against the EditRole (emoji character).
+    The category filter compares against the CATEGORY_ROLE.
     """
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._category_filter: str = ""  # "" = todas
+        self._category_filter: str = ""  # "" = all
 
     def setCategory(self, category: str) -> None:
-        self._category_filter = category if category != "Todas" else ""
+        self._category_filter = category if category != "All" else ""
         self.invalidateFilter()
 
     def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
         index = self.sourceModel().index(source_row, 0, source_parent)
 
-        # Filtro de categoria
+        # Category filter
         if self._category_filter:
             if index.data(CATEGORY_ROLE) != self._category_filter:
                 return False
 
-        # Filtro de texto (busca no caractere emoji via EditRole)
+        # Text filter (search in emoji character via EditRole)
         pattern = self.filterRegularExpression().pattern()
         if pattern:
             emoji = index.data(Qt.ItemDataRole.EditRole) or ""
@@ -95,11 +96,11 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
 
 
 # ---------------------------------------------------------------------------
-# Dados de exemplo — subconjunto de emojis agrupados por categoria
+# Example data — subset of emojis grouped by category
 # ---------------------------------------------------------------------------
 
 EMOJI_CATEGORIES: dict[str, list[str]] = {
-    "Rostos": [
+    "Smileys": [
         "😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😇", "😈",
         "😉", "😊", "😋", "😌", "😍", "🥰", "😎", "🤓", "🧐", "😏",
         "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫",
@@ -109,13 +110,13 @@ EMOJI_CATEGORIES: dict[str, list[str]] = {
         "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴", "🤢",
         "🤮", "🤧", "😷", "🤒", "🤕",
     ],
-    "Gestos": [
+    "Gestures": [
         "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞",
         "🤟", "🤘", "🤙", "👈", "👉", "👆", "🖕", "👇", "☝️", "👍",
         "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝",
         "🙏", "✍️", "💅", "🤳", "💪", "🦾", "🦿", "🦵", "🦶",
     ],
-    "Animais": [
+    "Animals": [
         "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐻‍❄️", "🐨",
         "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🙈", "🙉", "🙊", "🐔",
         "🐧", "🐦", "🐤", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴",
@@ -125,7 +126,7 @@ EMOJI_CATEGORIES: dict[str, list[str]] = {
         "🦘", "🦬", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙",
         "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃",
     ],
-    "Comidas": [
+    "Food": [
         "🍎", "🍊", "🍋", "🍇", "🍓", "🫐", "🍈", "🍒", "🍑", "🥭",
         "🍍", "🥥", "🥝", "🍅", "🍆", "🥑", "🫑", "🥦", "🥬", "🥒",
         "🌽", "🥕", "🧄", "🧅", "🥔", "🍠", "🧇", "🥞", "🧈", "🍳",
@@ -133,7 +134,7 @@ EMOJI_CATEGORIES: dict[str, list[str]] = {
         "🌭", "🍿", "🍦", "🍧", "🍨", "🍩", "🍪", "🎂", "🍰", "🧁",
         "🍫", "🍬", "🍭", "☕", "🍵", "🧃", "🥤", "🧋", "🍺", "🍻",
     ],
-    "Objetos": [
+    "Objects": [
         "⌚", "📱", "💻", "⌨️", "🖥️", "🖨️", "🖱️", "📷", "📸", "📹",
         "🎥", "📞", "☎️", "📟", "📠", "📺", "📻", "🧭", "⏱️", "⏰",
         "📡", "🔋", "🔌", "💡", "🔦", "🕯️", "🪔", "🧯", "🛢️", "💰",
@@ -141,7 +142,7 @@ EMOJI_CATEGORIES: dict[str, list[str]] = {
         "🔗", "⛓️", "🧲", "🔫", "💣", "🪓", "🔪", "🗡️", "⚔️", "🛡️",
         "🚪", "🪞", "🪟", "🛋️", "🪑", "🚽", "🧻", "🚿", "🛁",
     ],
-    "Símbolos": [
+    "Symbols": [
         "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔",
         "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "✨", "⭐",
         "🌟", "💫", "⚡", "🌈", "🔥", "💧", "❄️", "🌊", "💥", "🎉",
@@ -151,29 +152,30 @@ EMOJI_CATEGORIES: dict[str, list[str]] = {
     ],
 }
 
-ALL_CATEGORIES = ["Todas"] + list(EMOJI_CATEGORIES.keys())
+ALL_CATEGORIES = ["All"] + list(EMOJI_CATEGORIES.keys())
 
 
 # ---------------------------------------------------------------------------
-# Janela principal
+# Main window
 # ---------------------------------------------------------------------------
 
 class EmojiDemoWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("QEmojiView — Demo")
+        self.setWindowTitle("QEmojiView Demo")
+        self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
         self.resize(800, 620)
 
         # ------------------------------------------------------------------
-        # Cadeia de modelos:
+        # Model chain:
         #   QStandardItemModel
         #       -> EmojiFilterProxyModel
-        #           -> QDecorationRoleProxyModel  <- passado ao QEmojiView
+        #           -> QDecorationRoleProxyModel  <- passed to QEmojiView
         #
-        # O QDecorationRoleProxyModel NÃO é criado internamente pelo
-        # QEmojiView neste fluxo — ele é construído aqui para que possamos
-        # encadear o proxy de filtro antes dele, sem perder a separação de
-        # responsabilidades (o decoration proxy nunca toca no modelo fonte).
+        # QDecorationRoleProxyModel is NOT created internally by
+        # QEmojiView in this flow — it is constructed here so we can
+        # chain the filter proxy before it, without losing the separation of
+        # concerns (the decoration proxy never touches the source model).
         # ------------------------------------------------------------------
         self._source_model = QStandardItemModel()
         self._build_model()
@@ -184,74 +186,31 @@ class EmojiDemoWindow(QMainWindow):
         self._decoration_proxy = QDecorationRoleProxyModel()
         self._decoration_proxy.setSourceModel(self._filter_proxy)
 
-        # ------------------------------------------------------------------
-        # Layout
-        # ------------------------------------------------------------------
-        central = QWidget()
-        self.setCentralWidget(central)
-        root_layout = QVBoxLayout(central)
-        root_layout.setContentsMargins(12, 12, 12, 8)
-        root_layout.setSpacing(8)
+        self.init_widgets()
+        self.init_layout()
+        self.init_connections()
 
-        root_layout.addWidget(self._build_controls())
+        self._on_size_changed(48)
 
-        sep = QFrame()
-        sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setFrameShadow(QFrame.Shadow.Sunken)
-        root_layout.addWidget(sep)
+    def init_widgets(self) -> None:
+        """Instantiate and configure UI widgets."""
+        self._central_widget = QWidget()
+        self._controls_widget = QWidget()
 
-        # QEmojiView recebe o QDecorationRoleProxyModel já configurado.
-        # Internamente o view não cria um segundo decoration proxy — ele usa
-        # o que for passado via setModel().
-        self._emoji_view = QEmojiView()
-        self._emoji_view.setModel(self._decoration_proxy)
-        self._emoji_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        root_layout.addWidget(self._emoji_view)
-
-        root_layout.addWidget(self._build_detail_panel())
-
-        self._status = QStatusBar()
-        self.setStatusBar(self._status)
-        self._update_status()
-
-        # ------------------------------------------------------------------
-        # Conexões
-        # ------------------------------------------------------------------
-        self._emoji_view.itemClicked.connect(self._on_item_clicked)
-        self._filter_proxy.rowsInserted.connect(self._update_status)
-        self._filter_proxy.rowsRemoved.connect(self._update_status)
-        self._filter_proxy.modelReset.connect(self._update_status)
-
-    # ------------------------------------------------------------------
-    # Construção da UI
-    # ------------------------------------------------------------------
-
-    def _build_controls(self) -> QWidget:
-        """Constrói a barra de controles: busca, categoria, renderização, tamanho."""
-        bar = QWidget()
-        layout = QHBoxLayout(bar)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
-
+        # Controls Bar Widgets
         self._search_edit = QLineEdit()
-        self._search_edit.setPlaceholderText("🔍  Buscar emoji…")
+        self._search_edit.setPlaceholderText("🔍  Search emoji…")
         self._search_edit.setClearButtonEnabled(True)
-        self._search_edit.textChanged.connect(self._on_search_changed)
-        layout.addWidget(self._search_edit, stretch=3)
 
-        layout.addWidget(QLabel("Categoria:"))
+        self._category_label = QLabel("Category:")
         self._category_combo = QComboBox()
         self._category_combo.addItems(ALL_CATEGORIES)
-        self._category_combo.currentTextChanged.connect(self._on_category_changed)
-        layout.addWidget(self._category_combo, stretch=1)
 
-        layout.addWidget(QLabel("Renderização:"))
+        self._source_label = QLabel("Rendering:")
         self._source_combo = QComboBox()
-        self._source_combo.addItems(["PNG (Twemoji)", "SVG (Twemoji)", "Fonte do sistema"])
-        self._source_combo.currentIndexChanged.connect(self._on_source_changed)
-        layout.addWidget(self._source_combo, stretch=1)
+        self._source_combo.addItems(["PNG (Twemoji)", "SVG (Twemoji)", "System font"])
 
-        layout.addWidget(QLabel("Tamanho:"))
+        self._size_label_title = QLabel("Size:")
         self._size_slider = QSlider(Qt.Orientation.Horizontal)
         self._size_slider.setRange(24, 96)
         self._size_slider.setValue(48)
@@ -259,51 +218,109 @@ class EmojiDemoWindow(QMainWindow):
         self._size_slider.setFixedWidth(120)
         self._size_label = QLabel("48 px")
         self._size_label.setFixedWidth(42)
-        self._size_slider.valueChanged.connect(self._on_size_changed)
-        layout.addWidget(self._size_slider)
-        layout.addWidget(self._size_label)
 
-        return bar
+        # Separator line
+        self._sep_frame = QFrame()
+        self._sep_frame.setFrameShape(QFrame.Shape.HLine)
+        self._sep_frame.setFrameShadow(QFrame.Shadow.Sunken)
 
-    def _build_detail_panel(self) -> QGroupBox:
-        """Constrói o painel inferior com detalhes do emoji selecionado."""
-        group = QGroupBox("Emoji selecionado")
-        layout = QHBoxLayout(group)
-        layout.setSpacing(16)
+        # Emoji View
+        # QEmojiView receives the pre-configured QDecorationRoleProxyModel.
+        # Internally, the view does not create a second decoration proxy — it uses
+        # whatever is passed via setModel().
+        self._emoji_view = QEmojiView()
+        self._emoji_view.setModel(self._decoration_proxy)
+        self._emoji_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
+        # Detail Panel Widgets
+        self._detail_group = QGroupBox("Selected emoji")
         self._preview_label = QLabel("—")
         self._preview_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._preview_label.setStyleSheet("font-size: 48px;")
         self._preview_label.setFixedSize(72, 72)
-        layout.addWidget(self._preview_label)
 
-        details_layout = QVBoxLayout()
-        self._char_label = QLabel("Nenhum emoji selecionado")
+        self._char_label = QLabel("No emoji selected")
         self._char_label.setStyleSheet("font-weight: bold; font-size: 14px;")
         self._codepoint_label = QLabel("")
         self._name_label = QLabel("")
-        details_layout.addWidget(self._char_label)
-        details_layout.addWidget(self._codepoint_label)
-        details_layout.addWidget(self._name_label)
-        details_layout.addStretch()
-        layout.addLayout(details_layout, stretch=1)
 
         self._copy_btn = QToolButton()
-        self._copy_btn.setText("📋 Copiar")
+        self._copy_btn.setText("📋 Copy")
         self._copy_btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self._copy_btn.setEnabled(False)
-        self._copy_btn.clicked.connect(self._on_copy_emoji)
-        layout.addWidget(self._copy_btn)
 
         self._selected_emoji: str = ""
-        return group
+
+        # Status Bar
+        self._status = QStatusBar()
+        self.setStatusBar(self._status)
+        self._update_status()
+
+    def init_layout(self) -> None:
+        """Arrange widgets into layouts and set layouts on parent widgets."""
+        self.setCentralWidget(self._central_widget)
+        root_layout = QVBoxLayout(self._central_widget)
+        root_layout.setContentsMargins(12, 12, 12, 8)
+        root_layout.setSpacing(8)
+
+        # Controls Bar Layout
+        controls_layout = QHBoxLayout(self._controls_widget)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(12)
+        controls_layout.addWidget(self._search_edit, stretch=3)
+        controls_layout.addWidget(self._category_label)
+        controls_layout.addWidget(self._category_combo, stretch=1)
+        controls_layout.addWidget(self._source_label)
+        controls_layout.addWidget(self._source_combo, stretch=1)
+        controls_layout.addWidget(self._size_label_title)
+        controls_layout.addWidget(self._size_slider)
+        controls_layout.addWidget(self._size_label)
+
+        # Main Layout assembly
+        root_layout.addWidget(self._controls_widget)
+        root_layout.addWidget(self._sep_frame)
+        root_layout.addWidget(self._emoji_view)
+
+        # Detail Panel Layout
+        detail_layout = QHBoxLayout(self._detail_group)
+        detail_layout.setSpacing(16)
+        detail_layout.addWidget(self._preview_label)
+
+        details_text_layout = QVBoxLayout()
+        details_text_layout.addWidget(self._char_label)
+        details_text_layout.addWidget(self._codepoint_label)
+        details_text_layout.addWidget(self._name_label)
+        details_text_layout.addStretch()
+        detail_layout.addLayout(details_text_layout, stretch=1)
+        detail_layout.addWidget(self._copy_btn)
+
+        root_layout.addWidget(self._detail_group)
+
+    def init_connections(self) -> None:
+        """Connect signals to their respective slot handlers."""
+        # Controls Bar Connections
+        self._search_edit.textChanged.connect(self._on_search_changed)
+        self._category_combo.currentTextChanged.connect(self._on_category_changed)
+        self._source_combo.currentIndexChanged.connect(self._on_source_changed)
+        self._size_slider.valueChanged.connect(self._on_size_changed)
+
+        # Detail Panel & Copy Button Connections
+        self._copy_btn.clicked.connect(self._on_copy_emoji)
+
+        # Emoji View Connections
+        self._emoji_view.itemClicked.connect(self._on_item_clicked)
+
+        # Filter Proxy Connections
+        self._filter_proxy.rowsInserted.connect(self._update_status)
+        self._filter_proxy.rowsRemoved.connect(self._update_status)
+        self._filter_proxy.modelReset.connect(self._update_status)
 
     # ------------------------------------------------------------------
-    # Modelo
+    # Model
     # ------------------------------------------------------------------
 
     def _build_model(self) -> None:
-        """Popula o QStandardItemModel com todos os emojis e suas categorias."""
+        """Populates the QStandardItemModel with all emojis and their categories."""
         self._source_model.clear()
         for category, emojis in EMOJI_CATEGORIES.items():
             for emoji in emojis:
@@ -343,11 +360,11 @@ class EmojiDemoWindow(QMainWindow):
         self._emoji_view.setIconSize(QSize(value, value))
 
     def _on_item_clicked(self, index: QModelIndex) -> None:
-        """Exibe detalhes do emoji clicado.
+        """Displays details of the clicked emoji.
 
-        O index recebido aponta para o QDecorationRoleProxyModel.
-        É necessário mapear dois níveis até o QStandardItemModel para
-        ler os dados sem intermediários.
+        The received index points to the QDecorationRoleProxyModel.
+        It is necessary to map two levels down to the QStandardItemModel to
+        read the data directly.
         """
         # decoration proxy -> filter proxy -> source model
         filter_index = self._decoration_proxy.mapToSource(index)
@@ -361,13 +378,13 @@ class EmojiDemoWindow(QMainWindow):
         self._preview_label.setText(emoji)
 
         codepoints = " ".join(f"U+{ord(c):04X}" for c in emoji if c != "\uFE0F")
-        self._codepoint_label.setText(f"Codepoint: {codepoints}")
+        self._codepoint_label.setText(f"Codepoints: {codepoints}")
 
         try:
             name = unicodedata.name(emoji[0])
         except (ValueError, TypeError):
             name = "—"
-        self._name_label.setText(f"Nome: {name}")
+        self._name_label.setText(f"Name: {name}")
         self._char_label.setText(emoji)
         self._copy_btn.setEnabled(True)
 
@@ -375,12 +392,12 @@ class EmojiDemoWindow(QMainWindow):
         if self._selected_emoji:
             QApplication.clipboard().setText(self._selected_emoji)
             self._status.showMessage(
-                f"'{self._selected_emoji}' copiado para a área de transferência!", 2500
+                f"'{self._selected_emoji}' copied to clipboard!", 2500
             )
 
     def _update_status(self) -> None:
         total = self._filter_proxy.rowCount()
-        self._status.showMessage(f"{total} emoji(s) exibido(s)")
+        self._status.showMessage(f"{total} emoji(s) displayed")
 
 
 # ---------------------------------------------------------------------------
