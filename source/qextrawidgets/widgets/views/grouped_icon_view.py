@@ -267,8 +267,9 @@ class QGroupedIconView(QGridIconView):
             rows = list(self._rows(cat_index))
 
             if self.isExpanded(cat_persistent_index) and rows:
+                cols = self.virtualColumns()
                 for row, persistent_index in enumerate(rows):
-                    self._populate_grid_caches(row, persistent_index, self._item_indexes[cat_persistent_index], y)
+                    self._populate_grid_caches(row, persistent_index, self._item_indexes[cat_persistent_index], cols, y)
 
                 rows_count = max(self._item_indexes[cat_persistent_index].keys()) + 1
                 logger.debug(f"Rows count: {rows_count}")
