@@ -361,7 +361,6 @@ class QGridIconView(QAbstractItemView):
             old_selection_model.selectionChanged.disconnect(
                 self._on_selection_changed
             )
-            old_selection_model.currentChanged.disconnect(self._on_current_changed)
 
         super().setModel(model)
 
@@ -379,7 +378,6 @@ class QGridIconView(QAbstractItemView):
         new_selection_model = self.selectionModel()
         if new_selection_model:
             new_selection_model.selectionChanged.connect(self._on_selection_changed)
-            new_selection_model.currentChanged.connect(self._on_current_changed)
 
     @Slot()
     def _on_layout_changed(self) -> None:
@@ -418,11 +416,6 @@ class QGridIconView(QAbstractItemView):
     @Slot()
     def _on_selection_changed(self) -> None:
         """Handle selection changes to update visual feedback."""
-        self.viewport().update()
-
-    @Slot()
-    def _on_current_changed(self) -> None:
-        """Handle current index changes (e.g., from setCurrentIndex) to update visual feedback."""
         self.viewport().update()
 
     # -------------------------------------------------------------------------
