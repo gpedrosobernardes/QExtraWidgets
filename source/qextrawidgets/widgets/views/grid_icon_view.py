@@ -490,16 +490,20 @@ class QGridIconView(QAbstractItemView):
         paint_total = 0
 
         for p_index, rect in self._visible_items():
+            logger.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
             visual_rect = rect.translated(0, -scroll_y)
 
-            logger.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
-            paint_start = time.perf_counter()
-            self._init_option(option, p_index, visual_rect)
-            item_delegate.paint(painter, option, p_index)
-            paint_end = time.perf_counter()
-            paint_delta = paint_end - paint_start
-            paint_total += paint_delta
-            logger.debug(f"Painted in {paint_delta:.6f} seconds.")
+            if logger.isEnabledFor(logging.DEBUG):
+                paint_start = time.perf_counter()
+                self._init_option(option, p_index, visual_rect)
+                item_delegate.paint(painter, option, p_index)
+                paint_end = time.perf_counter()
+                paint_delta = paint_end - paint_start
+                paint_total += paint_delta
+                logger.debug(f"Painted in {paint_delta:.6f} seconds.")
+            else:
+                self._init_option(option, p_index, visual_rect)
+                item_delegate.paint(painter, option, p_index)
 
         end = time.perf_counter()
         logger.debug(f"Painted {paint_total:.6f} seconds.")
