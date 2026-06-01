@@ -189,7 +189,7 @@ class QEmojiImageProvider(QObject):
         return QEmojiImageProvider.getFallbackBy(target_size, dpr)
 
     @staticmethod
-    def getUrlBy(alias: str, size: QSize, dpr: float, source: str) -> QUrl:
+    def getUrlBy(emoji_code: str, size: QSize, dpr: float, source: str) -> QUrl:
         """Build a unique ``QUrl`` cache key for a specific emoji + render config.
 
         The URL encodes every parameter that affects the visual output of a
@@ -198,14 +198,14 @@ class QEmojiImageProvider(QObject):
 
         URL format::
 
-            emoji://<alias>?size=<size>&dpr=<dpr>&source=<source>
+            emoji://<emoji_code>?height=<height>&width=<width>&dpr=<dpr>&source=<source>
 
         Example::
 
-            emoji://1F600?size=32&dpr=2.0&source=png
+            emoji://1F600?height=32&width=32&dpr=2.0&source=png
 
         Args:
-            alias:  Unified emoji code point string (e.g. ``"1F600"``),
+            emoji_code:  Unified emoji code point string (e.g. ``"1F600"``),
                     typically obtained via ``char_to_unified()``.
             size:   Logical size used for the ``size`` query parameter.
             dpr:    Device pixel ratio used for the ``dpr`` query parameter.
@@ -217,7 +217,7 @@ class QEmojiImageProvider(QObject):
         """
         url = QUrl()
         url.setScheme("emoji")
-        url.setPath(alias)
+        url.setPath(emoji_code)
 
         query_params = QUrlQuery()
         query_params.addQueryItem("height", str(size.height()))
