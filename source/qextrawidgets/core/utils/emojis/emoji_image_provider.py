@@ -9,8 +9,8 @@ redundant disk I/O across repeated requests.
 
 Typical usage::
 
-    provider = QEmojiImageProvider(size=32, dpr=2.0, source="png")
-    pixmap = provider.getPixmap("😀")          # logical 32 px, physical 64 px
+    provider = QEmojiImageProvider(source="png")
+    pixmap = provider.getPixmap("😀", size=QSize(32, 32), dpr=2.0)  # logical 32 px, physical 64 px
 """
 
 from PySide6.QtCore import QSize, QUrl, QUrlQuery, QObject, Signal
@@ -27,11 +27,11 @@ class QEmojiImageProvider(QObject):
     """Loads, scales, and caches emoji images for use in Qt widgets.
 
     ``QEmojiImageProvider`` centralizes all emoji-to-pixmap resolution logic.
-    It keeps track of three rendering parameters — logical size, device-pixel
-    ratio, and rendering source — and exposes both instance-level convenience
-    methods (which use those stored parameters) and static counterparts (which
-    accept every parameter explicitly, useful when no persistent provider object
-    is needed).
+    It stores only the rendering *source* as persistent state, while ``size``
+    and ``dpr`` are passed per-call.  It exposes both instance-level convenience
+    methods (which inject the stored ``source`` automatically) and static
+    counterparts that accept every parameter explicitly — useful when no
+    persistent provider object is needed.
 
     Rendering sources
     -----------------
@@ -61,20 +61,21 @@ class QEmojiImageProvider(QObject):
 
     Example::
 
-        provider = QEmojiImageProvider(size=48, dpr=screen.devicePixelRatio())
-        pixmap = provider.getPixmap("👍")
+        provider = QEmojiImageProvider(source="png")
+        pixmap = provider.getPixmap("👍", size=QSize(48, 48), dpr=screen.devicePixelRatio())
         label.setPixmap(pixmap)
     """
 
     sourceChanged = Signal(str)
 
     def __init__(self, source: str = "png") -> None:
-        """Initialise the provider with fixed rendering parameters.
+        """Initialize the provider with a rendering source.
+
+        ``size`` and ``dpr`` are intentionally *not* stored here — they are
+        passed per-call so that a single provider instance can serve requests
+        for different sizes and screens without being re-created.
 
         Args:
-            size:   Logical pixel size of the emoji image (width = height).
-            dpr:    Device pixel ratio of the target screen (e.g. ``2.0`` for
-                    Retina displays).  Used to compute the physical resolution.
             source: Rendering back-end to use.  ``"png"`` or ``"svg"`` select
                     Twemoji file assets; any other value is treated as a font
                     family name.  Defaults to ``"png"``.
@@ -95,7 +96,9 @@ class QEmojiImageProvider(QObject):
         than a null one.
 
         Args:
-            size: Physical pixel size (width and height) of the placeholder.
+            size: Logical pixel size (width and height) of the placeholder.
+                  The pixmap is created at this size and tagged with ``dpr``;
+                  Qt will use the physical backing-store size automatically.
             dpr:  Device pixel ratio to tag the pixmap with.
 
         Returns:
@@ -217,7 +220,8 @@ class QEmojiImageProvider(QObject):
         url.setPath(alias)
 
         query_params = QUrlQuery()
-        query_params.addQueryItem("size", str(size))
+        query_params.addQueryItem("height", str(size.height()))
+        query_params.addQueryItem("width", str(size.width()))
         query_params.addQueryItem("dpr", str(dpr))
         query_params.addQueryItem("source", source)
 
@@ -261,28 +265,35 @@ class QEmojiImageProvider(QObject):
     # Instance-level convenience wrappers
     # ------------------------------------------------------------------
 
-    def getUrl(self, alias: str, size: QSize, dpr: float) -> QUrl:
-        """Build a cache key URL using this provider's stored parameters.
+    def getUrl(self, emoji_code: str, size: QSize, dpr: float) -> QUrl:
+        """Build a cache key URL injecting this provider's source.
 
-        Convenience wrapper around :meth:`getUrlBy` that substitutes the
-        instance's ``size``, ``dpr``, and ``source`` automatically.
+        Convenience wrapper around :meth:`getUrlBy` that fills in the
+        ``source`` argument automatically from the provider's current state.
+        ``size`` and ``dpr`` must still be supplied by the caller.
 
         Args:
-            alias: Unified emoji code point string (e.g. ``"1F600"``).
+            emoji_code: Unified emoji code point string (e.g. ``"1F600"``),
+                   typically obtained via ``char_to_unified()``.
+            size:  Logical pixel size for the ``size`` query parameter.
+            dpr:   Device pixel ratio for the ``dpr`` query parameter.
 
         Returns:
-            A ``QUrl`` cache key for the given alias under current settings.
+            A ``QUrl`` cache key for the given alias under the current source.
         """
-        return self.getUrlBy(alias, size, dpr, self.getSource())
+        return self.getUrlBy(emoji_code, size, dpr, self.getSource())
 
     def getPixmap(self, emoji: str, size: QSize, dpr: float) -> QPixmap:
-        """Load an emoji pixmap using this provider's stored parameters.
+        """Load an emoji pixmap injecting this provider's source.
 
-        Convenience wrapper around :meth:`getPixmapBy` that substitutes the
-        instance's ``size``, ``dpr``, and ``source`` automatically.
+        Convenience wrapper around :meth:`getPixmapBy` that fills in the
+        ``source`` argument automatically from the provider's current state.
+        ``size`` and ``dpr`` must still be supplied by the caller.
 
         Args:
             emoji: Unicode emoji character (e.g. ``"😀"``).
+            size:  Logical pixel size of the resulting pixmap.
+            dpr:   Device pixel ratio of the target screen.
 
         Returns:
             The resolved ``QPixmap``, or a transparent fallback on failure.
@@ -290,14 +301,16 @@ class QEmojiImageProvider(QObject):
         return self.getPixmapBy(emoji, size, dpr, self.getSource())
 
     def getPixmapFromIconItem(self, icon_item: QIconItem, size: QSize, dpr: float) -> QPixmap:
-        """Resolve a ``QIconItem``'s emoji to a pixmap using stored parameters.
+        """Resolve a ``QIconItem``'s emoji to a pixmap injecting this provider's source.
 
-        Convenience wrapper around :meth:`getPixmapFromIconItemBy` that
-        substitutes the instance's ``size``, ``dpr``, and ``source``
-        automatically.
+        Convenience wrapper around :meth:`getPixmapFromIconItemBy` that fills
+        in the ``source`` argument automatically from the provider's current
+        state.  ``size`` and ``dpr`` must still be supplied by the caller.
 
         Args:
             icon_item: Item carrying the base emoji and skin tone modifier.
+            size:      Logical pixel size of the resulting pixmap.
+            dpr:       Device pixel ratio of the target screen.
 
         Returns:
             The resolved ``QPixmap``, or a transparent fallback on failure.
