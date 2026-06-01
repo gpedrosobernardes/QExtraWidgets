@@ -546,10 +546,9 @@ class QGridIconView(QAbstractItemView):
         self._item_rects.clear()
         self._item_indexes.clear()
 
-        rows = list(self._rows(self.rootIndex()))
         cols = self.virtualColumns()
 
-        for row, persistent_index in enumerate(rows):
+        for row, persistent_index in enumerate(self._rows(self.rootIndex())):
             self._populate_grid_caches(row, persistent_index, self._item_indexes, cols)
 
         rows_count = max(self._item_indexes.keys()) + 1
