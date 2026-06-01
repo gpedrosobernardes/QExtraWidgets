@@ -67,10 +67,8 @@ class QEmojiImageProvider(QObject):
     """
 
     sourceChanged = Signal(str)
-    sizeChanged = Signal(int)
-    devicePixelRatioChanged = Signal(float)
 
-    def __init__(self, size: int, dpr: float, source: str = "png") -> None:
+    def __init__(self, source: str = "png") -> None:
         """Initialise the provider with fixed rendering parameters.
 
         Args:
@@ -82,8 +80,6 @@ class QEmojiImageProvider(QObject):
                     family name.  Defaults to ``"png"``.
         """
         super().__init__()
-        self._size = size
-        self._dpr = dpr
         self._source = source
 
     # ------------------------------------------------------------------
@@ -91,7 +87,7 @@ class QEmojiImageProvider(QObject):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def getFallbackBy(size: int, dpr: float) -> QPixmap:
+    def getFallbackBy(size: QSize, dpr: float) -> QPixmap:
         """Create a fully transparent placeholder pixmap.
 
         Used whenever an emoji asset cannot be located or read, ensuring
@@ -106,7 +102,7 @@ class QEmojiImageProvider(QObject):
             A ``size × size`` transparent ``QPixmap`` with its device-pixel
             ratio set to ``dpr``.
         """
-        fallback = QPixmap(size, size)
+        fallback = QPixmap(size)
         fallback.fill(Qt.GlobalColor.transparent)
         fallback.setDevicePixelRatio(dpr)
         return fallback
@@ -114,7 +110,7 @@ class QEmojiImageProvider(QObject):
     @staticmethod
     def getPixmapBy(
         emoji: str,
-        size: int,
+        size: QSize,
         dpr: float = 1.0,
         source: str = "png",
     ) -> QPixmap:
@@ -143,7 +139,7 @@ class QEmojiImageProvider(QObject):
             fallback pixmap if the asset cannot be loaded.
         """
         # 1. Physical (backing-store) size in pixels
-        target_size = int(size * dpr)
+        target_size = size * dpr
 
         # 2. Build a deterministic cache key from all rendering parameters
         cache_url = QEmojiImageProvider.getUrlBy(char_to_unified(emoji), size, dpr, source)
@@ -169,7 +165,7 @@ class QEmojiImageProvider(QObject):
                 # For SVG: set the target size *before* read() so the renderer
                 # produces pixels at the correct resolution instead of decoding
                 # at the document's intrinsic size and then rescaling.
-                reader.setScaledSize(QSize(target_size, target_size))
+                reader.setScaledSize(target_size)
 
                 image = reader.read()
                 if not image.isNull():
@@ -181,7 +177,7 @@ class QEmojiImageProvider(QObject):
         else:
             # Font back-end: render the emoji glyph via QIconGenerator
             pixmap = QIconGenerator.charToPixmap(
-                emoji, QSize(size, size), QFont(source), dpr
+                emoji, size, QFont(source), dpr
             )
             QPixmapCache.insert(cache_url.toString(), pixmap)
             return pixmap
@@ -190,7 +186,7 @@ class QEmojiImageProvider(QObject):
         return QEmojiImageProvider.getFallbackBy(target_size, dpr)
 
     @staticmethod
-    def getUrlBy(alias: str, size: int, dpr: float, source: str) -> QUrl:
+    def getUrlBy(alias: str, size: QSize, dpr: float, source: str) -> QUrl:
         """Build a unique ``QUrl`` cache key for a specific emoji + render config.
 
         The URL encodes every parameter that affects the visual output of a
@@ -231,7 +227,7 @@ class QEmojiImageProvider(QObject):
     @staticmethod
     def getPixmapFromIconItemBy(
         icon_item: QIconItem,
-        size: int,
+        size: QSize,
         dpr: float,
         source: str,
     ) -> QPixmap:
@@ -265,7 +261,7 @@ class QEmojiImageProvider(QObject):
     # Instance-level convenience wrappers
     # ------------------------------------------------------------------
 
-    def getUrl(self, alias: str) -> QUrl:
+    def getUrl(self, alias: str, size: QSize, dpr: float) -> QUrl:
         """Build a cache key URL using this provider's stored parameters.
 
         Convenience wrapper around :meth:`getUrlBy` that substitutes the
@@ -277,9 +273,9 @@ class QEmojiImageProvider(QObject):
         Returns:
             A ``QUrl`` cache key for the given alias under current settings.
         """
-        return self.getUrlBy(alias, self._size, self._dpr, self.getSource())
+        return self.getUrlBy(alias, size, dpr, self.getSource())
 
-    def getPixmap(self, emoji: str) -> QPixmap:
+    def getPixmap(self, emoji: str, size: QSize, dpr: float) -> QPixmap:
         """Load an emoji pixmap using this provider's stored parameters.
 
         Convenience wrapper around :meth:`getPixmapBy` that substitutes the
@@ -291,9 +287,9 @@ class QEmojiImageProvider(QObject):
         Returns:
             The resolved ``QPixmap``, or a transparent fallback on failure.
         """
-        return self.getPixmapBy(emoji, self._size, self._dpr, self.getSource())
+        return self.getPixmapBy(emoji, size, dpr, self.getSource())
 
-    def getPixmapFromIconItem(self, icon_item: QIconItem) -> QPixmap:
+    def getPixmapFromIconItem(self, icon_item: QIconItem, size: QSize, dpr: float) -> QPixmap:
         """Resolve a ``QIconItem``'s emoji to a pixmap using stored parameters.
 
         Convenience wrapper around :meth:`getPixmapFromIconItemBy` that
@@ -307,7 +303,7 @@ class QEmojiImageProvider(QObject):
             The resolved ``QPixmap``, or a transparent fallback on failure.
         """
         return self.getPixmapFromIconItemBy(
-            icon_item, self._size, self._dpr, self.getSource()
+            icon_item, size, dpr, self.getSource()
         )
 
     # ------------------------------------------------------------------
@@ -337,65 +333,3 @@ class QEmojiImageProvider(QObject):
         if source != self._source:
             self._source = source
             self.sourceChanged.emit(self._source)
-
-    def getSize(self) -> int:
-        """Return the current logical emoji size in pixels.
-
-        Returns:
-            The logical pixel size (width = height) used when resolving
-            pixmaps via the instance-level convenience methods.  The
-            physical backing-store size is ``getSize() × dpr``.
-        """
-        return self._size
-
-    def setSize(self, size: int) -> None:
-        """Change the logical emoji size and notify listeners.
-
-        If ``size`` differs from the current value, updates the internal
-        state and emits :attr:`sizeChanged` with the new value.
-        No-op if the value is unchanged (avoids spurious signal emissions).
-
-        Note:
-            Changing the size does **not** invalidate ``QPixmapCache`` entries
-            from the previous size.  Previously cached pixmaps remain in the
-            cache and will be served if a caller requests the old size again.
-
-        Args:
-            size: New logical pixel size (width = height).  Must be > 0.
-        """
-        if size != self._size:
-            self._size = size
-            self.sizeChanged.emit(self._size)
-
-    def getDevicePixelRatio(self) -> float:
-        """Return the current device pixel ratio.
-
-        Returns:
-            The DPR used when resolving pixmaps via the instance-level
-            convenience methods.  The physical backing-store size of any
-            produced pixmap is ``getSize() × getDevicePixelRatio()``.
-        """
-        return self._dpr
-
-    def setDevicePixelRatio(self, dpr: float) -> None:
-        """Change the device pixel ratio and notify listeners.
-
-        If ``dpr`` differs from the current value, updates the internal
-        state and emits :attr:`devicePixelRatioChanged` with the new value.
-        No-op if the value is unchanged (avoids spurious signal emissions).
-
-        Note:
-            Changing the DPR does **not** invalidate ``QPixmapCache`` entries
-            produced with the previous DPR.  Those pixmaps remain cached and
-            will be served if a caller explicitly requests the old DPR again.
-            If stale entries are a concern, call ``QPixmapCache.clear()``
-            before or after updating the DPR.
-
-        Args:
-            dpr: New device pixel ratio. Typical values are ``1.0`` (standard
-                 displays), ``1.25`` / ``1.5`` (Windows intermediate scales),
-                 and ``2.0`` (Retina / 4K displays). Must be > 0.
-        """
-        if dpr != self._dpr:
-            self._dpr = dpr
-            self.devicePixelRatioChanged.emit(self._dpr)

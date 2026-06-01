@@ -379,7 +379,7 @@ class EmojiDemoWindow(QMainWindow):
         if pixmap_image_provider is None:
             return
 
-        size = self._preview_label.size().height()
+        size = self._preview_label.size()
         dpr = self._preview_label.devicePixelRatio()
         pixmap = QEmojiImageProvider.getPixmapBy(emoji, size, dpr, pixmap_image_provider.getSource())
 

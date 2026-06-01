@@ -5,7 +5,7 @@ from PySide6.QtCore import (
     QModelIndex,
     QPersistentModelIndex,
     Signal,
-    QTimer,
+    QTimer, QSize,
 )
 from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage
 from PySide6.QtWidgets import (
@@ -30,7 +30,7 @@ class QGridIconDelegate(QStyledItemDelegate):
     """
 
     # Signal emitted when an item has no DecorationRole data
-    requestImage = Signal(QPersistentModelIndex)
+    requestImage = Signal(QPersistentModelIndex, QSize, float)
 
     def __init__(
         self,
@@ -129,6 +129,7 @@ class QGridIconDelegate(QStyledItemDelegate):
         current_state = typing.cast(QStyle.StateFlag, option.state)
         bg_color = None
         base_bg_color = palette.color(QPalette.ColorRole.Base)
+        dpr = painter.device().devicePixelRatio()
 
         # Determine Background Color for Selection/Hover
         if current_state & QStyle.StateFlag.State_Selected:
@@ -158,7 +159,7 @@ class QGridIconDelegate(QStyledItemDelegate):
 
         if index not in self._requested_indices:
             self._requested_indices.add(index)
-            self.requestImage.emit(index)
+            self.requestImage.emit(index, target_rect.size(), dpr)
 
         elif item_data is not None:
             if isinstance(item_data, (QIcon, QPixmap, QImage)) and not item_data.isNull():
@@ -194,18 +195,19 @@ class QGridIconDelegate(QStyledItemDelegate):
                 else:
                     pixmap = item_data
 
-                dpr = pixmap.devicePixelRatio()
-
-                # Scale using physical pixels so the backing-store resolution is
-                # preserved on HiDPI screens.  target_rect is in logical pixels,
-                # so we multiply by dpr to get the physical target size.
-                physical_target = target_rect.size() * dpr
-                scaled_pixmap = pixmap.scaled(
-                    physical_target,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
-                )
-                scaled_pixmap.setDevicePixelRatio(dpr)
+                if pixmap.size() != target_rect.size():
+                    # Scale using physical pixels so the backing-store resolution is
+                    # preserved on HiDPI screens.  target_rect is in logical pixels,
+                    # so we multiply by dpr to get the physical target size.
+                    physical_target = target_rect.size() * dpr
+                    scaled_pixmap = pixmap.scaled(
+                        physical_target,
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation,
+                    )
+                    scaled_pixmap.setDevicePixelRatio(dpr)
+                else:
+                    scaled_pixmap = pixmap
 
                 # Center using logical sizes (deviceIndependentSize) so the
                 # arithmetic stays in the same coordinate space as target_rect.

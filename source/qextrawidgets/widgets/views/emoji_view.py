@@ -23,7 +23,7 @@ class QEmojiView(QGridIconView):
     def __init__(
         self,
         parent: typing.Optional[QWidget] = None,
-        icon_pixmap_getter: typing.Optional[typing.Callable[[str], QPixmap]] = None,
+        icon_pixmap_getter: typing.Optional[typing.Callable[[str, QSize, float], QPixmap]] = None,
     ):
         """
         Initialize the QEmojiView.
@@ -38,7 +38,7 @@ class QEmojiView(QGridIconView):
         self.setModel(QDecorationRoleProxyModel())
 
         if icon_pixmap_getter is None:
-            self._emoji_image_provider = QEmojiImageProvider(32, self.devicePixelRatio())
+            self._emoji_image_provider = QEmojiImageProvider()
             self.setIconPixmapGetter(self._emoji_image_provider.getPixmap)
         else:
             self._emoji_image_provider = None
@@ -53,9 +53,6 @@ class QEmojiView(QGridIconView):
         """
         if self._emoji_image_provider is not None:
             self._emoji_image_provider.sourceChanged.connect(self._on_image_provider_settings_changed)
-            self._emoji_image_provider.sizeChanged.connect(self._on_image_provider_settings_changed)
-            self._emoji_image_provider.devicePixelRatioChanged.connect(self._on_image_provider_settings_changed)
-            self.iconSizeChanged.connect(self._on_icon_size_changed)
 
         delegate = self.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
@@ -84,7 +81,7 @@ class QEmojiView(QGridIconView):
 
     def setIconPixmapGetter(
         self,
-        icon_pixmap_getter: typing.Callable[[str], QPixmap],
+        icon_pixmap_getter: typing.Callable[[str, QSize, float], QPixmap],
     ) -> None:
         """
         Sets the strategy for retrieving icon pixmaps.
@@ -98,7 +95,7 @@ class QEmojiView(QGridIconView):
         delegate = self.itemDelegate()
         delegate.forceReloadAll()
 
-    def iconPixmapGetter(self) -> typing.Callable[[str], QPixmap]:
+    def iconPixmapGetter(self) -> typing.Callable[[str, QSize, float], QPixmap]:
         """
         Returns the current emoji pixmap getter function.
 
@@ -114,8 +111,8 @@ class QEmojiView(QGridIconView):
     # Internal Slots & Callbacks
     # -------------------------------------------------------------------------
 
-    @Slot(QPersistentModelIndex)
-    def _on_request_image(self, persistent_index: QPersistentModelIndex) -> None:
+    @Slot(QPersistentModelIndex, QSize, float)
+    def _on_request_image(self, persistent_index: QPersistentModelIndex, size: QSize, dpr: float) -> None:
         """
         Loads the emoji image when requested by the delegate.
 
@@ -139,23 +136,12 @@ class QEmojiView(QGridIconView):
         if emoji is None:
             return
 
-        pixmap = icon_pixmap_getter(emoji)
+        pixmap = icon_pixmap_getter(emoji, size, dpr)
         proxy = self.model()
         proxy.setData(persistent_index, pixmap, Qt.ItemDataRole.DecorationRole)
 
         end = time.perf_counter()
         logger.debug(f"Requested image for {emoji} in {end - start:.6f} seconds")
-
-    @Slot(QSize)
-    def _on_icon_size_changed(self, size: QSize) -> None:
-        """
-        Handles the iconSizeChanged signal to set a new size for the emoji icons.
-
-        Args:
-            size (QSize): The new width and height for the icons.
-        """
-        if self._emoji_image_provider is not None:
-            self._emoji_image_provider.setSize(size.width())
 
     @Slot()
     def _on_image_provider_settings_changed(self) -> None:
