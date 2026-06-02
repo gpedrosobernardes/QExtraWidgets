@@ -548,7 +548,11 @@ class QGridIconView(QAbstractItemView):
         for row, persistent_index in enumerate(self._rows(self.rootIndex())):
             self._populate_grid_caches(row, persistent_index, self._item_indexes, cols)
 
-        rows_count = max(self._item_indexes.keys()) + 1
+        item_indexes_keys = self._item_indexes.keys()
+        if item_indexes_keys:
+            rows_count = max(item_indexes_keys) + 1
+        else:
+            rows_count = 1
         content_height = self._calculate_rows_height(rows_count)
 
         scroll_range = max(0, content_height - self.viewport().height())
