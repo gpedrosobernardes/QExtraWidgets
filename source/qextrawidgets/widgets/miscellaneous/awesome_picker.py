@@ -2,6 +2,7 @@ import random
 import typing
 
 import qtawesome
+from PySide6.QtCore import QSize
 from PySide6.QtGui import QPixmap, Qt
 
 from qextrawidgets.gui.items.icon_item import QIconItem
@@ -55,15 +56,20 @@ class QAwesomePicker(QIconPicker):
             icon_item = QIconItem(random_icon, True, color_modifier=color)
             self.addColorOption(icon_item)
 
-    def iconPixmapGetter(self) -> typing.Callable[[QIconItem], QPixmap]:
+    def iconPixmapGetter(self) -> typing.Callable[[QIconItem, QSize, float], QPixmap]:
         """Define the icon getter that returns the icon pixmap from QtAwesome."""
-        view = self.view()
-        def getter(item: QIconItem) -> QPixmap:
+
+        def getter(item: QIconItem, size: QSize, dpr: float) -> QPixmap:
             name = item.data(Qt.ItemDataRole.EditRole)
             color = item.data(QIconItem.QIconItemDataRole.ColorModifierRole)
             if color:
                 icon = qtawesome.icon(name, color=color)
             else:
                 icon = qtawesome.icon(name)
-            return icon.pixmap(view.iconSize())
+
+            physical_size = size * dpr
+            pixmap = icon.pixmap(physical_size)
+            pixmap.setDevicePixelRatio(dpr)
+            return pixmap
+
         return getter
