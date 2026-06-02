@@ -152,6 +152,7 @@ class QGridIconDelegate(QStyledItemDelegate):
             min(rect.width(), rect.height()) * self._item_internal_margin_ratio
         )
         target_rect = rect.adjusted(margin, margin, -margin, -margin)
+        target_size = target_rect.size()
 
         # --- Lazy Loading Logic ---
         # If no valid data is found, trigger the signal
@@ -159,7 +160,7 @@ class QGridIconDelegate(QStyledItemDelegate):
 
         if index not in self._requested_indices:
             self._requested_indices.add(index)
-            self.requestImage.emit(index, target_rect.size(), dpr)
+            self.requestImage.emit(index, target_size, dpr)
 
         elif item_data is not None:
             if isinstance(item_data, (QIcon, QPixmap, QImage)) and not item_data.isNull():
@@ -195,28 +196,25 @@ class QGridIconDelegate(QStyledItemDelegate):
                 else:
                     pixmap = item_data
 
-                if pixmap.size() != target_rect.size():
-                    # Scale using physical pixels so the backing-store resolution is
-                    # preserved on HiDPI screens.  target_rect is in logical pixels,
-                    # so we multiply by dpr to get the physical target size.
-                    physical_target = target_rect.size() * dpr
-                    scaled_pixmap = pixmap.scaled(
-                        physical_target,
-                        Qt.AspectRatioMode.KeepAspectRatio,
-                        Qt.TransformationMode.SmoothTransformation,
-                    )
-                    scaled_pixmap.setDevicePixelRatio(dpr)
-                else:
-                    scaled_pixmap = pixmap
+                logical_size = pixmap.deviceIndependentSize().toSize()
+                fit_size = logical_size.scaled(
+                    target_size,
+                    Qt.AspectRatioMode.KeepAspectRatio,
+                )
 
-                # Center using logical sizes (deviceIndependentSize) so the
-                # arithmetic stays in the same coordinate space as target_rect.
-                logical_w = scaled_pixmap.deviceIndependentSize().width()
-                logical_h = scaled_pixmap.deviceIndependentSize().height()
-                x = target_rect.x() + (target_rect.width() - logical_w) / 2
-                y = target_rect.y() + (target_rect.height() - logical_h) / 2
+                aligned_rect = QStyle.alignedRect(
+                    Qt.LayoutDirection.LeftToRight,
+                    Qt.AlignmentFlag.AlignCenter,
+                    fit_size,
+                    target_rect,
+                )
+
+                pixmap_max_side = max(logical_size.width(), logical_size.height())
+
+                if pixmap_max_side < target_size.height() or pixmap.devicePixelRatio() != dpr:
+                    self.requestImage.emit(index, target_size, dpr)
 
                 if not (current_state & QStyle.StateFlag.State_Enabled):
                     painter.setOpacity(0.5)
 
-                painter.drawPixmap(int(x), int(y), scaled_pixmap)
+                painter.drawPixmap(aligned_rect, pixmap)

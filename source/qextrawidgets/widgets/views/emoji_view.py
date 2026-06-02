@@ -139,6 +139,7 @@ class QEmojiView(QGridIconView):
             Optional[QEmojiImageProvider]: The default provider instance, or
             ``None`` if a custom getter is in use.
         """
+        return self._emoji_image_provider
 
     # -------------------------------------------------------------------------
     # Internal Slots & Callbacks

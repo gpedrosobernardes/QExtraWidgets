@@ -32,7 +32,7 @@ class QEmojiPicker(QIconPicker):
             model (QIconPickerModel, optional): The model containing icon data. If None,
                 a populated QIconPickerModel with emojis will be instantiated. Defaults to None.
             icon_label_size (int, optional): The size of the emoji label in pixels. Defaults to 32.
-            icon_pixmap_getter (Callable[[QIconItem], QPixmap], optional): Custom callback to
+            icon_pixmap_getter (Callable[[QIconItem, QSize, float], QPixmap], optional): Custom callback to
                 retrieve pixmaps. If None, the default QEmojiImageProvider is used. Defaults to None.
         """
         self._emoji_image_provider = None
