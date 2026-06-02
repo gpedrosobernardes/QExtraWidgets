@@ -4,4 +4,5 @@ from .icon_item import QIconItem
 
 __all__ = [
     "QIconCategoryItem",
+    "QIconItem",
 ]

@@ -276,8 +276,8 @@ class QIconPicker(QWidget):
 
         menu.exec(self._grouped_icon_view.mapToGlobal(position))
 
-    @Slot(QPersistentModelIndex)
-    def _on_request_image(self, persistent_index: QPersistentModelIndex) -> None:
+    @Slot(QPersistentModelIndex, QSize, float)
+    def _on_request_image(self, persistent_index: QPersistentModelIndex, size: QSize, dpr: float) -> None:
         """Loads the emoji image when requested by the delegate.
 
         Args:
@@ -312,7 +312,7 @@ class QIconPicker(QWidget):
         item = self._model.itemFromIndex(source_index)
         if isinstance(item, QIconItem):
             # Generate the pixmap
-            pixmap = icon_pixmap_getter(item)
+            pixmap = icon_pixmap_getter(item, size, dpr)
 
             # Debug: Ensure the pixmap was generated
             if pixmap.isNull():
@@ -327,15 +327,19 @@ class QIconPicker(QWidget):
     def _paint_emoji_on_label(self) -> None:
         """Updates the preview label with the current emoji pixmap."""
         icon_pixmap_getter = self.iconPixmapGetter()
+        size = self._icon_label.size()
         if self._icon_on_label and icon_pixmap_getter:
-            pixmap = icon_pixmap_getter(self._icon_on_label)
+            pixmap = icon_pixmap_getter(self._icon_on_label, size, self._icon_label.devicePixelRatio())
             self._icon_label.setPixmap(pixmap)
 
     def _paint_skintones(self) -> None:
         """Updates the skin tone selector icons."""
+        icon_pixmap_getter = self.iconPixmapGetter()
+        size = self._color_modifier_selector.iconSize()
+        dpr = self._color_modifier_selector.devicePixelRatio()
         for index in range(self._color_modifier_selector.count()):
             icon_item = self._color_modifier_selector.itemData(index)
-            icon = self.iconPixmapGetter()(icon_item)
+            icon = icon_pixmap_getter(icon_item, size, dpr)
             if icon:
                 self._color_modifier_selector.setItemIcon(index, icon)
 
@@ -464,15 +468,17 @@ class QIconPicker(QWidget):
             data: QIconItem instance.
         """
         icon_pixmap_getter = self.iconPixmapGetter()
+        size = self._color_modifier_selector.iconSize()
+        dpr = self._color_modifier_selector.devicePixelRatio()
         if icon_pixmap_getter:
-            icon = icon_pixmap_getter(data)
+            icon = icon_pixmap_getter(data, size, dpr)
         else:
             icon = QIcon()
         self._color_modifier_selector.addItem(icon=icon, data=data)
 
     def setIconPixmapGetter(
         self,
-        icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap],
+        icon_pixmap_getter: typing.Callable[[QIconItem, QSize, float], QPixmap],
     ) -> None:
         """Sets the strategy for retrieving icon pixmaps.
 
@@ -490,7 +496,7 @@ class QIconPicker(QWidget):
         delegate = self.delegate()
         delegate.forceReloadAll()
 
-    def iconPixmapGetter(self) -> typing.Callable[[QIconItem], QPixmap]:
+    def iconPixmapGetter(self) -> typing.Callable[[QIconItem, QSize, float], QPixmap]:
         """Returns the current emoji pixmap getter function.
 
         Returns:

@@ -1,7 +1,7 @@
 import pytest
 from PySide6.QtGui import QValidator
 
-from qextrawidgets.core.utils.emoji_finder import QEmojiFinder
+from qextrawidgets.core.utils.emojis import QEmojiFinder
 from qextrawidgets.gui.validators import QEmojiValidator
 
 

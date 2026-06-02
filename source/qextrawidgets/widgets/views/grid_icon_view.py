@@ -268,7 +268,7 @@ class QGridIconView(QAbstractItemView):
             if columns_values:
                 yield from columns_values.values()
 
-    def _populate_grid_caches(self, row: int, persistent_index: QPersistentModelIndex, grid: dict, y_offset: int = 0) -> None:
+    def _populate_grid_caches(self, row: int, persistent_index: QPersistentModelIndex, grid: dict, cols: int, y_offset: int = 0) -> None:
         """
         Helper to fill the cache with all the data of a given row.
 
@@ -282,8 +282,6 @@ class QGridIconView(QAbstractItemView):
 
         item_w = icon_size.width()
         item_h = icon_size.height()
-
-        cols = self.virtualColumns()
 
         col_current = row % cols
         virtual_row = row // cols
@@ -363,7 +361,6 @@ class QGridIconView(QAbstractItemView):
             old_selection_model.selectionChanged.disconnect(
                 self._on_selection_changed
             )
-            old_selection_model.currentChanged.disconnect(self._on_current_changed)
 
         super().setModel(model)
 
@@ -381,7 +378,6 @@ class QGridIconView(QAbstractItemView):
         new_selection_model = self.selectionModel()
         if new_selection_model:
             new_selection_model.selectionChanged.connect(self._on_selection_changed)
-            new_selection_model.currentChanged.connect(self._on_current_changed)
 
     @Slot()
     def _on_layout_changed(self) -> None:
@@ -420,11 +416,6 @@ class QGridIconView(QAbstractItemView):
     @Slot()
     def _on_selection_changed(self) -> None:
         """Handle selection changes to update visual feedback."""
-        self.viewport().update()
-
-    @Slot()
-    def _on_current_changed(self) -> None:
-        """Handle current index changes (e.g., from setCurrentIndex) to update visual feedback."""
         self.viewport().update()
 
     # -------------------------------------------------------------------------
@@ -496,14 +487,26 @@ class QGridIconView(QAbstractItemView):
 
         item_delegate = self.itemDelegate()
 
+        paint_total = 0
+
         for p_index, rect in self._visible_items():
+            logger.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
             visual_rect = rect.translated(0, -scroll_y)
 
-            logger.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
-            self._init_option(option, p_index, visual_rect)
-            item_delegate.paint(painter, option, p_index)
+            if logger.isEnabledFor(logging.DEBUG):
+                paint_start = time.perf_counter()
+                self._init_option(option, p_index, visual_rect)
+                item_delegate.paint(painter, option, p_index)
+                paint_end = time.perf_counter()
+                paint_delta = paint_end - paint_start
+                paint_total += paint_delta
+                logger.debug(f"Painted in {paint_delta:.6f} seconds.")
+            else:
+                self._init_option(option, p_index, visual_rect)
+                item_delegate.paint(painter, option, p_index)
 
         end = time.perf_counter()
+        logger.debug(f"Painted {paint_total:.6f} seconds.")
         logger.debug(f"Finished paintEvent in {end - start:.6f} seconds.")
 
     # -------------------------------------------------------------------------
@@ -540,10 +543,10 @@ class QGridIconView(QAbstractItemView):
         self._item_rects.clear()
         self._item_indexes.clear()
 
-        rows = list(self._rows(self.rootIndex()))
+        cols = self.virtualColumns()
 
-        for row, persistent_index in enumerate(rows):
-            self._populate_grid_caches(row, persistent_index, self._item_indexes)
+        for row, persistent_index in enumerate(self._rows(self.rootIndex())):
+            self._populate_grid_caches(row, persistent_index, self._item_indexes, cols)
 
         rows_count = max(self._item_indexes.keys()) + 1
         content_height = self._calculate_rows_height(rows_count)

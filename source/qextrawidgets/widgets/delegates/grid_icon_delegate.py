@@ -5,7 +5,7 @@ from PySide6.QtCore import (
     QModelIndex,
     QPersistentModelIndex,
     Signal,
-    QTimer,
+    QTimer, QSize,
 )
 from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage
 from PySide6.QtWidgets import (
@@ -30,7 +30,7 @@ class QGridIconDelegate(QStyledItemDelegate):
     """
 
     # Signal emitted when an item has no DecorationRole data
-    requestImage = Signal(QPersistentModelIndex)
+    requestImage = Signal(QPersistentModelIndex, QSize, float)
 
     def __init__(
         self,
@@ -129,6 +129,7 @@ class QGridIconDelegate(QStyledItemDelegate):
         current_state = typing.cast(QStyle.StateFlag, option.state)
         bg_color = None
         base_bg_color = palette.color(QPalette.ColorRole.Base)
+        dpr = painter.device().devicePixelRatio()
 
         # Determine Background Color for Selection/Hover
         if current_state & QStyle.StateFlag.State_Selected:
@@ -151,20 +152,19 @@ class QGridIconDelegate(QStyledItemDelegate):
             min(rect.width(), rect.height()) * self._item_internal_margin_ratio
         )
         target_rect = rect.adjusted(margin, margin, -margin, -margin)
+        target_size = target_rect.size()
 
         # --- Lazy Loading Logic ---
         # If no valid data is found, trigger the signal
         is_data_valid = False
-        if item_data is not None:
+
+        if index not in self._requested_indices:
+            self._requested_indices.add(index)
+            self.requestImage.emit(index, target_size, dpr)
+
+        elif item_data is not None:
             if isinstance(item_data, (QIcon, QPixmap, QImage)) and not item_data.isNull():
                 is_data_valid = True
-
-        # Check if we already requested this index to avoid spamming the signal in the paint loop
-        p_index = QPersistentModelIndex(index)
-        if p_index not in self._requested_indices:
-            self._requested_indices.add(p_index)
-            self.requestImage.emit(p_index)
-            is_data_valid = False
 
         if not is_data_valid:
             # Optional: Draw a placeholder (e.g., a simple loading circle or gray box)
@@ -196,19 +196,25 @@ class QGridIconDelegate(QStyledItemDelegate):
                 else:
                     pixmap = item_data
 
-                scaled_pixmap = pixmap.scaled(
-                    target_rect.size(),
+                logical_size = pixmap.deviceIndependentSize().toSize()
+                fit_size = logical_size.scaled(
+                    target_size,
                     Qt.AspectRatioMode.KeepAspectRatio,
-                    Qt.TransformationMode.SmoothTransformation,
                 )
 
-                x = target_rect.x() + (target_rect.width() - scaled_pixmap.width()) // 2
-                y = (
-                    target_rect.y()
-                    + (target_rect.height() - scaled_pixmap.height()) // 2
+                aligned_rect = QStyle.alignedRect(
+                    Qt.LayoutDirection.LeftToRight,
+                    Qt.AlignmentFlag.AlignCenter,
+                    fit_size,
+                    target_rect,
                 )
+
+                pixmap_max_side = max(logical_size.width(), logical_size.height())
+
+                if pixmap_max_side < target_size.height() or pixmap.devicePixelRatio() != dpr:
+                    self.requestImage.emit(index, target_size, dpr)
 
                 if not (current_state & QStyle.StateFlag.State_Enabled):
                     painter.setOpacity(0.5)
 
-                painter.drawPixmap(x, y, scaled_pixmap)
+                painter.drawPixmap(aligned_rect, pixmap)
