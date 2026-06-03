@@ -48,6 +48,8 @@ class QGridIconView(QAbstractItemView):
         """
         super().__init__(parent)
 
+        self._model_column = 0
+
         # Cache using Persistent Indices
         self._item_rects: dict[QPersistentModelIndex, QRect] = {}
         self._item_indexes: dict[int, dict[int, typing.Tuple[QPersistentModelIndex, QRect]]] = {}
@@ -246,7 +248,7 @@ class QGridIconView(QAbstractItemView):
 
         row_count = self.model().rowCount(parent_index)
         for r in range(row_count):
-            index = self.model().index(r, 0, parent_index)
+            index = self.model().index(r, self._model_column, parent_index)
             if index.isValid() and not self.isRowHidden(r):
                 yield QPersistentModelIndex(index)
 
@@ -548,7 +550,11 @@ class QGridIconView(QAbstractItemView):
         for row, persistent_index in enumerate(self._rows(self.rootIndex())):
             self._populate_grid_caches(row, persistent_index, self._item_indexes, cols)
 
-        rows_count = max(self._item_indexes.keys()) + 1
+        item_indexes_keys = self._item_indexes.keys()
+        if item_indexes_keys:
+            rows_count = max(item_indexes_keys) + 1
+        else:
+            rows_count = 1
         content_height = self._calculate_rows_height(rows_count)
 
         scroll_range = max(0, content_height - self.viewport().height())
@@ -741,3 +747,23 @@ class QGridIconView(QAbstractItemView):
         if not index.isValid():
             return True
         return False
+
+    def setModelColumn(self, column: int) -> None:
+        """
+        Set the model column from which item data is read.
+
+        Args:
+            column (int): Zero-based column index to use when querying the model.
+        """
+        if column != self._model_column:
+            self._model_column = column
+            self.itemDelegate().forceReloadAll()
+
+    def modelColumn(self) -> int:
+        """
+        Return the model column currently used to read item data.
+
+        Returns:
+            int: Zero-based column index.
+        """
+        return self._model_column

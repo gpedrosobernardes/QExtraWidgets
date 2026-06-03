@@ -20,7 +20,7 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 #### Images
 
-::: qextrawidgets.core.images.icon_generator
+::: qextrawidgets.core.utils.images.icon_generator
 
 #### Others
 
