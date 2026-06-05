@@ -14,13 +14,11 @@ Typical usage::
 """
 
 from PySide6.QtCore import QSize, QUrl, QUrlQuery, QObject, Signal
-from PySide6.QtGui import QPixmap, QPixmapCache, Qt, QImageReader, QFont
+from PySide6.QtGui import QPixmap, QPixmapCache, Qt, QImageReader, QFont, QStandardItem
 from emoji_data_python import char_to_unified
 from twemoji_api import get_emoji_path
 
-from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
 from qextrawidgets.core.utils.images import QIconGenerator
-from qextrawidgets.gui.items import QIconItem
 
 
 class QEmojiImageProvider(QObject):
@@ -230,7 +228,7 @@ class QEmojiImageProvider(QObject):
 
     @staticmethod
     def getPixmapFromIconItemBy(
-        icon_item: QIconItem,
+        item: QStandardItem,
         size: QSize,
         dpr: float,
         source: str,
@@ -242,7 +240,7 @@ class QEmojiImageProvider(QObject):
         and delegates to :meth:`getPixmapBy` for the actual loading.
 
         Args:
-            icon_item: Item whose ``EditRole`` data holds the base emoji
+            item: Item whose ``EditRole`` data holds the base emoji
                        character and whose ``ColorModifierRole`` data holds
                        the skin tone code (or an empty string for the default
                        tone).
@@ -254,11 +252,7 @@ class QEmojiImageProvider(QObject):
             The resolved ``QPixmap``, or a transparent fallback pixmap if
             the emoji character cannot be determined.
         """
-        emoji_char = QEmojiUtils.getEmojiWithSkinToneByIconItem(icon_item)
-
-        if emoji_char is None:
-            return QEmojiImageProvider.getFallbackBy(size, dpr)
-
+        emoji_char = item.data(Qt.ItemDataRole.EditRole)
         return QEmojiImageProvider.getPixmapBy(emoji_char.char, size, dpr, source)
 
     # ------------------------------------------------------------------
@@ -300,7 +294,7 @@ class QEmojiImageProvider(QObject):
         """
         return self.getPixmapBy(emoji, size, dpr, self.getSource())
 
-    def getPixmapFromIconItem(self, icon_item: QIconItem, size: QSize, dpr: float) -> QPixmap:
+    def getPixmapFromIconItem(self, item: QStandardItem, size: QSize, dpr: float) -> QPixmap:
         """Resolve a ``QIconItem``'s emoji to a pixmap injecting this provider's source.
 
         Convenience wrapper around :meth:`getPixmapFromIconItemBy` that fills
@@ -308,7 +302,7 @@ class QEmojiImageProvider(QObject):
         state.  ``size`` and ``dpr`` must still be supplied by the caller.
 
         Args:
-            icon_item: Item carrying the base emoji and skin tone modifier.
+            item: Item carrying the base emoji and skin tone modifier.
             size:      Logical pixel size of the resulting pixmap.
             dpr:       Device pixel ratio of the target screen.
 
@@ -316,7 +310,7 @@ class QEmojiImageProvider(QObject):
             The resolved ``QPixmap``, or a transparent fallback on failure.
         """
         return self.getPixmapFromIconItemBy(
-            icon_item, size, dpr, self.getSource()
+            item, size, dpr, self.getSource()
         )
 
     # ------------------------------------------------------------------

@@ -1,9 +1,9 @@
 import typing
 
 from PySide6.QtCore import Signal
+from PySide6.QtGui import QStandardItem
 from PySide6.QtWidgets import QMenu, QWidgetAction, QWidget
 
-from qextrawidgets.gui.items.icon_item import QIconItem
 from qextrawidgets.gui.models import QIconPickerModel
 from qextrawidgets.widgets.miscellaneous.awesome_picker import QAwesomePicker
 
@@ -15,7 +15,7 @@ class QAwesomePickerMenu(QMenu):
         picked (QIconItem): Emitted when an icon is selected.
     """
 
-    picked = Signal(QIconItem)
+    picked = Signal(QStandardItem)
 
     def __init__(
             self,
@@ -45,7 +45,7 @@ class QAwesomePickerMenu(QMenu):
         """
         return self._picker
 
-    def _on_picked(self, item: QIconItem) -> None:
+    def _on_picked(self, item: QStandardItem) -> None:
         """Handles the emoji picked signal.
 
         Args:

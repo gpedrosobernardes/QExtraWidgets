@@ -1,0 +1,29 @@
+import typing
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QStandardItem
+from emoji_data_python import EmojiChar
+
+from qextrawidgets.core.utils.emojis import QEmojiUtils
+
+
+class QEmojiItem(QStandardItem):
+    def __init__(self, emoji_char: EmojiChar) -> None:
+        super().__init__()
+        self.setData(emoji_char, Qt.ItemDataRole.EditRole)
+        self.setEditable(False)
+
+    def data(self, /, role: int = Qt.ItemDataRole.EditRole) -> typing.Any:
+        if role == Qt.ItemDataRole.UserRole:
+            emoji_char = super(QEmojiItem, self).data(Qt.ItemDataRole.EditRole)
+            try:
+                base_emoji = QEmojiUtils.getBaseEmoji(emoji_char.char)
+            except KeyError:
+                return set(emoji_char.short_names)
+            else:
+                return set(base_emoji.short_names)
+
+        return super(QEmojiItem, self).data(role)
+
+    def clone(self, /):
+        return QEmojiItem(self.data(Qt.ItemDataRole.EditRole))

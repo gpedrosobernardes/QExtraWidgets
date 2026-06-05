@@ -2,16 +2,15 @@ import random
 import typing
 
 import qtawesome
-from PySide6.QtCore import QSize
-from PySide6.QtGui import QPixmap, Qt
+from PySide6.QtCore import QSize, Slot
+from PySide6.QtGui import QPixmap, Qt, QStandardItem
 
-from qextrawidgets.gui.items.icon_item import QIconItem
-from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
+from qextrawidgets.gui.models.awesome_picker_model import QAwesomePickerModel
 from qextrawidgets.widgets.miscellaneous.icon_picker import QIconPicker
 
 
 class QAwesomePicker(QIconPicker):
-    def __init__(self, parent = None, model: typing.Optional[QIconPickerModel] = None, icon_label_size: int = 32):
+    def __init__(self, parent = None, model: typing.Optional[QAwesomePickerModel] = None, icon_label_size: int = 32):
         """
         Initialize the QAwesomePicker class.
         Fill the color selector with a bunch of color options of a random icon.
@@ -22,7 +21,7 @@ class QAwesomePicker(QIconPicker):
             icon_label_size (int, optional): The size of the icon label. Defaults to 32.
         """
         if model is None:
-            model = QIconPickerModel(QIconPickerModel.PopulateSource.AwesomeIcons)
+            model = QAwesomePickerModel()
 
         super().__init__(parent, model, icon_label_size)
 
@@ -49,19 +48,25 @@ class QAwesomePicker(QIconPicker):
             "#0000FF",  # Azul
             "#7F00FF",  # Violeta
             "#FF00FF",  # Magenta
-            "#FF007F"  # Rosa-Choque
+            "#FF007F"   # Rosa-Choque
         ]
 
         for color in colors:
-            icon_item = QIconItem(random_icon, True, color_modifier=color)
+            icon_item = QStandardItem()
+            icon_item.setData(random_icon, Qt.ItemDataRole.EditRole)
+            icon_item.setData(qtawesome.icon(random_icon, color=color), Qt.ItemDataRole.DecorationRole)
+            icon_item.setData(color, Qt.ItemDataRole.UserRole)
             self.addColorOption(icon_item)
 
-    def iconPixmapGetter(self) -> typing.Callable[[QIconItem, QSize, float], QPixmap]:
+    def iconPixmapGetter(self) -> typing.Callable[[QStandardItem, QSize, float], QPixmap]:
         """Define the icon getter that returns the icon pixmap from QtAwesome."""
 
-        def getter(item: QIconItem, size: QSize, dpr: float) -> QPixmap:
+        def getter(item: QStandardItem, size: QSize, dpr: float) -> QPixmap:
             name = item.data(Qt.ItemDataRole.EditRole)
-            color = item.data(QIconItem.QIconItemDataRole.ColorModifierRole)
+
+            item = self._color_modifier_selector.currentData()
+            color = item.data(Qt.ItemDataRole.UserRole)
+
             if color:
                 icon = qtawesome.icon(name, color=color)
             else:
@@ -73,3 +78,13 @@ class QAwesomePicker(QIconPicker):
             return pixmap
 
         return getter
+
+    @Slot(QStandardItem)
+    def _on_set_color_modifier(self, icon_item: QStandardItem) -> None:
+        """Updates the skin tone of the emojis.
+
+        Args:
+            icon_item (QIconItem): QIconItem instance representing the color_modifier.
+        """
+        delegate = self.delegate()
+        delegate.forceReloadAll()

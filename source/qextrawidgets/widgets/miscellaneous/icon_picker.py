@@ -3,12 +3,11 @@ import time
 import typing
 
 from PySide6.QtCore import QSize, QTimer, Slot, QPoint, QPersistentModelIndex, QModelIndex, Signal
-from PySide6.QtGui import Qt, QFont, QPixmap, QIcon, QFontMetrics
+from PySide6.QtGui import Qt, QFont, QPixmap, QIcon, QFontMetrics, QStandardItem
 from PySide6.QtWidgets import QWidget, QAbstractItemView, QButtonGroup, QLabel, QHBoxLayout, QVBoxLayout, QLineEdit, \
     QMenu, QApplication, QToolButton
 
 from qextrawidgets.gui.items import QIconCategoryItem
-from qextrawidgets.gui.items.icon_item import QIconItem
 from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
 from qextrawidgets.gui.proxys.icon_picker_proxy import QIconPickerProxyModel
 from qextrawidgets.widgets.delegates import QGroupedIconDelegate
@@ -25,13 +24,13 @@ class QIconPicker(QWidget):
         picked: Emitted when a QIcon item is clicked.
     """
 
-    picked = Signal(QIconItem)
+    picked = Signal(QStandardItem)
 
     def __init__(self,
                  parent=None,
                  model: typing.Optional[QIconPickerModel] = None,
                  icon_label_size: int = 32,
-                 icon_pixmap_getter: typing.Callable[[QIconItem], QPixmap] = None,
+                 icon_pixmap_getter: typing.Callable[[QStandardItem], QPixmap] = None,
                  alias_format: str = "{alias}") -> None:
         """
         Initialize QIconPicker widget.
@@ -191,7 +190,7 @@ class QIconPicker(QWidget):
         self._search_timer.timeout.connect(self._on_filter_emojis)
         self._search_line_edit.textChanged.connect(lambda: self._search_timer.start())
 
-        self._grouped_icon_view.itemEntered.connect(self._on_mouse_entered_emoji)
+        self._grouped_icon_view.itemEntered.connect(self._on_mouse_entered_icon)
         self._grouped_icon_view.itemExited.connect(self._on_mouse_exited_emoji)
         self._grouped_icon_view.itemClicked.connect(self._on_item_clicked)
         self._grouped_icon_view.customContextMenuRequested.connect(
@@ -204,7 +203,7 @@ class QIconPicker(QWidget):
         delegate.requestImage.connect(self._on_request_image)
 
     @Slot(QModelIndex)
-    def _on_color_modifier_changed(self, index: QModelIndex) -> None:
+    def _on_model_request_icon(self, index: QModelIndex) -> None:
         """Handles skin tone changes from the model.
 
         Args:
@@ -215,15 +214,14 @@ class QIconPicker(QWidget):
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.forceReload(proxy_index)
 
-    @Slot(QIconItem)
-    def _on_set_color_modifier(self, icon_item: QIconItem) -> None:
+    @Slot(QStandardItem)
+    def _on_set_color_modifier(self, icon_item: QStandardItem) -> None:
         """Updates the skin tone of the emojis.
 
         Args:
             icon_item (QIconItem): QIconItem instance representing the color_modifier.
         """
-        color_modifier = icon_item.data(QIconItem.QIconItemDataRole.ColorModifierRole)
-        self.model().setColorModifier(color_modifier)
+        pass
 
     # Connections
     @Slot(QPoint)
@@ -236,16 +234,17 @@ class QIconPicker(QWidget):
         proxy_index = self._grouped_icon_view.indexAt(position)
         source_index = self._proxy.mapToSource(proxy_index)
         item = self._model.itemFromIndex(source_index)
+        parent = item.parent()
 
         menu = QMenu(self._grouped_icon_view)
 
-        if isinstance(item, QIconCategoryItem):
+        if parent is None:
             collapse_all_action = menu.addAction(self.tr("Collapse all"))
             collapse_all_action.triggered.connect(self._grouped_icon_view.collapseAll)
             expand_all_action = menu.addAction(self.tr("Expand all"))
             expand_all_action.triggered.connect(self._grouped_icon_view.expandAll)
 
-        elif isinstance(item, QIconItem):
+        else:
             icon_text = item.data(Qt.ItemDataRole.EditRole)
 
             # Check if emoji exists in favorites using helper method
@@ -271,8 +270,6 @@ class QIconPicker(QWidget):
 
             alias = aliases[0] if aliases else item.data(Qt.ItemDataRole.EditRole)
             copy_alias_action.triggered.connect(lambda: clipboard.setText(alias))
-        else:
-            return
 
         menu.exec(self._grouped_icon_view.mapToGlobal(position))
 
@@ -310,16 +307,16 @@ class QIconPicker(QWidget):
 
         # 3. Fetch the item and set the image
         item = self._model.itemFromIndex(source_index)
-        if isinstance(item, QIconItem):
-            # Generate the pixmap
-            pixmap = icon_pixmap_getter(item, size, dpr)
 
-            # Debug: Ensure the pixmap was generated
-            if pixmap.isNull():
-                logging.warning(f"Null pixmap generated for {item.data(Qt.ItemDataRole.EditRole)}")
+        # Generate the pixmap
+        pixmap = icon_pixmap_getter(item, size, dpr)
 
-            # Set the icon (This triggers dataChanged in model -> proxy -> view)
-            item.setIcon(pixmap)
+        # Debug: Ensure the pixmap was generated
+        if pixmap.isNull():
+            logging.warning(f"Null pixmap generated for {item.data(Qt.ItemDataRole.EditRole)}")
+
+        # Set the icon (This triggers dataChanged in model -> proxy -> view)
+        item.setIcon(pixmap)
 
         end = time.perf_counter()
         logging.debug(f"Requested image for {item.data(Qt.ItemDataRole.EditRole)} in {end - start:.6f} seconds")
@@ -354,8 +351,8 @@ class QIconPicker(QWidget):
         self._grouped_icon_view.scrollTo(proxy_index)
         self._grouped_icon_view.setExpanded(QPersistentModelIndex(proxy_index), True)
 
-    @Slot(QIconCategoryItem)
-    def _on_categories_inserted(self, category_item: QIconCategoryItem) -> None:
+    @Slot(QStandardItem)
+    def _on_categories_inserted(self, category_item: QStandardItem) -> None:
         """Handles the insertion of categories into the model.
 
         Args:
@@ -373,14 +370,14 @@ class QIconPicker(QWidget):
         self._shortcuts_layout.addWidget(shortcut)
         self._shortcuts_group.addButton(shortcut)
 
-    @Slot(QIconCategoryItem)
-    def _on_categories_removed(self, category_item: QIconCategoryItem) -> None:
+    @Slot(QStandardItem)
+    def _on_categories_removed(self, category_item: QStandardItem) -> None:
         """Handles the removal of categories into the model.
 
         Args:
             category_item (QIconCategoryItem): The removed category item.
         """
-        category = category_item.category()
+        category = category_item.data(Qt.ItemDataRole.UserRole)
         button = self._shortcuts_container.findChild(QToolButton, category)
 
         if button:
@@ -399,11 +396,11 @@ class QIconPicker(QWidget):
         model = self.model()
         for row in range(model.rowCount()):
             item = model.item(row)
-            if isinstance(item, QIconCategoryItem):
+            if isinstance(item, QStandardItem):
                 self._on_categories_inserted(item)
 
     @Slot(QModelIndex)
-    def _on_mouse_entered_emoji(self, index: QModelIndex) -> None:
+    def _on_mouse_entered_icon(self, index: QModelIndex) -> None:
         """Handles mouse entry events on emoji items to show preview.
 
         Args:
@@ -411,11 +408,11 @@ class QIconPicker(QWidget):
         """
         source_index = self._proxy.mapToSource(index)
         item = self._model.itemFromIndex(source_index)
-        if isinstance(item, QIconItem):
+        if item.parent():
             self._icon_on_label = item
             self._paint_emoji_on_label()
 
-            aliases = item.data(Qt.ItemDataRole.UserRole) or [item.data(Qt.ItemDataRole.EditRole)]
+            aliases = item.data(Qt.ItemDataRole.UserRole)
             aliases_text = " ".join(self._alias_format.format(alias=alias) for alias in aliases)
 
             metrics = QFontMetrics(self._aliases_icon_label.font())
@@ -443,7 +440,7 @@ class QIconPicker(QWidget):
         source_index = self._proxy.mapToSource(proxy_index)
         item = self._model.itemFromIndex(source_index)
 
-        if not isinstance(item, QIconItem):
+        if isinstance(item, QIconCategoryItem):
             return
 
         self.picked.emit(item)
@@ -460,25 +457,28 @@ class QIconPicker(QWidget):
         self._proxy.setFilterFixedString(text)
 
     # Public methods
-    def addColorOption(self, data: QIconItem):
+    def addColorOption(self, item: QStandardItem):
         """
         Adds a color option to the color selector in the icon picker.
 
         Args:
-            data: QIconItem instance.
+            item: QIconItem instance.
         """
         icon_pixmap_getter = self.iconPixmapGetter()
         size = self._color_modifier_selector.iconSize()
         dpr = self._color_modifier_selector.devicePixelRatio()
-        if icon_pixmap_getter:
-            icon = icon_pixmap_getter(data, size, dpr)
+        decoration = item.data(Qt.ItemDataRole.DecorationRole)
+        if decoration:
+            icon = decoration
+        elif icon_pixmap_getter:
+            icon = icon_pixmap_getter(item, size, dpr)
         else:
             icon = QIcon()
-        self._color_modifier_selector.addItem(icon=icon, data=data)
+        self._color_modifier_selector.addItem(icon=icon, data=item)
 
     def setIconPixmapGetter(
         self,
-        icon_pixmap_getter: typing.Callable[[QIconItem, QSize, float], QPixmap],
+        icon_pixmap_getter: typing.Callable[[QStandardItem, QSize, float], QPixmap],
     ) -> None:
         """Sets the strategy for retrieving icon pixmaps.
 
@@ -496,7 +496,7 @@ class QIconPicker(QWidget):
         delegate = self.delegate()
         delegate.forceReloadAll()
 
-    def iconPixmapGetter(self) -> typing.Callable[[QIconItem, QSize, float], QPixmap]:
+    def iconPixmapGetter(self) -> typing.Callable[[QStandardItem, QSize, float], QPixmap]:
         """Returns the current emoji pixmap getter function.
 
         Returns:
@@ -515,14 +515,14 @@ class QIconPicker(QWidget):
             if self._model:
                 self._model.categoryInserted.disconnect(self._on_categories_inserted)
                 self._model.categoryRemoved.disconnect(self._on_categories_removed)
-                self._model.colorChanged.disconnect(self._on_color_modifier_changed)
+                self._model.requestIcon.disconnect(self._on_model_request_icon)
 
             self._model = model
             self._proxy.setSourceModel(self._model)
 
             self._model.categoryInserted.connect(self._on_categories_inserted)
             self._model.categoryRemoved.connect(self._on_categories_removed)
-            self._model.colorChanged.connect(self._on_color_modifier_changed)
+            self._model.requestIcon.connect(self._on_model_request_icon)
 
             self._on_model_reset()
 

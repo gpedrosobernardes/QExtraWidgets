@@ -1,13 +1,12 @@
 import random
 import typing
 
-from PySide6.QtCore import QSize
-from PySide6.QtGui import QPixmap, QScreen
+from PySide6.QtCore import QSize, Slot
+from PySide6.QtGui import QPixmap, QStandardItem, Qt
 
 from qextrawidgets.core.utils.emojis.emoji_image_provider import QEmojiImageProvider
-from qextrawidgets.core.utils.emojis.emoji_utils import EmojiSkinTone, QEmojiUtils
-from qextrawidgets.gui.items.icon_item import QIconItem
-from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
+from qextrawidgets.core.utils.emojis.emoji_utils import EmojiSkinVariations, QEmojiUtils
+from qextrawidgets.gui.models.emoji_picker_model import QEmojiPickerModel
 from qextrawidgets.widgets.delegates import QGroupedIconDelegate
 from qextrawidgets.widgets.miscellaneous.icon_picker import QIconPicker
 
@@ -20,9 +19,9 @@ class QEmojiPicker(QIconPicker):
 
     def __init__(self,
                  parent=None,
-                 model: typing.Optional[QIconPickerModel] = None,
+                 model: typing.Optional[QEmojiPickerModel] = None,
                  icon_label_size: int = 32,
-                 icon_pixmap_getter: typing.Optional[typing.Callable[[QIconItem, QSize, float], QPixmap]] = None):
+                 icon_pixmap_getter: typing.Optional[typing.Callable[[QStandardItem, QSize, float], QPixmap]] = None):
         """Initializes the QEmojiPicker class.
 
         Fills the color selector with a random emoji demonstrating all supported skin tones.
@@ -38,12 +37,7 @@ class QEmojiPicker(QIconPicker):
         self._emoji_image_provider = None
 
         if model is None:
-            model = QIconPickerModel(QIconPickerModel.PopulateSource.Emojis)
-
-        skin_tones = list(EmojiSkinTone)
-
-        emojis_with_color = QEmojiUtils.emojisWithSkinTones()
-        random_color_emoji = random.choice(emojis_with_color)
+            model = QEmojiPickerModel()
 
         super().__init__(parent, model, icon_label_size, None, ":{alias}:")
 
@@ -56,8 +50,14 @@ class QEmojiPicker(QIconPicker):
             self._emoji_image_provider = None
             self.setIconPixmapGetter(icon_pixmap_getter)
 
-        for color_modifier in skin_tones:
-            icon_item = QIconItem(random_color_emoji, True, None, color_modifier)
+        skin_varied_emojis = list(QEmojiUtils.skinVariedEmojis())
+        emoji_char = random.choice(skin_varied_emojis)
+
+        for skin_variation in [None] + list(EmojiSkinVariations):
+            skin_varied_emoji_char = QEmojiUtils.applySkinVariation(emoji_char, skin_variation)
+            icon_item = QStandardItem()
+            icon_item.setData(skin_varied_emoji_char, Qt.ItemDataRole.EditRole)
+            icon_item.setData(skin_variation, Qt.ItemDataRole.UserRole)
             self.addColorOption(icon_item)
 
     def _on_image_provider_settings_changed(self):
@@ -69,6 +69,17 @@ class QEmojiPicker(QIconPicker):
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.forceReloadAll()
 
+    @Slot(QStandardItem)
+    def _on_set_color_modifier(self, icon_item: QStandardItem) -> None:
+        """Updates the skin tone of the emojis.
+
+        Args:
+            icon_item (QIconItem): QIconItem instance representing the color_modifier.
+        """
+        skin_variation = icon_item.data(Qt.ItemDataRole.UserRole)
+        model = self.model()
+        model.setSkinVariation(skin_variation)
+
     def getEmojiImageProvider(self) -> typing.Optional[QEmojiImageProvider]:
         """Retrieves the current emoji image provider instance.
 
@@ -77,3 +88,9 @@ class QEmojiPicker(QIconPicker):
                 the default pixmap getter, or None if a custom getter was provided.
         """
         return self._emoji_image_provider
+
+    def model(self) -> QEmojiPickerModel:
+        """Retrieves the current model instance.
+        Returns:
+        """
+        return self._model

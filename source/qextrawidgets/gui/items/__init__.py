@@ -1,8 +1,8 @@
 from .icon_category_item import QIconCategoryItem
-from .icon_item import QIconItem
+from .emoji_item import QEmojiItem
 
 
 __all__ = [
     "QIconCategoryItem",
-    "QIconItem",
+    "QEmojiItem",
 ]

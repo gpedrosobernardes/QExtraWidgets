@@ -33,11 +33,6 @@ This page contains the automatic API reference for the `qextrawidgets` package.
 
 ::: qextrawidgets.gui.icons.theme_responsive_icon
 
-### Items
-
-::: qextrawidgets.gui.items.icon_category_item
-::: qextrawidgets.gui.items.icon_item
-
 ### Models
 
 ::: qextrawidgets.gui.models.icon_picker_model

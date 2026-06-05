@@ -1,20 +1,12 @@
 import typing
 
 from PySide6.QtGui import QStandardItem, QIcon, QPixmap, Qt
-from enum import Enum
 
 
 class QIconCategoryItem(QStandardItem):
     """
     A standard item representing a category of icons in the model.
     """
-
-    class QIconCategoryRoles(int, Enum):
-        """
-        Custom data roles for the category item.
-        """
-        pass
-
     def __init__(self, text: str, category: str, icon: typing.Union[QIcon, QPixmap]):
         """
         Initializes the category item.

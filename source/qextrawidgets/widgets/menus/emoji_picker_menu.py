@@ -1,10 +1,9 @@
 import typing
 
 from PySide6.QtCore import Signal
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QStandardItem
 from PySide6.QtWidgets import QMenu, QWidgetAction, QWidget
 
-from qextrawidgets.gui.items.icon_item import QIconItem
 from qextrawidgets.gui.models import QIconPickerModel
 from qextrawidgets.widgets.miscellaneous.emoji_picker import QEmojiPicker
 
@@ -16,14 +15,14 @@ class QEmojiPickerMenu(QMenu):
         picked (QIconItem): Emitted when an emoji is selected.
     """
 
-    picked = Signal(QIconItem)
+    picked = Signal(QStandardItem)
 
     def __init__(
             self,
             parent: typing.Optional[QWidget] = None,
             model: typing.Optional[QIconPickerModel] = None,
             icon_label_size: int = 32,
-            icon_pixmap_getter: typing.Optional[typing.Callable[[QIconItem], QPixmap]] = None) -> None:
+            icon_pixmap_getter: typing.Optional[typing.Callable[[QStandardItem], QPixmap]] = None) -> None:
         """Initialize the emoji picker menu.
 
         Args:
@@ -49,7 +48,7 @@ class QEmojiPickerMenu(QMenu):
         """
         return self._picker
 
-    def _on_picked(self, item: QIconItem) -> None:
+    def _on_picked(self, item: QStandardItem) -> None:
         """Handles the emoji picked signal.
 
         Args:

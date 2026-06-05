@@ -1,3 +1,5 @@
+import logging
+
 from PySide6.QtGui import QFontDatabase, QShortcut, QKeySequence
 import sys
 
@@ -24,9 +26,8 @@ from qextrawidgets.core.utils import QSystemUtils
 from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.core.utils.emojis import QEmojiFonts
-from qextrawidgets.gui.items.icon_item import QIconItem
+from qextrawidgets.gui.items import QEmojiItem
 from qextrawidgets.widgets.menus.emoji_picker_menu import QEmojiPickerMenu
-from qextrawidgets.gui.items import QIconCategoryItem
 
 from emoji_data_python import emoji_data
 
@@ -165,10 +166,9 @@ class MainWindow(QMainWindow):
 
         playground_layout.addWidget(input_container)
 
-    def _on_emoji_picked(self, item: QIconItem) -> None:
-        emoji_char = QEmojiUtils.getEmojiWithSkinToneByIconItem(item)
-        if emoji_char is not None:
-            self.line_edit.insert(emoji_char.char)
+    def _on_emoji_picked(self, item: QEmojiItem) -> None:
+        emoji_char = item.data(Qt.ItemDataRole.EditRole)
+        self.line_edit.insert(emoji_char.char)
 
     def _on_emoji_size_changed(self, value: int) -> None:
         self.emoji_picker.view().setIconSize(QSize(value, value))
@@ -203,12 +203,13 @@ class MainWindow(QMainWindow):
 
     def _add_custom_category(self) -> None:
         icon = QThemeResponsiveIcon.fromAwesome("fa6s.rocket")
-        category_item = QIconCategoryItem("Custom", "Custom", icon)
-        self.emoji_picker.model().appendRow(category_item)
+        model = self.emoji_picker.model()
+        model.addCategory("Custom", "Custom", icon)
 
         # Add some sample emojis (using first 10 from data)
-        items = [QIconItem.fromEmojiChar(emoji_data[i]) for i in range(10)]
-        category_item.appendRows(items)
+        items = [QEmojiItem(emoji_data[i]) for i in range(10)]
+        for item in items:
+            model.addIcon("Custom", item)
 
         self.add_cat_btn.setEnabled(False)
         self.remove_cat_btn.setEnabled(True)
@@ -232,9 +233,8 @@ class MainWindow(QMainWindow):
 
         return supported_emoji_fonts
 
-
 if __name__ == "__main__":
-    # logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
 
     app = QApplication(sys.argv)
     window = MainWindow()
