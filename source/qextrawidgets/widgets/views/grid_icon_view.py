@@ -16,6 +16,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import QCursor, QPainter, QMouseEvent, QRegion, QPaintEvent
 from PySide6.QtWidgets import QAbstractItemView, QStyleOptionViewItem, QStyle, QWidget
+from qextrawidgets.core.utils.system_utils import log_qt_performance
 
 from qextrawidgets.widgets.delegates.grid_icon_delegate import QGridIconDelegate
 import logging
@@ -227,7 +228,6 @@ class QGridIconView(QAbstractItemView):
         Returns:
             A Tuple of row and column.
         """
-        logging.debug(f"Looking for index at {point}")
         item_w = self.iconSize().width()
         item_h = self.iconSize().height()
 
@@ -465,6 +465,7 @@ class QGridIconView(QAbstractItemView):
         super().leaveEvent(event)
 
     # noinspection PyUnresolvedReferences
+    @log_qt_performance
     def paintEvent(self, event: QPaintEvent) -> None:
         """
         Paint the items in the view.
@@ -472,9 +473,6 @@ class QGridIconView(QAbstractItemView):
         Args:
             event (QPaintEvent): The paint event.
         """
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.paintEvent")
-
-        start = time.perf_counter()
 
         if not self._item_rects:
             return
@@ -489,27 +487,10 @@ class QGridIconView(QAbstractItemView):
 
         item_delegate = self.itemDelegate()
 
-        paint_total = 0
-
         for p_index, rect in self._visible_items():
-            logger.debug(f"Paiting {p_index.data(Qt.EditRole)} at {rect.x()}, {rect.y()}.")
             visual_rect = rect.translated(0, -scroll_y)
-
-            if logger.isEnabledFor(logging.DEBUG):
-                paint_start = time.perf_counter()
-                self._init_option(option, p_index, visual_rect)
-                item_delegate.paint(painter, option, p_index)
-                paint_end = time.perf_counter()
-                paint_delta = paint_end - paint_start
-                paint_total += paint_delta
-                logger.debug(f"Painted in {paint_delta:.6f} seconds.")
-            else:
-                self._init_option(option, p_index, visual_rect)
-                item_delegate.paint(painter, option, p_index)
-
-        end = time.perf_counter()
-        logger.debug(f"Painted {paint_total:.6f} seconds.")
-        logger.debug(f"Finished paintEvent in {end - start:.6f} seconds.")
+            self._init_option(option, p_index, visual_rect)
+            item_delegate.paint(painter, option, p_index)
 
     # -------------------------------------------------------------------------
     # QAbstractItemView Implementation
@@ -527,15 +508,12 @@ class QGridIconView(QAbstractItemView):
         effective_width = width - (2 * self._margin)
         return max(1, effective_width // (item_w + self._margin))
 
+    @log_qt_performance
     def updateGeometries(self) -> None:
         """
         Recalculate the layout of item rectangles and update scrollbars.
         Assumes a flat model structure.
         """
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.updateGeometries")
-
-        start = time.perf_counter()
-
         if not self.model():
             return
 
@@ -566,8 +544,6 @@ class QGridIconView(QAbstractItemView):
         vertical_scroll_bar.setSingleStep(item_h // 2)
 
         super().updateGeometries()
-        end = time.perf_counter()
-        logger.debug(f"Finished updateGeometries in {end - start:.6f} seconds.")
 
     def visualRect(
         self, index: typing.Union[QModelIndex, QPersistentModelIndex]
@@ -597,11 +573,8 @@ class QGridIconView(QAbstractItemView):
         Returns:
             QModelIndex: The index at the given point, or valid if not found.
         """
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.indexAt")
-
         point.setY(point.y() + self.verticalScrollBar().value())
         row, col = self._get_coordinates_at(point)
-        logger.debug(f"Looking for index at {row}, {col}")
 
         cols_p_index = self._item_indexes.get(row)
         if not cols_p_index:
@@ -610,7 +583,6 @@ class QGridIconView(QAbstractItemView):
         result = cols_p_index.get(col)
         if result:
             p_index, _ = result
-            logger.debug(f"Found index {p_index}")
             return QModelIndex(p_index)
 
         return QModelIndex()

@@ -1,4 +1,7 @@
-from PySide6.QtCore import QRectF, QRect
+import logging
+from functools import wraps
+
+from PySide6.QtCore import QRectF, QRect, QElapsedTimer
 from PySide6.QtGui import QGuiApplication, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow
 
@@ -43,3 +46,19 @@ class QSystemUtils:
             window_rect = window.geometry()
 
         return window_rect.adjusted(-inset, -inset, inset, inset)
+
+
+def log_qt_performance(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        timer = QElapsedTimer()
+        timer.start()
+
+        try:
+            return func(*args, **kwargs)
+        finally:
+            elapsed = timer.elapsed()
+            logger = logging.getLogger(func.__qualname__)
+            logger.debug(f"Executed {func.__name__} in {elapsed} ms.")
+
+    return wrapper

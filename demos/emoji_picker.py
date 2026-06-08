@@ -23,10 +23,10 @@ from PySide6.QtWidgets import (
 )
 
 from qextrawidgets.core.utils import QSystemUtils
-from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.core.utils.emojis import QEmojiFonts
 from qextrawidgets.gui.items import QEmojiItem
+from qextrawidgets.gui.models.emoji_picker_model import QEmojiPickerModel
 from qextrawidgets.widgets.menus.emoji_picker_menu import QEmojiPickerMenu
 
 from emoji_data_python import emoji_data
@@ -36,6 +36,8 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
 
+        self._model = QEmojiPickerModel()
+
         self.setWindowTitle("QEmojiPicker Demo")
         self.resize(800, 600)
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
@@ -43,13 +45,11 @@ class MainWindow(QMainWindow):
         self._init_widgets()
         self.setup_layout()
         self.setup_connections()
-        self.setup_initial_state()
 
     def _init_widgets(self) -> None:
         # Picker Configuration Widgets
-        self.emoji_picker_menu = QEmojiPickerMenu(self)
+        self.emoji_picker_menu = QEmojiPickerMenu(self._model, self)
         self.emoji_picker = self.emoji_picker_menu.picker()
-        self.emoji_image_provider = self.emoji_picker.getEmojiImageProvider()
 
         emoji_picker_view = self.emoji_picker.view()
         emoji_picker_delegate = self.emoji_picker.delegate()
@@ -75,12 +75,6 @@ class MainWindow(QMainWindow):
         self.grid_spacing_spin.setSingleStep(5)
         self.grid_spacing_spin.setValue(emoji_picker_view.margin())
 
-        self.use_pixmaps_check = QCheckBox()
-        self.use_pixmaps_check.setChecked(True)
-
-        self.font_combo = QComboBox()
-        self.font_combo.addItems(self._get_emoji_fonts())
-
         # Category Widgets
         self.add_cat_btn = QPushButton("Add 'Custom' Category")
 
@@ -96,16 +90,11 @@ class MainWindow(QMainWindow):
         self.emoji_size_spin.valueChanged.connect(self._on_emoji_size_changed)
         self.emoji_margin_spin.valueChanged.connect(self._on_emoji_margin_changed)
         self.grid_spacing_spin.valueChanged.connect(self._on_grid_spacing_changed)
-        self.font_combo.currentTextChanged.connect(self._on_font_combo_changed)
-        self.use_pixmaps_check.stateChanged.connect(self._on_use_pixmap_changed)
         self.add_cat_btn.clicked.connect(self._add_custom_category)
         self.remove_cat_btn.clicked.connect(self._remove_custom_category)
 
         obs_shortcut = QShortcut(QKeySequence("F12"), self)
         obs_shortcut.activated.connect(lambda: print(QSystemUtils.getObsRect(self)))
-
-    def setup_initial_state(self) -> None:
-        self._on_use_pixmap_changed(self.use_pixmaps_check.checkState())
 
     def setup_layout(self) -> None:
         central_widget = QWidget()
@@ -127,14 +116,6 @@ class MainWindow(QMainWindow):
         config_form.addRow("Grid Spacing:", self.grid_spacing_spin)
 
         controls_layout.addWidget(config_group)
-
-        # Source group
-        source_group = QGroupBox("Source")
-        source_form = QFormLayout(source_group)
-        source_form.addRow("Use Pixmaps:", self.use_pixmaps_check)
-        source_form.addRow("Emoji Font:", self.font_combo)
-
-        controls_layout.addWidget(source_group)
 
         # Categories Group
         cat_group = QGroupBox("Custom Categories")
@@ -185,39 +166,22 @@ class MainWindow(QMainWindow):
     def _on_grid_spacing_changed(self, value: int) -> None:
         self.emoji_picker.view().setMargin(value)
 
-    def _on_font_combo_changed(self, font_family: str) -> None:
-        self.emoji_image_provider.setSource(font_family)
-        QFontDatabase.setApplicationEmojiFontFamilies([font_family])
-        self.line_edit.setFont(QApplication.font())
-
-    def _on_use_pixmap_changed(self, state: Qt.CheckState) -> None:
-        if Qt.CheckState(state) == Qt.CheckState.Checked:
-            self.font_combo.setDisabled(True)
-            self.emoji_image_provider.setSource("png")
-            QFontDatabase.setApplicationEmojiFontFamilies(["Twemoji"])
-            self.line_edit.setFont("Twemoji")
-        else:
-            # Revert to current font in combo
-            self.font_combo.setDisabled(False)
-            self._on_font_combo_changed(self.font_combo.currentText())
-
     def _add_custom_category(self) -> None:
         icon = QThemeResponsiveIcon.fromAwesome("fa6s.rocket")
-        model = self.emoji_picker.model()
-        model.addCategory("Custom", "Custom", icon)
+        self._model.addCategory("Custom", "Custom", icon)
 
         # Add some sample emojis (using first 10 from data)
         items = [QEmojiItem(emoji_data[i]) for i in range(10)]
         for item in items:
-            model.addIcon("Custom", item)
+            self._model.addIcon("Custom", item)
 
         self.add_cat_btn.setEnabled(False)
         self.remove_cat_btn.setEnabled(True)
 
     def _remove_custom_category(self) -> None:
-        index = self.emoji_picker.model().findCategory("Custom")
+        index = self._model.findCategory("Custom")
         if index:
-            self.emoji_picker.model().removeRow(index.row())
+            self._model.removeRow(index.row())
 
         self.add_cat_btn.setEnabled(True)
         self.remove_cat_btn.setEnabled(False)

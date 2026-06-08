@@ -68,7 +68,7 @@ class QEmojiView(QGridIconView):
         and delegation requests.
         """
         if self._emoji_image_provider is not None:
-            self._emoji_image_provider.sourceChanged.connect(self._on_image_provider_settings_changed)
+            self._emoji_image_provider.fontFamilyChanged.connect(self._on_image_provider_settings_changed)
 
         delegate = self.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
@@ -167,10 +167,6 @@ class QEmojiView(QGridIconView):
             dpr (float): Device pixel ratio of the screen the view is on,
                 forwarded to the getter so it can produce a HiDPI-aware pixmap.
         """
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}._on_request_image")
-
-        start = time.perf_counter()
-
         if not persistent_index.isValid():
             return
 
@@ -187,9 +183,6 @@ class QEmojiView(QGridIconView):
         pixmap = icon_pixmap_getter(emoji, size, dpr)
         proxy = self.model()
         proxy.setData(persistent_index, pixmap, Qt.ItemDataRole.DecorationRole)
-
-        end = time.perf_counter()
-        logger.debug(f"Requested image for {emoji} in {end - start:.6f} seconds")
 
     @Slot()
     def _on_image_provider_settings_changed(self) -> None:

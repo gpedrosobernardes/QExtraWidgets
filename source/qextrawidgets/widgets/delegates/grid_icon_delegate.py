@@ -5,7 +5,7 @@ from PySide6.QtCore import (
     QModelIndex,
     QPersistentModelIndex,
     Signal,
-    QTimer, QSize,
+    QTimer, QSize, QSizeF,
 )
 from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage
 from PySide6.QtWidgets import (
@@ -14,6 +14,8 @@ from PySide6.QtWidgets import (
     QStyledItemDelegate,
 )
 import typing
+
+from qextrawidgets.core.utils.system_utils import log_qt_performance
 
 
 class QGridIconDelegate(QStyledItemDelegate):
@@ -30,7 +32,7 @@ class QGridIconDelegate(QStyledItemDelegate):
     """
 
     # Signal emitted when an item has no DecorationRole data
-    requestImage = Signal(QPersistentModelIndex, QSize, float)
+    requestImage = Signal(QPersistentModelIndex, QSize)
 
     def __init__(
         self,
@@ -45,7 +47,6 @@ class QGridIconDelegate(QStyledItemDelegate):
             item_internal_margin_ratio (float): Internal margin ratio (0.0 to 0.5).
         """
         super().__init__(parent)
-        self._requested_indices: typing.Set[QPersistentModelIndex] = set()
         self.setItemInternalMargin(item_internal_margin_ratio)
 
     def setItemInternalMargin(self, ratio: float) -> None:
@@ -66,26 +67,6 @@ class QGridIconDelegate(QStyledItemDelegate):
         """
         return self._item_internal_margin_ratio
 
-    def forceReloadAll(self) -> None:
-        """
-        Clear the cache of ALL requested images.
-
-        The next time the view paints a missing image item (e.g. on scroll or hover),
-        it will emit requestImage again.
-        """
-        self._requested_indices.clear()
-
-    def forceReload(self, index: QModelIndex) -> None:
-        """
-        Clear the cache for a specific index to force re-requesting the image.
-
-        Args:
-            index (QModelIndex): The index to clear from the cache.
-        """
-        persistent_index = QPersistentModelIndex(index)
-        if persistent_index in self._requested_indices:
-            self._requested_indices.remove(persistent_index)
-
     def paint(
         self,
         painter: QPainter,
@@ -104,29 +85,17 @@ class QGridIconDelegate(QStyledItemDelegate):
         self._draw_grid_item(painter, option, index)
         painter.restore()
 
+    @log_qt_performance
     def _draw_grid_item(
-        self,
-        painter: QPainter,
-        option: QStyleOptionViewItem,
-        index: QPersistentModelIndex,
+            self,
+            painter: QPainter,
+            option: QStyleOptionViewItem,
+            index: QPersistentModelIndex,
     ) -> None:
-        """
-        Draw a child item in the grid used for lazy loading check.
+        painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)
 
-        Checks for DecorationRole; if missing, triggers requestImage signal.
-        Renders the icon or pixmap centered in the item rect.
-
-        Args:
-            painter (QPainter): The painter object.
-            option (QStyleOptionViewItem): The style options.
-            index (QModelIndex): The model index of the item.
-        """
-
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform)
-
-        palette = typing.cast(QPalette, option.palette)
-        current_state = typing.cast(QStyle.StateFlag, option.state)
+        palette = option.palette
+        current_state = option.state
         bg_color = None
         base_bg_color = palette.color(QPalette.ColorRole.Base)
         dpr = painter.device().devicePixelRatio()
@@ -138,7 +107,7 @@ class QGridIconDelegate(QStyledItemDelegate):
             bg_color = base_bg_color.lighter(120)
 
         # Draw Background (Rounded Rect)
-        rect = typing.cast(QRect, option.rect).adjusted(2, 2, -2, -2)
+        rect = option.rect.adjusted(2, 2, -2, -2)
 
         if bg_color is not None:
             painter.setPen(Qt.PenStyle.NoPen)
@@ -148,73 +117,64 @@ class QGridIconDelegate(QStyledItemDelegate):
         # Retrieve Data
         item_data = index.data(Qt.ItemDataRole.DecorationRole)
 
-        margin = int(
-            min(rect.width(), rect.height()) * self._item_internal_margin_ratio
-        )
+        margin = int(min(rect.width(), rect.height()) * self._item_internal_margin_ratio)
         target_rect = rect.adjusted(margin, margin, -margin, -margin)
         target_size = target_rect.size()
 
-        # --- Lazy Loading Logic ---
-        # If no valid data is found, trigger the signal
-        is_data_valid = False
+        # ── Fast path: emoji string direto no DecorationRole ─────────────────────
+        # Renderiza com drawText — zero alocação, sem I/O, sem sinal emitido.
+        if isinstance(item_data, str) and item_data:
 
-        if index not in self._requested_indices:
-            self._requested_indices.add(index)
-            self.requestImage.emit(index, target_size, dpr)
+            if not (current_state & QStyle.StateFlag.State_Enabled):
+                painter.setOpacity(0.5)
 
-        elif item_data is not None:
-            if isinstance(item_data, (QIcon, QPixmap, QImage)) and not item_data.isNull():
-                is_data_valid = True
+            painter.drawText(target_rect, Qt.AlignmentFlag.AlignCenter, item_data)
 
-        if not is_data_valid:
-            # Optional: Draw a placeholder (e.g., a simple loading circle or gray box)
-            painter.setPen(Qt.PenStyle.DotLine)
+            if not (current_state & QStyle.StateFlag.State_Enabled):
+                painter.setOpacity(1.0)
+            return
+
+        # ── Slow path: QIcon / QPixmap / QImage (carregado pelo provider) ────────
+        if not isinstance(item_data, (QIcon, QPixmap, QImage)) or item_data.isNull():
+            physical_size = (QSizeF(target_size) * dpr).toSize()
             painter.setPen(palette.color(QPalette.ColorRole.Mid))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(target_rect, 4, 4)
+            self.requestImage.emit(index, physical_size)
+            return
 
-        else:
-            # --- Drawing Logic ---
-            if isinstance(item_data, QIcon):
-                mode = QIcon.Mode.Normal
-                if not (current_state & QStyle.StateFlag.State_Enabled):
-                    mode = QIcon.Mode.Disabled
-                elif current_state & QStyle.StateFlag.State_Selected:
-                    mode = QIcon.Mode.Selected
+        # ── QIcon ─────────────────────────────────────────────────────────────────
+        if isinstance(item_data, QIcon):
+            mode = QIcon.Mode.Normal
+            if not (current_state & QStyle.StateFlag.State_Enabled):
+                mode = QIcon.Mode.Disabled
+            elif current_state & QStyle.StateFlag.State_Selected:
+                mode = QIcon.Mode.Selected
 
-                item_data.paint(
-                    painter,
-                    target_rect,
-                    Qt.AlignmentFlag.AlignCenter,
-                    mode,
-                    QIcon.State.Off,
-                )
+            item_data.paint(
+                painter,
+                target_rect,
+                Qt.AlignmentFlag.AlignCenter,
+                mode,
+                QIcon.State.Off,
+            )
+            return
 
-            elif isinstance(item_data, (QPixmap, QImage)):
-                if isinstance(item_data, QImage):
-                    pixmap = QPixmap.fromImage(item_data)
-                else:
-                    pixmap = item_data
+        # ── QPixmap / QImage ──────────────────────────────────────────────────────
+        if isinstance(item_data, (QPixmap, QImage)):
+            logical_size = item_data.deviceIndependentSize().toSize()
+            fit_size = logical_size.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio)
 
-                logical_size = pixmap.deviceIndependentSize().toSize()
-                fit_size = logical_size.scaled(
-                    target_size,
-                    Qt.AspectRatioMode.KeepAspectRatio,
-                )
+            aligned_rect = QStyle.alignedRect(
+                Qt.LayoutDirection.LeftToRight,
+                Qt.AlignmentFlag.AlignCenter,
+                fit_size,
+                target_rect,
+            )
 
-                aligned_rect = QStyle.alignedRect(
-                    Qt.LayoutDirection.LeftToRight,
-                    Qt.AlignmentFlag.AlignCenter,
-                    fit_size,
-                    target_rect,
-                )
-
-                pixmap_max_side = max(logical_size.width(), logical_size.height())
-
-                if pixmap_max_side < target_size.height() or pixmap.devicePixelRatio() != dpr:
-                    self.requestImage.emit(index, target_size, dpr)
-
-                if not (current_state & QStyle.StateFlag.State_Enabled):
-                    painter.setOpacity(0.5)
-
-                painter.drawPixmap(aligned_rect, pixmap)
+            if not (current_state & QStyle.StateFlag.State_Enabled):
+                painter.setOpacity(0.5)
+                painter.drawPixmap(aligned_rect, item_data)
+                painter.setOpacity(1.0)
+            else:
+                painter.drawPixmap(aligned_rect, item_data)

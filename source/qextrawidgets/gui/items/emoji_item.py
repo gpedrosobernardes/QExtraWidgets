@@ -23,6 +23,10 @@ class QEmojiItem(QStandardItem):
             else:
                 return set(base_emoji.short_names)
 
+        elif role == Qt.ItemDataRole.DecorationRole:
+            emoji_char = super(QEmojiItem, self).data(Qt.ItemDataRole.EditRole)
+            return emoji_char.char
+
         return super(QEmojiItem, self).data(role)
 
     def clone(self, /):

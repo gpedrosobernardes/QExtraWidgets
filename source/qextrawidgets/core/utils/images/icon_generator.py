@@ -25,7 +25,9 @@ from PySide6.QtGui import (
     QPainter,
     QFont,
     QColor,
-    QPainterPath, QRegion,
+    QPainterPath,
+    QImage,
+    QFontMetrics,
 )
 from PySide6.QtWidgets import QStyle
 
@@ -66,30 +68,93 @@ class QIconGenerator:
     # ------------------------------------------------------------------
 
     @classmethod
-    def charToPixmap(
+    def charToImage(
             cls,
             char: str,
             target_size: QSize,
-            font: QFont = QFont("Arial"),
-            dpr: float = 1.0,
+            font_family: str,
             color: QColor = QColor(Qt.GlobalColor.black),
-    ) -> QPixmap:
-        if target_size.isEmpty():
-            return QPixmap()
+    ) -> QImage:
+        try:
+            image = cls.charToImageViaMetrics(char, target_size, font_family, color)
+        except ValueError:
+            return cls.charToImageViaScan(char, target_size, font_family, color)
+        else:
+            return image
 
-        # 1 - Gera a imagem grande 512x512
-        BASE_SIZE = 128
-        CANVAS_SIZE = BASE_SIZE * 4  # 512 × 512
+    @staticmethod
+    def charToImageViaMetrics(
+        char: str,
+        target_size: QSize,
+        font_family: str,
+        color: QColor,
+    ) -> QImage:
+        if target_size.isEmpty() or not char:
+            return QImage()
 
-        render_font = QFont(font)
+        physical_w = target_size.width()
+        physical_h = target_size.height()
+
+        render_font = QFont(font_family)
+        render_font.setPixelSize(physical_h)
+
+        fm = QFontMetrics(render_font)
+        glyph_rect = fm.tightBoundingRect(char)
+
+        if glyph_rect.height() <= 1 or glyph_rect.width() <= 1:
+            raise ValueError("Failed to calculate font bounding rect.")
+
+        scale = min(
+            physical_w / glyph_rect.width(),
+            physical_h / glyph_rect.height(),
+        )
+        render_font.setPixelSize(max(1, int(physical_h * scale)))
+        fm = QFontMetrics(render_font)
+        glyph_rect = fm.tightBoundingRect(char)
+
+        image = QImage(physical_w, physical_h, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+
+        offset_x = (physical_w - glyph_rect.width()) // 2 - glyph_rect.left()
+        offset_y = (physical_h - glyph_rect.height()) // 2 - glyph_rect.top()
+
+        painter = QPainter(image)
+        painter.setRenderHints(
+            QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing
+        )
+        painter.setFont(render_font)
+        painter.setPen(color)
+        painter.drawText(offset_x, offset_y, char)
+        painter.end()
+        return image
+
+    @classmethod
+    def charToImageViaScan(
+        cls,
+        char: str,
+        target_size: QSize,
+        font_family: str,
+        color: QColor,
+    ) -> QImage:
+        if target_size.isEmpty() or not char:
+            return QImage()
+
+        physical_w = target_size.width()
+        physical_h = target_size.height()
+
+        BASE_SIZE   = max(physical_w, physical_h)
+        CANVAS_SIZE = BASE_SIZE * 4
+
+        render_font = QFont(font_family)
         render_font.setPixelSize(BASE_SIZE)
 
-        pixmap = QPixmap(CANVAS_SIZE, CANVAS_SIZE)
-        pixmap.fill(Qt.GlobalColor.transparent)
+        canvas = QImage(CANVAS_SIZE, CANVAS_SIZE, QImage.Format.Format_ARGB32_Premultiplied)
+        canvas.fill(Qt.GlobalColor.transparent)
 
-        painter = QPainter(pixmap)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+        painter = QPainter(canvas)
+        painter.setRenderHints(
+            QPainter.RenderHint.Antialiasing | QPainter.RenderHint.TextAntialiasing
+        )
         painter.setFont(render_font)
         painter.setPen(color)
         painter.drawText(
@@ -99,36 +164,16 @@ class QIconGenerator:
         )
         painter.end()
 
-        # ---------------------------------------------------------
-        # 2 - Acha os limites reais da tinta usando a API nativa
-        # ---------------------------------------------------------
+        ink_rect = cls._ink_bounding_rect(canvas)
+        if ink_rect.isEmpty():
+            return QImage()
 
-        # Extrai o canal alpha como um mapa de bits preto e branco (rápido, em C++)
-        alpha_mask = pixmap.mask()
-
-        # Cria uma região baseada nessa máscara e pede a caixa delimitadora
-        ink_rect = QRegion(alpha_mask).boundingRect()
-
-        if ink_rect.isEmpty() or ink_rect.width() == 0 or ink_rect.height() == 0:
-            return QPixmap()
-
-        # Corta a imagem nativamente usando o QRect encontrado
-        cropped_pixmap = pixmap.copy(ink_rect)
-
-        # ---------------------------------------------------------
-        # 3 - Dimensiona para o tamanho pedido
-        # ---------------------------------------------------------
-        physical_w = int(target_size.width() * dpr)
-        physical_h = int(target_size.height() * dpr)
-
-        final_pixmap = cropped_pixmap.scaled(
+        final = canvas.copy(ink_rect).scaled(
             QSize(physical_w, physical_h),
             Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
+            Qt.TransformationMode.SmoothTransformation,
         )
-
-        final_pixmap.setDevicePixelRatio(dpr)
-        return final_pixmap
+        return final
 
     @staticmethod
     def getCircularPixmap(pixmap: QPixmap, size: int, dpr: float = 1.0) -> QPixmap:
@@ -301,3 +346,21 @@ class QIconGenerator:
         painter.end()
 
         return final_pixmap
+
+    @staticmethod
+    def _ink_bounding_rect(image: QImage) -> QRect:
+        w, h = image.width(), image.height()
+        buf = memoryview(image.bits()).cast("B")
+        stride = image.bytesPerLine()
+
+        top, bottom, left, right = h, -1, w, -1
+        for y in range(h):
+            row = y * stride
+            for x in range(w):
+                if buf[row + x * 4 + 3]:
+                    if y < top:    top    = y
+                    if y > bottom: bottom = y
+                    if x < left:   left   = x
+                    if x > right:  right  = x
+
+        return QRect() if bottom < 0 else QRect(left, top, right - left + 1, bottom - top + 1)

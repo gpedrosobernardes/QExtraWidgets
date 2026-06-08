@@ -381,7 +381,7 @@ class EmojiDemoWindow(QMainWindow):
 
         size = self._preview_label.size()
         dpr = self._preview_label.devicePixelRatio()
-        pixmap = QEmojiImageProvider.getPixmapBy(emoji, size, dpr, pixmap_image_provider.getSource())
+        pixmap = QEmojiImageProvider.getPixmapBy(emoji, size, dpr, pixmap_image_provider.fontFamily())
 
         self._selected_emoji = emoji
         self._preview_label.setPixmap(pixmap)
@@ -415,8 +415,9 @@ class EmojiDemoWindow(QMainWindow):
 
 def main() -> None:
     # logger = logging.getLogger(f"qextrawidgets.widgets.views.emoji_view.QEmojiView._on_request_image")
-    logger = logging.getLogger(f"qextrawidgets.widgets.views.grid_icon_view.QEmojiView.paintEvent")
-    logger.setLevel(logging.DEBUG)
+    # logger = logging.getLogger(f"qextrawidgets.widgets.views.grid_icon_view.QEmojiView.paintEvent")
+    # logger.setLevel(logging.DEBUG)
+    logging.basicConfig(level=logging.DEBUG)
 
     app = QApplication(sys.argv)
     app.setApplicationName("QEmojiView Demo")

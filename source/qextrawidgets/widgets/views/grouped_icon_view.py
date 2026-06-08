@@ -346,17 +346,17 @@ class QGroupedIconView(QGridIconView):
 
         for category_index, grid in self._item_indexes.items():
             real_point = point + QPoint(0, self.verticalScrollBar().value())
-            logger.debug(f"Looking for index at {real_point}")
+            # logger.debug(f"Looking for index at {real_point}")
 
             category_rect = self._item_rects[category_index]
-            logger.debug(f"Verifying if point is on category {category_rect}")
+            # logger.debug(f"Verifying if point is on category {category_rect}")
             if category_rect.contains(real_point):
-                logger.debug(f"Yes, point is on category {category_rect}")
+                # logger.debug(f"Yes, point is on category {category_rect}")
                 return QModelIndex(category_index)
 
             if self.isExpanded(category_index):
                 row, col = self._get_coordinates_at(real_point - category_rect.bottomLeft())
-                logger.debug(f"Looking for index at {row}, {col}")
+                # logger.debug(f"Looking for index at {row}, {col}")
 
                 cols_p_index = grid.get(row)
                 if not cols_p_index:
@@ -365,7 +365,7 @@ class QGroupedIconView(QGridIconView):
                 result = cols_p_index.get(col)
                 if result:
                     p_index, rect = result
-                    logger.debug(f"Found index {p_index}")
+                    # logger.debug(f"Found index {p_index}")
                     if rect.contains(real_point):
                         return QModelIndex(p_index)
 

@@ -1,12 +1,17 @@
 import logging
 import time
 import typing
+import urllib
 
-from PySide6.QtCore import QSize, QTimer, Slot, QPoint, QPersistentModelIndex, QModelIndex, Signal
-from PySide6.QtGui import Qt, QFont, QPixmap, QIcon, QFontMetrics, QStandardItem
+from PySide6.QtCore import QSize, QTimer, Slot, QPoint, QPersistentModelIndex, QModelIndex, Signal, QUrlQuery, \
+    QThreadPool, QElapsedTimer
+from PySide6.QtGui import Qt, QFont, QPixmap, QIcon, QFontMetrics, QStandardItem, QImage
 from PySide6.QtWidgets import QWidget, QAbstractItemView, QButtonGroup, QLabel, QHBoxLayout, QVBoxLayout, QLineEdit, \
     QMenu, QApplication, QToolButton
+from pygments.lexers import func
 
+from qextrawidgets.core.runnables.image_provider import QImageProvider
+from qextrawidgets.core.utils.system_utils import log_qt_performance
 from qextrawidgets.gui.items import QIconCategoryItem
 from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
 from qextrawidgets.gui.proxys.icon_picker_proxy import QIconPickerProxyModel
@@ -27,65 +32,31 @@ class QIconPicker(QWidget):
     picked = Signal(QStandardItem)
 
     def __init__(self,
-                 parent=None,
-                 model: typing.Optional[QIconPickerModel] = None,
+                 image_provider: typing.Type[QImageProvider],
+                 model: QIconPickerModel,
+                 parent: typing.Optional[QWidget] = None,
                  icon_label_size: int = 32,
-                 icon_pixmap_getter: typing.Callable[[QStandardItem], QPixmap] = None,
                  alias_format: str = "{alias}") -> None:
-        """
-        Initialize QIconPicker widget.
-        Setup widgets, layout and models.
-
-        Args:
-            parent: Parent widget.
-            model: Optional QIconPickerModel instance.
-            icon_label_size: Size of the icon label.
-            icon_pixmap_getter: Optional function that takes an icon item and returns the pixmap.
-            alias_format: Format of the alias icon label.
-        """
         super().__init__(parent)
+
+        self._pool = QThreadPool()
+        self._pool.setExpiryTimeout(-1)
+        self._pool.setMaxThreadCount(1)
+
+        self._images = {}
+
+        self._image_provider = image_provider
+
+        self._alias_format = alias_format
 
         self._search_timer = QTimer(self)
         self._search_timer.setSingleShot(True)
         self._search_timer.setInterval(200)
 
+        self._model = model
         self._proxy = QIconPickerProxyModel()
+        self._proxy.setSourceModel(self._model)
 
-        self._icon_on_label = None
-        self._model = None
-
-        self._init_view(icon_label_size)
-        self._setup_layout()
-        self._setup_connections()
-        self._init_models(model)
-
-        if icon_pixmap_getter is None:
-            self._icon_pixmap_getter = None
-        else:
-            self.setIconPixmapGetter(icon_pixmap_getter)
-
-        self.setAliasFormat(alias_format)
-
-    def _init_models(self, model: typing.Optional[QIconPickerModel]):
-        """
-        Initialize the icon picker model.
-
-        Args:
-            model: Optional QIconPickerModel instance.
-        """
-        self._grouped_icon_view.setModel(self._proxy)
-
-        if model is None:
-            model = QIconPickerModel()
-        self.setModel(model)
-
-    def _init_view(self, icon_label_size: int) -> None:
-        """
-        Initialize the internal widgets of the view.
-
-        Args:
-            icon_label_size: Size of the icon label.
-        """
         self._search_line_edit = self._create_search_line_edit()
 
         self._color_modifier_selector = QIconComboBox()
@@ -97,6 +68,7 @@ class QIconPicker(QWidget):
         self._grouped_icon_view.setSelectionMode(
             QAbstractItemView.SelectionMode.NoSelection
         )
+        self._grouped_icon_view.setModel(self._proxy)
 
         self._shortcuts_container = QWidget()
         self._shortcuts_container.setFixedHeight(40)  # Fixed height for the bar
@@ -107,11 +79,16 @@ class QIconPicker(QWidget):
         self._icon_label = QLabel()
         self._icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self._icon_label.setScaledContents(True)
-        self.setIconLabelSize(icon_label_size)
+        self._icon_label.setFixedSize(icon_label_size, icon_label_size)
 
         self._aliases_icon_label = self._create_icon_label()
 
         self.setContentsMargins(10, 10, 10, 10)
+
+        self._setup_layout()
+        self._setup_connections()
+
+        self._on_model_reset()
 
     # Private methods
     @staticmethod
@@ -143,27 +120,6 @@ class QIconPicker(QWidget):
         line_edit.setFont(font)
         return line_edit
 
-    def _setup_layout(self) -> None:
-        """Sets up the initial layout of the widget."""
-        self._shortcuts_layout = QHBoxLayout(self._shortcuts_container)
-        self._shortcuts_layout.setContentsMargins(5, 0, 5, 0)
-        self._shortcuts_layout.setSpacing(2)
-
-        header_layout = QHBoxLayout()
-        header_layout.addWidget(self._search_line_edit, True)
-        header_layout.addWidget(self._color_modifier_selector)
-
-        content_layout = QHBoxLayout()
-        content_layout.addWidget(self._icon_label)
-        content_layout.addWidget(self._aliases_icon_label, True)
-
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addLayout(header_layout)
-        main_layout.addWidget(self._shortcuts_container)
-        main_layout.addWidget(self._grouped_icon_view)
-        main_layout.addLayout(content_layout)
-
     @staticmethod
     def _create_shortcut_button(text: str, icon: QIcon) -> QToolButton:
         """Creates a shortcut button for the category bar.
@@ -185,6 +141,27 @@ class QIconPicker(QWidget):
         btn.setIcon(icon)
         return btn
 
+    def _setup_layout(self) -> None:
+        """Sets up the initial layout of the widget."""
+        self._shortcuts_layout = QHBoxLayout(self._shortcuts_container)
+        self._shortcuts_layout.setContentsMargins(5, 0, 5, 0)
+        self._shortcuts_layout.setSpacing(2)
+
+        header_layout = QHBoxLayout()
+        header_layout.addWidget(self._search_line_edit, True)
+        header_layout.addWidget(self._color_modifier_selector)
+
+        content_layout = QHBoxLayout()
+        content_layout.addWidget(self._icon_label)
+        content_layout.addWidget(self._aliases_icon_label, True)
+
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addLayout(header_layout)
+        main_layout.addWidget(self._shortcuts_container)
+        main_layout.addWidget(self._grouped_icon_view)
+        main_layout.addLayout(content_layout)
+
     def _setup_connections(self) -> None:
         """Sets up signals and slots connections."""
         self._search_timer.timeout.connect(self._on_filter_emojis)
@@ -197,22 +174,13 @@ class QIconPicker(QWidget):
             self._on_context_menu
         )
 
+        self._model.categoryInserted.connect(self._on_categories_inserted)
+        self._model.categoryRemoved.connect(self._on_categories_removed)
+
         self._color_modifier_selector.currentDataChanged.connect(self._on_set_color_modifier)
 
         delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
         delegate.requestImage.connect(self._on_request_image)
-
-    @Slot(QModelIndex)
-    def _on_model_request_icon(self, index: QModelIndex) -> None:
-        """Handles skin tone changes from the model.
-
-        Args:
-            index (QModelIndex): The index in the source model that changed.
-        """
-        logging.debug("Requesting image again for {}".format(index.data(Qt.ItemDataRole.EditRole)))
-        proxy_index = self._proxy.mapFromSource(index)
-        delegate: QGroupedIconDelegate = self._grouped_icon_view.itemDelegate()
-        delegate.forceReload(proxy_index)
 
     @Slot(QStandardItem)
     def _on_set_color_modifier(self, icon_item: QStandardItem) -> None:
@@ -273,72 +241,37 @@ class QIconPicker(QWidget):
 
         menu.exec(self._grouped_icon_view.mapToGlobal(position))
 
+    def _build_url_query(self, index: typing.Union[QPersistentModelIndex, QModelIndex], size: QSize) -> QUrlQuery:
+        pass
+
+    @log_qt_performance
     @Slot(QPersistentModelIndex, QSize, float)
-    def _on_request_image(self, persistent_index: QPersistentModelIndex, size: QSize, dpr: float) -> None:
-        """Loads the emoji image when requested by the delegate.
+    def _on_request_image(self, persistent_index: QPersistentModelIndex, size: QSize) -> None:
+        timer = QElapsedTimer()
+        timer.start()
+        url_query = self._build_url_query(persistent_index, size)
+        url_query_string = url_query.toString()
+        logging.debug(f"Build url query in {timer.elapsed()} ms.")
 
-        Args:
-            persistent_index (QPersistentModelIndex): The persistent index of the item needing an image.
-        """
-        start = time.perf_counter()
+        try:
+            image: typing.Optional[QImage] = self._images[url_query_string]
+        except KeyError:
+            self._images[url_query_string] = None
+            timer = QElapsedTimer()
+            timer.start()
+            provider = self._image_provider(url_query)
+            logging.debug(f"Created provider in {timer.elapsed()} ms.")
+            provider.success.connect(self._on_request_image_success)
+            self._pool.start(provider)
+        else:
+            if image is not None:
+                model_index = self._proxy.mapToSource(persistent_index)
+                item = self._model.itemFromIndex(model_index)
+                item.setData(image, Qt.ItemDataRole.DecorationRole)
 
-        if not persistent_index.isValid():
-            return
-
-        icon_pixmap_getter = self.iconPixmapGetter()
-
-        if not icon_pixmap_getter:
-            return
-
-        # 1. Explicitly convert to QModelIndex
-        # Note: QModelIndex constructor does not accept QPersistentModelIndex directly in PySide6
-        proxy_index = persistent_index.model().index(
-            persistent_index.row(), persistent_index.column(), persistent_index.parent()
-        )
-
-        if not proxy_index.isValid():
-            return
-
-        # 2. Map from Proxy to Source Model
-        source_index = self._proxy.mapToSource(proxy_index)
-
-        if not source_index.isValid():
-            return
-
-        # 3. Fetch the item and set the image
-        item = self._model.itemFromIndex(source_index)
-
-        # Generate the pixmap
-        pixmap = icon_pixmap_getter(item, size, dpr)
-
-        # Debug: Ensure the pixmap was generated
-        if pixmap.isNull():
-            logging.warning(f"Null pixmap generated for {item.data(Qt.ItemDataRole.EditRole)}")
-
-        # Set the icon (This triggers dataChanged in model -> proxy -> view)
-        item.setIcon(pixmap)
-
-        end = time.perf_counter()
-        logging.debug(f"Requested image for {item.data(Qt.ItemDataRole.EditRole)} in {end - start:.6f} seconds")
-
-    def _paint_emoji_on_label(self) -> None:
-        """Updates the preview label with the current emoji pixmap."""
-        icon_pixmap_getter = self.iconPixmapGetter()
-        size = self._icon_label.size()
-        if self._icon_on_label and icon_pixmap_getter:
-            pixmap = icon_pixmap_getter(self._icon_on_label, size, self._icon_label.devicePixelRatio())
-            self._icon_label.setPixmap(pixmap)
-
-    def _paint_skintones(self) -> None:
-        """Updates the skin tone selector icons."""
-        icon_pixmap_getter = self.iconPixmapGetter()
-        size = self._color_modifier_selector.iconSize()
-        dpr = self._color_modifier_selector.devicePixelRatio()
-        for index in range(self._color_modifier_selector.count()):
-            icon_item = self._color_modifier_selector.itemData(index)
-            icon = icon_pixmap_getter(icon_item, size, dpr)
-            if icon:
-                self._color_modifier_selector.setItemIcon(index, icon)
+    def _on_request_image_success(self, url_query: QUrlQuery, image: QImage) -> None:
+        url_query_string = url_query.toString()
+        self._images[url_query_string] = image
 
     @Slot(QModelIndex)
     def _on_shortcut_clicked(self, source_index: QModelIndex) -> None:
@@ -393,9 +326,8 @@ class QIconPicker(QWidget):
             self._shortcuts_group.removeButton(button)
             button.deleteLater()
 
-        model = self.model()
-        for row in range(model.rowCount()):
-            item = model.item(row)
+        for row in range(self._model.rowCount()):
+            item = self._model.item(row)
             if isinstance(item, QStandardItem):
                 self._on_categories_inserted(item)
 
@@ -409,8 +341,15 @@ class QIconPicker(QWidget):
         source_index = self._proxy.mapToSource(index)
         item = self._model.itemFromIndex(source_index)
         if item.parent():
-            self._icon_on_label = item
-            self._paint_emoji_on_label()
+            url_query = self._build_url_query(index, self._icon_label.size())
+
+            cached = self._images.get(url_query.toString())
+            if isinstance(cached, QImage):
+                self._icon_label.setPixmap(QPixmap.fromImage(cached))
+            else:
+                provider = self._image_provider(url_query)
+                provider.success.connect(self._on_label_image_received)
+                self._pool.start(provider)
 
             aliases = item.data(Qt.ItemDataRole.UserRole)
             aliases_text = " ".join(self._alias_format.format(alias=alias) for alias in aliases)
@@ -422,6 +361,11 @@ class QIconPicker(QWidget):
                 self._aliases_icon_label.width(),
             )
             self._aliases_icon_label.setText(elided_alias)
+
+    def _on_label_image_received(self, url_query: QUrlQuery, image: QImage) -> None:
+        pixmap = QPixmap.fromImage(image)
+        self._icon_label.setPixmap(pixmap)
+        self._images[url_query.toString()] = image
 
     @Slot()
     def _on_mouse_exited_emoji(self) -> None:
@@ -455,98 +399,6 @@ class QIconPicker(QWidget):
         """Filters the emojis across all categories based on the search text."""
         text = self._search_line_edit.text()
         self._proxy.setFilterFixedString(text)
-
-    # Public methods
-    def addColorOption(self, item: QStandardItem):
-        """
-        Adds a color option to the color selector in the icon picker.
-
-        Args:
-            item: QIconItem instance.
-        """
-        icon_pixmap_getter = self.iconPixmapGetter()
-        size = self._color_modifier_selector.iconSize()
-        dpr = self._color_modifier_selector.devicePixelRatio()
-        decoration = item.data(Qt.ItemDataRole.DecorationRole)
-        if decoration:
-            icon = decoration
-        elif icon_pixmap_getter:
-            icon = icon_pixmap_getter(item, size, dpr)
-        else:
-            icon = QIcon()
-        self._color_modifier_selector.addItem(icon=icon, data=item)
-
-    def setIconPixmapGetter(
-        self,
-        icon_pixmap_getter: typing.Callable[[QStandardItem, QSize, float], QPixmap],
-    ) -> None:
-        """Sets the strategy for retrieving icon pixmaps.
-
-        Args:
-            icon_pixmap_getter (Callable[[QIconItem], QPixmap]):
-                Can be a font family name (str), a QFont object, or a callable that takes an emoji string
-                and returns a QPixmap.
-        """
-
-        self._icon_pixmap_getter = icon_pixmap_getter
-
-        self._paint_emoji_on_label()
-        self._paint_skintones()
-
-        delegate = self.delegate()
-        delegate.forceReloadAll()
-
-    def iconPixmapGetter(self) -> typing.Callable[[QStandardItem, QSize, float], QPixmap]:
-        """Returns the current emoji pixmap getter function.
-
-        Returns:
-            Callable[[QIconItem], QPixmap]: A function that takes an emoji string and returns a QPixmap.
-        """
-        return self._icon_pixmap_getter
-
-    def setModel(self, model: QIconPickerModel):
-        """
-        Setter for icon picker model.
-
-        Args:
-            model(QIconPickerModel): The icon picker model.
-        """
-        if model != self._model:
-            if self._model:
-                self._model.categoryInserted.disconnect(self._on_categories_inserted)
-                self._model.categoryRemoved.disconnect(self._on_categories_removed)
-                self._model.requestIcon.disconnect(self._on_model_request_icon)
-
-            self._model = model
-            self._proxy.setSourceModel(self._model)
-
-            self._model.categoryInserted.connect(self._on_categories_inserted)
-            self._model.categoryRemoved.connect(self._on_categories_removed)
-            self._model.requestIcon.connect(self._on_model_request_icon)
-
-            self._on_model_reset()
-
-    def model(self) -> QIconPickerModel:
-        """Returns the emoji picker model."""
-        return self._model
-
-    def setIconLabelSize(self, size: int):
-        """
-        Setter for icon label size.
-
-        Args:
-            size(int): The size of the icon label
-        """
-        self._icon_label.setFixedSize(QSize(size, size))
-
-    def setAliasFormat(self, alias_format: str):
-        """
-        Setter for alias format.
-
-        Args:
-            alias_format: Alias format.
-        """
-        self._alias_format = alias_format
 
     def translateUI(self) -> None:
         """Translates the UI components."""

@@ -5,6 +5,7 @@ from PySide6.QtGui import QPixmap, QStandardItem
 from PySide6.QtWidgets import QMenu, QWidgetAction, QWidget
 
 from qextrawidgets.gui.models import QIconPickerModel
+from qextrawidgets.gui.models.emoji_picker_model import QEmojiPickerModel
 from qextrawidgets.widgets.miscellaneous.emoji_picker import QEmojiPicker
 
 
@@ -19,10 +20,9 @@ class QEmojiPickerMenu(QMenu):
 
     def __init__(
             self,
+            model: QEmojiPickerModel,
             parent: typing.Optional[QWidget] = None,
-            model: typing.Optional[QIconPickerModel] = None,
-            icon_label_size: int = 32,
-            icon_pixmap_getter: typing.Optional[typing.Callable[[QStandardItem], QPixmap]] = None) -> None:
+            icon_label_size: int = 32) -> None:
         """Initialize the emoji picker menu.
 
         Args:
@@ -33,7 +33,7 @@ class QEmojiPickerMenu(QMenu):
                 Method to generate emoji pixmaps. Defaults to EmojiImageProvider.getPixmap.
         """
         super().__init__(parent)
-        self._picker = QEmojiPicker(parent, model, icon_label_size, icon_pixmap_getter)
+        self._picker = QEmojiPicker(model, parent, icon_label_size)
         self._picker.picked.connect(self._on_picked)
 
         action = QWidgetAction(self)
