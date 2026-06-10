@@ -1,13 +1,13 @@
 from PySide6.QtCore import (
     QObject,
     Qt,
-    QRect,
     QModelIndex,
     QPersistentModelIndex,
     Signal,
-    QTimer, QSize, QSizeF,
+    QSize,
+    QSizeF,
 )
-from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage
+from PySide6.QtGui import QPalette, QPainter, QIcon, QPixmap, QImage, QTextLayout
 from PySide6.QtWidgets import (
     QStyleOptionViewItem,
     QStyle,
@@ -47,31 +47,12 @@ class QGridIconDelegate(QStyledItemDelegate):
             item_internal_margin_ratio (float): Internal margin ratio (0.0 to 0.5).
         """
         super().__init__(parent)
-        self.setItemInternalMargin(item_internal_margin_ratio)
-
-    def setItemInternalMargin(self, ratio: float) -> None:
-        """
-        Set the internal margin ratio for the item content.
-
-        Args:
-            ratio (float): A value between 0.0 (0%) and 0.5 (50%).
-        """
-        self._item_internal_margin_ratio = max(0.0, min(0.5, ratio))
-
-    def itemInternalMargin(self) -> float:
-        """
-        Get the internal margin ratio for the item content.
-
-        Returns:
-            float: A value between 0.0 (0%) and 0.5 (50%).
-        """
-        return self._item_internal_margin_ratio
 
     def paint(
         self,
         painter: QPainter,
         option: QStyleOptionViewItem,
-        index: QPersistentModelIndex,
+        index: QModelIndex,
     ) -> None:
         """
         Paint the item.
@@ -90,7 +71,7 @@ class QGridIconDelegate(QStyledItemDelegate):
             self,
             painter: QPainter,
             option: QStyleOptionViewItem,
-            index: QPersistentModelIndex,
+            index: QModelIndex,
     ) -> None:
         painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)
 
@@ -100,46 +81,45 @@ class QGridIconDelegate(QStyledItemDelegate):
         base_bg_color = palette.color(QPalette.ColorRole.Base)
         dpr = painter.device().devicePixelRatio()
 
-        # Determine Background Color for Selection/Hover
         if current_state & QStyle.StateFlag.State_Selected:
             bg_color = palette.color(QPalette.ColorRole.Highlight)
         elif current_state & QStyle.StateFlag.State_MouseOver:
             bg_color = base_bg_color.lighter(120)
 
-        # Draw Background (Rounded Rect)
         rect = option.rect.adjusted(2, 2, -2, -2)
 
         if bg_color is not None:
-            painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(bg_color)
             painter.drawRoundedRect(rect, 8.0, 8.0)
 
-        # Retrieve Data
         item_data = index.data(Qt.ItemDataRole.DecorationRole)
 
-        margin = int(min(rect.width(), rect.height()) * self._item_internal_margin_ratio)
-        target_rect = rect.adjusted(margin, margin, -margin, -margin)
-        target_size = target_rect.size()
+        # margin = int(min(rect.width(), rect.height()) * self._item_internal_margin_ratio)
+        # target_rect = rect.adjusted(margin, margin, -margin, -margin)
+        # target_size = target_rect.size()
 
-        # ── Fast path: emoji string direto no DecorationRole ─────────────────────
-        # Renderiza com drawText — zero alocação, sem I/O, sem sinal emitido.
         if isinstance(item_data, str) and item_data:
+            # painter.drawText(target_rect, Qt.AlignmentFlag.AlignCenter, item_data)
 
-            if not (current_state & QStyle.StateFlag.State_Enabled):
-                painter.setOpacity(0.5)
+            layout = QTextLayout(item_data, option.font)
+            layout.beginLayout()
+            layout.createLine()
+            layout.endLayout()
 
-            painter.drawText(target_rect, Qt.AlignmentFlag.AlignCenter, item_data)
-
-            if not (current_state & QStyle.StateFlag.State_Enabled):
-                painter.setOpacity(1.0)
+            glyph_runs = layout.glyphRuns()
+            glyph_run = glyph_runs[0]
+            painter.drawGlyphRun(
+                rect.topLeft(),
+                glyph_run
+            )
             return
 
         # ── Slow path: QIcon / QPixmap / QImage (carregado pelo provider) ────────
         if not isinstance(item_data, (QIcon, QPixmap, QImage)) or item_data.isNull():
-            physical_size = (QSizeF(target_size) * dpr).toSize()
+            physical_size = (QSizeF(rect) * dpr).toSize()
             painter.setPen(palette.color(QPalette.ColorRole.Mid))
             painter.setBrush(Qt.BrushStyle.NoBrush)
-            painter.drawRoundedRect(target_rect, 4, 4)
+            painter.drawRoundedRect(rect, 4, 4)
             self.requestImage.emit(index, physical_size)
             return
 
@@ -153,7 +133,7 @@ class QGridIconDelegate(QStyledItemDelegate):
 
             item_data.paint(
                 painter,
-                target_rect,
+                rect,
                 Qt.AlignmentFlag.AlignCenter,
                 mode,
                 QIcon.State.Off,
@@ -163,18 +143,18 @@ class QGridIconDelegate(QStyledItemDelegate):
         # ── QPixmap / QImage ──────────────────────────────────────────────────────
         if isinstance(item_data, (QPixmap, QImage)):
             logical_size = item_data.deviceIndependentSize().toSize()
-            fit_size = logical_size.scaled(target_size, Qt.AspectRatioMode.KeepAspectRatio)
+            fit_size = logical_size.scaled(rect, Qt.AspectRatioMode.KeepAspectRatio)
 
             aligned_rect = QStyle.alignedRect(
                 Qt.LayoutDirection.LeftToRight,
                 Qt.AlignmentFlag.AlignCenter,
                 fit_size,
-                target_rect,
+                rect,
             )
 
-            if not (current_state & QStyle.StateFlag.State_Enabled):
-                painter.setOpacity(0.5)
-                painter.drawPixmap(aligned_rect, item_data)
-                painter.setOpacity(1.0)
-            else:
-                painter.drawPixmap(aligned_rect, item_data)
+            # if not (current_state & QStyle.StateFlag.State_Enabled):
+            #     painter.setOpacity(0.5)
+            #     painter.drawPixmap(aligned_rect, item_data)
+            #     painter.setOpacity(1.0)
+            # else:
+            painter.drawPixmap(aligned_rect, item_data)

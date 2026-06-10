@@ -308,7 +308,7 @@ class EmojiDemoWindow(QMainWindow):
         self._copy_btn.clicked.connect(self._on_copy_emoji)
 
         # Emoji View Connections
-        self._emoji_view.itemClicked.connect(self._on_item_clicked)
+        # self._emoji_view.itemClicked.connect(self._on_item_clicked)
 
         # Filter Proxy Connections
         self._filter_proxy.rowsInserted.connect(self._update_status)
@@ -328,6 +328,7 @@ class EmojiDemoWindow(QMainWindow):
                 item.setEditable(False)
                 item.setData(emoji, Qt.ItemDataRole.EditRole)
                 item.setData(category, CATEGORY_ROLE)
+                item.setData(emoji, Qt.ItemDataRole.DecorationRole)
                 try:
                     name = unicodedata.name(emoji[0], emoji)
                 except (ValueError, TypeError):

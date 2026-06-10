@@ -27,7 +27,7 @@ from PySide6.QtGui import (
     QColor,
     QPainterPath,
     QImage,
-    QFontMetrics,
+    QFontMetrics, QTextLayout, QGlyphRun,
 )
 from PySide6.QtWidgets import QStyle
 
@@ -174,6 +174,22 @@ class QIconGenerator:
             Qt.TransformationMode.SmoothTransformation,
         )
         return final
+
+    @staticmethod
+    def charToGlyph(
+            
+    ) -> QGlyphRun:
+        layout = QTextLayout(item_data)
+        layout.beginLayout()
+        layout.createLine()
+        layout.endLayout()
+
+        glyph_runs = layout.glyphRuns()
+        glyph_run = glyph_runs[0]
+        painter.drawGlyphRun(
+            target_rect.topLeft(),
+            glyph_run
+        )
 
     @staticmethod
     def getCircularPixmap(pixmap: QPixmap, size: int, dpr: float = 1.0) -> QPixmap:

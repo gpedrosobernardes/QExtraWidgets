@@ -13,6 +13,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QWidget, QStyleOptionViewItem, QStyle
 
+from qextrawidgets.core.utils.system_utils import log_qt_performance
 from qextrawidgets.widgets.delegates.grouped_icon_delegate import QGroupedIconDelegate
 from qextrawidgets.widgets.views.grid_icon_view import QGridIconView
 
@@ -47,6 +48,7 @@ class QGroupedIconView(QGridIconView):
         # View State
         self._expanded_items: set[QPersistentModelIndex] = set()
         self._item_indexes: dict[QPersistentModelIndex, dict[int, dict[int, typing.Tuple[QPersistentModelIndex, QRect]]]] = {}
+        self._rows_count: dict[QPersistentModelIndex, int] = {}
 
         # Layout Configuration
         self._header_height: int = header_height
@@ -159,6 +161,7 @@ class QGroupedIconView(QGridIconView):
         self._expanded_items.clear()
         super()._on_model_reset()
 
+    @log_qt_performance
     def _visible_items(self) -> typing.Generator[typing.Tuple[QPersistentModelIndex, QRect]]:
         """
         Generates visible items in the viewport.
@@ -167,15 +170,11 @@ class QGroupedIconView(QGridIconView):
         Returns:
             typing.Generator[typing.Tuple[QPersistentModelIndex, QRect]]: Generator of index and rect for visible items.
         """
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}._visible_items")
-
         viewport_rect = self.viewport().rect()
         viewport_rect.translate(0, self.verticalScrollBar().value())
-        logger.debug(f"Viewport rect: {viewport_rect}")
 
         for category_index, grid in self._item_indexes.items():
             category_rect = self._item_rects[category_index]
-            # logger.debug(f"Category {category_index.data(Qt.ItemDataRole.EditRole)} rect: {category_rect}")
 
             if viewport_rect.intersects(category_rect):
                 yield category_index, category_rect
@@ -192,7 +191,6 @@ class QGroupedIconView(QGridIconView):
 
                 if first_row > rows_count:
                     continue
-                logger.debug(f"Looking for visible items between rows {first_row} and {last_row}")
 
                 for i in range(first_row, last_row + 1):
                     columns_values = grid.get(i)
@@ -229,12 +227,11 @@ class QGroupedIconView(QGridIconView):
     # QAbstractItemView Implementation
     # -------------------------------------------------------------------------
 
+    @log_qt_performance
     def updateGeometries(self) -> None:
         """
         Recalculate the layout of item rectangles and update scrollbars.
         """
-        logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}.updateGeometries")
-
         start = time.perf_counter()
         model = self.model()
 
@@ -269,12 +266,14 @@ class QGroupedIconView(QGridIconView):
             if self.isExpanded(cat_persistent_index) and rows:
                 cols = self.virtualColumns()
                 for row, persistent_index in enumerate(rows):
-                    self._populate_grid_caches(row, persistent_index, self._item_indexes[cat_persistent_index], cols, y)
+                    virtual_column = row % cols
+                    virtual_row = row // cols
+
+                    self._populate_grid_caches(virtual_row, virtual_column, persistent_index, self._item_indexes[cat_persistent_index], y)
 
                 rows_count = max(self._item_indexes[cat_persistent_index].keys()) + 1
-                logger.debug(f"Rows count: {rows_count}")
+
                 y += self._calculate_rows_height(rows_count)
-                logger.debug(f"Rows height: {self._header_height}")
 
         content_height = y
         scroll_range = max(0, content_height - self.viewport().height())
@@ -346,17 +345,13 @@ class QGroupedIconView(QGridIconView):
 
         for category_index, grid in self._item_indexes.items():
             real_point = point + QPoint(0, self.verticalScrollBar().value())
-            # logger.debug(f"Looking for index at {real_point}")
 
             category_rect = self._item_rects[category_index]
-            # logger.debug(f"Verifying if point is on category {category_rect}")
             if category_rect.contains(real_point):
-                # logger.debug(f"Yes, point is on category {category_rect}")
                 return QModelIndex(category_index)
 
             if self.isExpanded(category_index):
                 row, col = self._get_coordinates_at(real_point - category_rect.bottomLeft())
-                # logger.debug(f"Looking for index at {row}, {col}")
 
                 cols_p_index = grid.get(row)
                 if not cols_p_index:
@@ -365,7 +360,6 @@ class QGroupedIconView(QGridIconView):
                 result = cols_p_index.get(col)
                 if result:
                     p_index, rect = result
-                    # logger.debug(f"Found index {p_index}")
                     if rect.contains(real_point):
                         return QModelIndex(p_index)
 

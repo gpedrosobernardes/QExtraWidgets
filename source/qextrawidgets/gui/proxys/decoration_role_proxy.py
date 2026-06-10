@@ -28,10 +28,13 @@ class QDecorationRoleProxyModel(QIdentityProxyModel):
     ) -> typing.Any:
         """Returns the data for the given index and role."""
         if role == Qt.ItemDataRole.DecorationRole:
-            if index.isValid():
-                persistent_index = QPersistentModelIndex(index)
-                return self._decorations.get(persistent_index, self._default_decoration)
-            return None
+            persistent_index = QPersistentModelIndex(index)
+            try:
+                decoration = self._decorations[persistent_index]
+            except KeyError:
+                return super().data(index, Qt.ItemDataRole.DecorationRole)
+            else:
+                return decoration
 
         return super().data(index, role)
 
@@ -52,20 +55,6 @@ class QDecorationRoleProxyModel(QIdentityProxyModel):
             return True
 
         return super().setData(index, value, role)
-
-    def setDefaultDecoration(self, decoration: typing.Any) -> None:
-        """Sets the default decoration for all items not explicitly set."""
-        self._default_decoration = decoration
-        # Invalidate all data to refresh the view
-        if self.sourceModel():
-            self.dataChanged.emit(
-                self.index(0, 0),
-                self.index(
-                    self.sourceModel().rowCount() - 1,
-                    self.sourceModel().columnCount() - 1,
-                ),
-                [Qt.ItemDataRole.DecorationRole],
-            )
 
     def clearDecorations(self) -> None:
         """Clears all explicit decorations, reverting to the default."""
