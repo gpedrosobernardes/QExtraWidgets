@@ -556,9 +556,6 @@ class QGridIconView(QAbstractItemView):
 
         self.selectionModel().select(selection, command)
 
-        # Force update to show selection changes
-        self.viewport().update()
-
     def visualRegionForSelection(self, selection: QItemSelection) -> QRegion:
         """
         Return the region covered by the selection.
