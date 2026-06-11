@@ -46,7 +46,7 @@ from PySide6.QtWidgets import (
     QToolButton,
 )
 
-from qextrawidgets.core.utils.emojis import QEmojiImageProvider, QEmojiFonts
+from qextrawidgets.core.utils.emojis import QEmojiImageProvider, QEmojiFonts, QEmojiUtils
 from qextrawidgets.core.utils.images import QIconGenerator
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.gui.proxys import QDecorationRoleProxyModel
@@ -76,8 +76,9 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
         self._category_filter: str = ""  # "" = all
 
     def setCategory(self, category: str) -> None:
+        self.beginFilterChange()
         self._category_filter = category if category != "All" else ""
-        self.invalidateFilter()
+        self.endFilterChange()
 
     def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
         index = self.sourceModel().index(source_row, 0, source_parent)
@@ -101,61 +102,7 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
 # Example data — subset of emojis grouped by category
 # ---------------------------------------------------------------------------
 
-EMOJI_CATEGORIES: dict[str, list[str]] = {
-    "Smileys": [
-        "😀", "😁", "😂", "🤣", "😃", "😄", "😅", "😆", "😇", "😈",
-        "😉", "😊", "😋", "😌", "😍", "🥰", "😎", "🤓", "🧐", "😏",
-        "😒", "😞", "😔", "😟", "😕", "🙁", "☹️", "😣", "😖", "😫",
-        "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳",
-        "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭",
-        "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧",
-        "😮", "😲", "🥱", "😴", "🤤", "😪", "😵", "🤐", "🥴", "🤢",
-        "🤮", "🤧", "😷", "🤒", "🤕",
-    ],
-    "Gestures": [
-        "👋", "🤚", "🖐️", "✋", "🖖", "👌", "🤌", "🤏", "✌️", "🤞",
-        "🤟", "🤘", "🤙", "👈", "👉", "👆", "🖕", "👇", "☝️", "👍",
-        "👎", "✊", "👊", "🤛", "🤜", "👏", "🙌", "👐", "🤲", "🤝",
-        "🙏", "✍️", "💅", "🤳", "💪", "🦾", "🦿", "🦵", "🦶",
-    ],
-    "Animals": [
-        "🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐻‍❄️", "🐨",
-        "🐯", "🦁", "🐮", "🐷", "🐸", "🐵", "🙈", "🙉", "🙊", "🐔",
-        "🐧", "🐦", "🐤", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴",
-        "🦄", "🐝", "🪱", "🐛", "🦋", "🐌", "🐞", "🐜", "🪲", "🦟",
-        "🦗", "🪰", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐊", "🐸",
-        "🦓", "🦍", "🦧", "🦣", "🐘", "🦛", "🦏", "🐪", "🐫", "🦒",
-        "🦘", "🦬", "🐃", "🐂", "🐄", "🐎", "🐖", "🐏", "🐑", "🦙",
-        "🐐", "🦌", "🐕", "🐩", "🦮", "🐕‍🦺", "🐈", "🐈‍⬛", "🐓", "🦃",
-    ],
-    "Food": [
-        "🍎", "🍊", "🍋", "🍇", "🍓", "🫐", "🍈", "🍒", "🍑", "🥭",
-        "🍍", "🥥", "🥝", "🍅", "🍆", "🥑", "🫑", "🥦", "🥬", "🥒",
-        "🌽", "🥕", "🧄", "🧅", "🥔", "🍠", "🧇", "🥞", "🧈", "🍳",
-        "🥚", "🧀", "🥗", "🥙", "🌮", "🌯", "🥪", "🍕", "🍔", "🍟",
-        "🌭", "🍿", "🍦", "🍧", "🍨", "🍩", "🍪", "🎂", "🍰", "🧁",
-        "🍫", "🍬", "🍭", "☕", "🍵", "🧃", "🥤", "🧋", "🍺", "🍻",
-    ],
-    "Objects": [
-        "⌚", "📱", "💻", "⌨️", "🖥️", "🖨️", "🖱️", "📷", "📸", "📹",
-        "🎥", "📞", "☎️", "📟", "📠", "📺", "📻", "🧭", "⏱️", "⏰",
-        "📡", "🔋", "🔌", "💡", "🔦", "🕯️", "🪔", "🧯", "🛢️", "💰",
-        "💳", "🪙", "💎", "⚖️", "🔧", "🔨", "⚒️", "🛠️", "🔩", "⚙️",
-        "🔗", "⛓️", "🧲", "🔫", "💣", "🪓", "🔪", "🗡️", "⚔️", "🛡️",
-        "🚪", "🪞", "🪟", "🛋️", "🪑", "🚽", "🧻", "🚿", "🛁",
-    ],
-    "Symbols": [
-        "❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔",
-        "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "✨", "⭐",
-        "🌟", "💫", "⚡", "🌈", "🔥", "💧", "❄️", "🌊", "💥", "🎉",
-        "🎊", "🎈", "🎁", "🏆", "🥇", "🥈", "🥉", "🎯", "🎮", "🎲",
-        "♠️", "♥️", "♦️", "♣️", "🃏", "🀄", "♟️", "✅", "❌", "⭕",
-        "🔴", "🟠", "🟡", "🟢", "🔵", "🟣", "⚫", "⚪", "🟤",
-    ],
-}
-
-ALL_CATEGORIES = ["All"] + list(EMOJI_CATEGORIES.keys())
-
+ALL_CATEGORIES = ["All"] + list(QEmojiUtils.emojiCharPerCategory.keys())
 
 # ---------------------------------------------------------------------------
 # Main window
@@ -210,7 +157,7 @@ class EmojiDemoWindow(QMainWindow):
 
         self._source_label = QLabel("Rendering:")
         self._source_combo = QComboBox()
-        self._source_combo.addItems(["PNG (Twemoji)", "SVG (Twemoji)", "System font"])
+        self._source_combo.addItems(["System font", "Twemoji"])
 
         self._size_label_title = QLabel("Size:")
         self._size_slider = QSlider(Qt.Orientation.Horizontal)
@@ -323,18 +270,14 @@ class EmojiDemoWindow(QMainWindow):
     def _build_model(self) -> None:
         """Populates the QStandardItemModel with all emojis and their categories."""
         self._source_model.clear()
-        for category, emojis in EMOJI_CATEGORIES.items():
-            for emoji in emojis:
+        for category, emoji_chars in QEmojiUtils.emojiCharPerCategory.items():
+            for emoji_char in sorted(emoji_chars, key=lambda e: e.sort_order):
                 item = QStandardItem()
                 item.setEditable(False)
-                item.setData(emoji, Qt.ItemDataRole.EditRole)
+                item.setData(emoji_char.char, Qt.ItemDataRole.EditRole)
                 item.setData(category, CATEGORY_ROLE)
-                item.setData(emoji, Qt.ItemDataRole.DecorationRole)
-                try:
-                    name = unicodedata.name(emoji[0], emoji)
-                except (ValueError, TypeError):
-                    name = emoji
-                item.setToolTip(f"{emoji}  {name}")
+                item.setData(emoji_char.char, Qt.ItemDataRole.DecorationRole)
+                item.setToolTip(f"{emoji_char.char} {emoji_char.name}")
                 self._source_model.appendRow(item)
 
     # ------------------------------------------------------------------
@@ -350,11 +293,8 @@ class EmojiDemoWindow(QMainWindow):
         self._update_status()
 
     def _on_source_changed(self, index: int) -> None:
-        provider = getattr(self._emoji_view, "_emoji_image_provider", None)
-        if provider is None:
-            return
-        sources = ["png", "svg", "Segoe UI Emoji"]
-        provider.setSource(sources[index])
+        sources = ["Segoe UI Emoji", "Twemoji"]
+        self._emoji_view.setFont(sources[index])
 
     def _on_size_changed(self, value: int) -> None:
         from PySide6.QtCore import QSize

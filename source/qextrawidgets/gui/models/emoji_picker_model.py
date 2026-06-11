@@ -73,7 +73,7 @@ class QEmojiPickerModel(QIconPickerModel):
                     continue
                 else:
                     for emoji_char in sorted(emoji_chars, key=lambda e: e.sort_order):
-                        category_item.appendRow(QEmojiItem(emoji_char))\
+                        category_item.appendRow(QEmojiItem(emoji_char))
 
         end = time.perf_counter()
         logging.debug(f"Populated emoji model in {end - start:.6f} seconds.")
