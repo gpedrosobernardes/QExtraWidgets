@@ -19,7 +19,7 @@ Key design decisions
   platform-specific font hinting.
 """
 import qtawesome
-from PySide6.QtCore import Qt, QSize, QRect
+from PySide6.QtCore import Qt, QSize, QRect, QPointF
 from PySide6.QtGui import (
     QPixmap,
     QPainter,
@@ -175,21 +175,51 @@ class QIconGenerator:
         )
         return final
 
+    @classmethod
+    def charToImageViaGlyphRun(
+        cls,
+        char: str,
+        size: QSize,
+        font_family: str
+    ) -> QImage:
+        pixel_size = cls.getBestPixelSizeForSize(size, font_family, char)
+
+        font = QFont(font_family)
+        font.setPixelSize(pixel_size)
+
+        image = QImage(size, QImage.Format.Format_ARGB32_Premultiplied)
+        image.fill(Qt.GlobalColor.transparent)
+
+        painter = QPainter(image)
+
+        layout = QTextLayout(char, font)
+        layout.beginLayout()
+        layout.createLine()
+        layout.endLayout()
+
+        layout.draw(painter, QPointF(0, 0))
+
+        painter.end()
+        return image
+
     @staticmethod
-    def charToGlyph(
-            
-    ) -> QGlyphRun:
-        layout = QTextLayout(item_data)
+    def getBestPixelSizeForSize(size: QSize, font_family: str, char: str = "x") -> int:
+        font = QFont(font_family)
+        font.setPixelSize(100)
+
+        layout = QTextLayout(char, font)
         layout.beginLayout()
         layout.createLine()
         layout.endLayout()
 
         glyph_runs = layout.glyphRuns()
         glyph_run = glyph_runs[0]
-        painter.drawGlyphRun(
-            target_rect.topLeft(),
-            glyph_run
-        )
+
+        bounding_rect = glyph_run.boundingRect()
+
+        height = int((100 * size.height()) / bounding_rect.height())
+
+        return height
 
     @staticmethod
     def getCircularPixmap(pixmap: QPixmap, size: int, dpr: float = 1.0) -> QPixmap:

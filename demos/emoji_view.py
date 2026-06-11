@@ -28,7 +28,7 @@ import sys
 import unicodedata
 
 from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -46,7 +46,8 @@ from PySide6.QtWidgets import (
     QToolButton,
 )
 
-from qextrawidgets.core.utils.emojis import QEmojiImageProvider
+from qextrawidgets.core.utils.emojis import QEmojiImageProvider, QEmojiFonts
+from qextrawidgets.core.utils.images import QIconGenerator
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.gui.proxys import QDecorationRoleProxyModel
 from qextrawidgets.widgets.views import QEmojiView
@@ -308,7 +309,7 @@ class EmojiDemoWindow(QMainWindow):
         self._copy_btn.clicked.connect(self._on_copy_emoji)
 
         # Emoji View Connections
-        # self._emoji_view.itemClicked.connect(self._on_item_clicked)
+        self._emoji_view.clicked.connect(self._on_item_clicked)
 
         # Filter Proxy Connections
         self._filter_proxy.rowsInserted.connect(self._update_status)
@@ -367,25 +368,14 @@ class EmojiDemoWindow(QMainWindow):
         It is necessary to map two levels down to the QStandardItemModel to
         read the data directly.
         """
-        # decoration proxy -> filter proxy -> source model
-        filter_index = self._decoration_proxy.mapToSource(index)
-        source_index = self._filter_proxy.mapToSource(filter_index)
-
-        emoji = source_index.data(Qt.ItemDataRole.EditRole)
+        emoji = index.data(Qt.ItemDataRole.EditRole)
         if not emoji:
             return
 
-        pixmap_image_provider = self._emoji_view.emojiImageProvider()
-
-        if pixmap_image_provider is None:
-            return
-
-        size = self._preview_label.size()
-        dpr = self._preview_label.devicePixelRatio()
-        pixmap = QEmojiImageProvider.getPixmapBy(emoji, size, dpr, pixmap_image_provider.fontFamily())
+        image = QIconGenerator.charToImage(emoji, self._preview_label.size(), "Twemoji")
 
         self._selected_emoji = emoji
-        self._preview_label.setPixmap(pixmap)
+        self._preview_label.setPixmap(QPixmap.fromImage(image))
 
         codepoints = " ".join(f"U+{ord(c):04X}" for c in emoji if c != "\uFE0F")
         self._codepoint_label.setText(f"Codepoints: {codepoints}")
@@ -423,6 +413,8 @@ def main() -> None:
     app = QApplication(sys.argv)
     app.setApplicationName("QEmojiView Demo")
     app.setStyle("Fusion")
+
+    QEmojiFonts.loadTwemojiFont()
 
     window = EmojiDemoWindow()
     window.show()

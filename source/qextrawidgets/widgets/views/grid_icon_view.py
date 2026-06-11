@@ -178,20 +178,6 @@ class QGridIconView(QAbstractItemView):
 
         option.state = state
 
-    def _calculate_rows_height(self, rows: int) -> int:
-        """
-        Calculates what the height for a given number of rows.
-
-        Args:
-            rows: Quantity to calculate.
-
-        Returns:
-            The height.
-        """
-        icon_size = self.iconSize()
-        item_h = icon_size.height()
-        return self._margin + ((item_h + self._margin) * rows)
-
     # -------------------------------------------------------------------------
     # Layout Scheduling & Cache Management
     # -------------------------------------------------------------------------
@@ -204,11 +190,6 @@ class QGridIconView(QAbstractItemView):
     def _execute_delayed_layout(self) -> None:
         """Update the layout."""
         self.updateGeometries()
-        self.viewport().update()
-
-    def _clear_cache(self, *args) -> None:
-        """Clear all the cached variables."""
-        self._hover_index = QPersistentModelIndex()
         self.viewport().update()
 
     def setModel(self, model: typing.Optional[QAbstractItemModel]) -> None:
@@ -231,8 +212,8 @@ class QGridIconView(QAbstractItemView):
             current_model.rowsRemoved.disconnect(self._on_rows_removed)
             current_model.dataChanged.disconnect(self._on_data_changed)
 
-            current_model.layoutAboutToBeChanged.disconnect(self._clear_cache)
-            current_model.rowsAboutToBeRemoved.disconnect(self._clear_cache)
+            current_model.layoutAboutToBeChanged.disconnect(self._on_layout_changed)
+            current_model.rowsAboutToBeRemoved.disconnect(self._on_layout_changed)
 
         # Disconnect from old selection model
         old_selection_model = self.selectionModel()
@@ -244,8 +225,8 @@ class QGridIconView(QAbstractItemView):
         super().setModel(model)
 
         if model:
-            model.layoutAboutToBeChanged.connect(self._clear_cache)
-            model.rowsAboutToBeRemoved.connect(self._clear_cache)
+            model.layoutAboutToBeChanged.connect(self._on_layout_changed)
+            model.rowsAboutToBeRemoved.connect(self._on_layout_changed)
 
             model.layoutChanged.connect(self._on_layout_changed)
             model.modelReset.connect(self._on_model_reset)
@@ -302,7 +283,10 @@ class QGridIconView(QAbstractItemView):
     @Slot(QModelIndex)
     def _on_entered(self, index: QModelIndex):
         if index != self._hover_index:
+            if self._hover_index.isValid():
+                self.viewport().update(self.visualRect(self._hover_index))
             self._hover_index = index
+            self.viewport().update(self.visualRect(index))
 
     def leaveEvent(self, event: QEvent) -> None:
         """
@@ -354,7 +338,6 @@ class QGridIconView(QAbstractItemView):
                 index = model.index(row, self.modelColumn())
                 if index.isValid():
                     rect = self.visualRect(index)
-                    rect.translate(0, -scroll_y)
                     self._init_option(option, index, rect)
                     item_delegate.paint(painter, option, index)
 
@@ -416,7 +399,9 @@ class QGridIconView(QAbstractItemView):
         column_width = self._margin * 2 + self.iconSize().width()
         x = virtual_point.x() * column_width + self._margin
         y = virtual_point.y() * row_width + self._margin
-        return QRect(QPoint(x, y), self.iconSize())
+        vertical_scroll_bar = self.verticalScrollBar()
+        scroll_y = vertical_scroll_bar.value()
+        return QRect(QPoint(x, y - scroll_y), self.iconSize())
 
     def indexAt(self, point: QPoint) -> QModelIndex:
         """
@@ -446,6 +431,10 @@ class QGridIconView(QAbstractItemView):
             hint (QAbstractItemView.ScrollHint): The scroll hint.
         """
         rect = self.visualRect(index)
+        vertical_scroll_bar = self.verticalScrollBar()
+        scroll_y = vertical_scroll_bar.value()
+        rect.translate(0, scroll_y)
+
         if not rect:
             return
 
@@ -582,8 +571,6 @@ class QGridIconView(QAbstractItemView):
         """
         region = QRegion()
 
-        scroll_y = self.verticalScrollBar().value()
-
         for selection_range in selection:
             top = selection_range.top()
             bottom = selection_range.bottom()
@@ -601,7 +588,7 @@ class QGridIconView(QAbstractItemView):
                 last_rect.bottomRight(),
             )
 
-        return region.translated(0, -scroll_y)
+        return region
 
     def isIndexHidden(
             self, index: typing.Union[QModelIndex, QPersistentModelIndex]
