@@ -29,14 +29,14 @@ class QGridIconView(QAbstractItemView):
             parent: typing.Optional[QWidget] = None,
             icon_size: QSize = QSize(100, 100),
             margin: int = 8,
+            padding: int = 4
     ):
         super().__init__(parent)
 
-        self._internal_margin_ratio = 0.1
         self._model_column = 0
-        self._icon_font_size = 0
         self._hover_index = QModelIndex()
-        self._margin: int = margin
+        self._margin = margin
+        self._padding = padding
         self._hidden_rows: typing.Set[int] = set()
 
         self._layout_timer = QTimer(self)
@@ -54,53 +54,34 @@ class QGridIconView(QAbstractItemView):
 
         self.entered.connect(self._on_entered)
 
-    def setItemInternalMargin(self, ratio: float) -> None:
-        """
-        Set the internal margin ratio for the item content.
+    def setPadding(self, padding: int):
+        if self._padding != padding:
+            self._padding = padding
+            self._schedule_layout()
 
-        Args:
-            ratio (float): A value between 0.0 (0%) and 0.5 (50%).
-        """
-        self._item_internal_margin_ratio = max(0.0, min(0.5, ratio))
 
-    def itemInternalMargin(self) -> float:
-        """
-        Get the internal margin ratio for the item content.
+    def padding(self) -> int:
+        return self._padding
 
-        Returns:
-            float: A value between 0.0 (0%) and 0.5 (50%).
-        """
-        return self._item_internal_margin_ratio
+    def tileSizeHint(self) -> QSize:
+        icon_size = self.iconSize()
+        height = icon_size.height() + self._padding * 2 + self._margin * 2
+        width = icon_size.width() + self._padding * 2 + self._margin * 2
+        return QSize(width, height)
+
+    def itemSizeHint(self) -> QSize:
+        icon_size = self.iconSize()
+        height = icon_size.height() + self._padding * 2
+        width = icon_size.width() + self._padding * 2
+        return QSize(width, height)
 
     def itemDelegate(self, _ = None) -> QGridIconDelegate:
         return typing.cast(QGridIconDelegate, super().itemDelegate())
 
-    def setIconSize(self, size: QSize) -> None:
-        super().setIconSize(size)
-
-        font = QFont(self.font())
-        font.setPixelSize(100)
-
-        layout = QTextLayout("😀", font)
-        layout.beginLayout()
-        layout.createLine()
-        layout.endLayout()
-
-        glyph_runs = layout.glyphRuns()
-        glyph_run = glyph_runs[0]
-        bounding_rect = glyph_run.boundingRect()
-
-        height = (100 * size.height()) / bounding_rect.height()
-
-        self._icon_font_size = height - height * self._internal_margin_ratio
-
-        self._schedule_layout()
-
-    def setMargin(self, margin: int) -> None:
-        if self._margin == margin:
-            return
-        self._margin = margin
-        self._schedule_layout()
+    def setMargin(self, margin: int):
+        if self._margin != margin:
+            self._margin = margin
+            self._schedule_layout()
 
     def margin(self) -> int:
         """
@@ -310,14 +291,10 @@ class QGridIconView(QAbstractItemView):
         Args:
             event (QPaintEvent): The paint event.
         """
-        font = QFont(self.font())
-        font.setPixelSize(self._icon_font_size)
-
         painter = QPainter(self.viewport())
         option = QStyleOptionViewItem()
         self.initViewItemOption(option)
         option.widget = self.viewport()
-        option.font = font
 
         vertical_scroll_bar = self.verticalScrollBar()
         scroll_y = vertical_scroll_bar.value()
@@ -353,9 +330,8 @@ class QGridIconView(QAbstractItemView):
             Columns count.
         """
         width = self.viewport().width()
-        item_width = self.iconSize().width()
-        column_size = self._margin * 2 + item_width
-        return max(1, width // column_size)
+        tile_width = self.tileSizeHint().width()
+        return max(1, width // tile_width)
 
     @log_qt_performance
     def updateGeometries(self) -> None:
@@ -365,22 +341,18 @@ class QGridIconView(QAbstractItemView):
         """
         model = self.model()
 
-        if not model:
-            return
+        tile_height = self.tileSizeHint().height()
+        virtual_point = self.virtualPoint(model.rowCount())
 
-        item_h = self._margin * 2 + self.iconSize().height()
-        virtual_columns = self.virtualColumns()
-
-        content_height = int((item_h * model.rowCount()) / virtual_columns) + self._margin
+        content_height = tile_height * virtual_point.y()
 
         viewport_height = self.viewport().height()
         scroll_range = max(0, content_height - viewport_height)
 
         vertical_scroll_bar = self.verticalScrollBar()
-
         vertical_scroll_bar.setRange(0, scroll_range)
         vertical_scroll_bar.setPageStep(viewport_height)
-        vertical_scroll_bar.setSingleStep(item_h // 2)
+        vertical_scroll_bar.setSingleStep(tile_height // 2)
 
         super().updateGeometries()
 
@@ -395,13 +367,12 @@ class QGridIconView(QAbstractItemView):
             QRect: The visual rectangle.
         """
         virtual_point = self.virtualPoint(index.row())
-        row_width = self._margin * 2 + self.iconSize().height()
-        column_width = self._margin * 2 + self.iconSize().width()
-        x = virtual_point.x() * column_width + self._margin
-        y = virtual_point.y() * row_width + self._margin
+        tile_size = self.tileSizeHint()
+        x = virtual_point.x() * tile_size.width() + self._margin
+        y = virtual_point.y() * tile_size.height() + self._margin
         vertical_scroll_bar = self.verticalScrollBar()
         scroll_y = vertical_scroll_bar.value()
-        return QRect(QPoint(x, y - scroll_y), self.iconSize())
+        return QRect(QPoint(x, y - scroll_y), self.itemSizeHint())
 
     def indexAt(self, point: QPoint) -> QModelIndex:
         """
@@ -630,9 +601,7 @@ class QGridIconView(QAbstractItemView):
         return QPoint(virtual_column, virtual_row)
 
     def virtualPointAt(self, point: QPoint) -> QPoint:
-        item_w = self.iconSize().width()
-        item_h = self.iconSize().height()
-
-        col = point.x() // (item_w + self._margin * 2)
-        row = point.y() // (item_h + self._margin * 2)
+        tile_size = self.tileSizeHint()
+        col = point.x() // tile_size.width()
+        row = point.y() // tile_size.height()
         return QPoint(col, row)

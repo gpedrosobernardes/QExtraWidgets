@@ -25,10 +25,10 @@ Execution:
 """
 import logging
 import sys
-import unicodedata
 
-from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap
+import unicodedata
+from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex, QSize
+from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -46,12 +46,10 @@ from PySide6.QtWidgets import (
     QToolButton,
 )
 
-from qextrawidgets.core.utils.emojis import QEmojiImageProvider, QEmojiFonts, QEmojiUtils
-from qextrawidgets.core.utils.images import QIconGenerator
+from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
+from qextrawidgets.core.utils.emojis.global_emoji_pixmap_cache import QGlobalEmojiPixmapCache
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
-from qextrawidgets.gui.proxys import QDecorationRoleProxyModel
 from qextrawidgets.widgets.views import QEmojiView
-
 
 # ---------------------------------------------------------------------------
 # Custom category role
@@ -73,7 +71,7 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._category_filter: str = ""  # "" = all
+        self._category_filter: str = ""
 
     def setCategory(self, category: str) -> None:
         self.beginFilterChange()
@@ -109,37 +107,27 @@ ALL_CATEGORIES = ["All"] + list(QEmojiUtils.emojiCharPerCategory.keys())
 # ---------------------------------------------------------------------------
 
 class EmojiDemoWindow(QMainWindow):
+    emojiFonts = ["Segoe UI Emoji", "Twemoji"]
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("QEmojiView Demo")
         self.setWindowIcon(QThemeResponsiveIcon.fromAwesome("fa6b.python"))
         self.resize(800, 620)
 
-        # ------------------------------------------------------------------
-        # Model chain:
-        #   QStandardItemModel
-        #       -> EmojiFilterProxyModel
-        #           -> QDecorationRoleProxyModel  <- passed to QEmojiView
-        #
-        # QDecorationRoleProxyModel is NOT created internally by
-        # QEmojiView in this flow — it is constructed here so we can
-        # chain the filter proxy before it, without losing the separation of
-        # concerns (the decoration proxy never touches the source model).
-        # ------------------------------------------------------------------
         self._source_model = QStandardItemModel()
         self._build_model()
 
         self._filter_proxy = EmojiFilterProxyModel()
         self._filter_proxy.setSourceModel(self._source_model)
 
-        self._decoration_proxy = QDecorationRoleProxyModel()
-        self._decoration_proxy.setSourceModel(self._filter_proxy)
-
         self.init_widgets()
         self.init_layout()
         self.init_connections()
 
         self._on_size_changed(48)
+
+        self._emoji_view.model().setSourceModel(self._filter_proxy)
 
     def init_widgets(self) -> None:
         """Instantiate and configure UI widgets."""
@@ -177,8 +165,7 @@ class EmojiDemoWindow(QMainWindow):
         # QEmojiView receives the pre-configured QDecorationRoleProxyModel.
         # Internally, the view does not create a second decoration proxy — it uses
         # whatever is passed via setModel().
-        self._emoji_view = QEmojiView()
-        self._emoji_view.setModel(self._decoration_proxy)
+        self._emoji_view = QEmojiView(self.emojiFonts[0])
         self._emoji_view.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
         # Detail Panel Widgets
@@ -274,9 +261,8 @@ class EmojiDemoWindow(QMainWindow):
             for emoji_char in sorted(emoji_chars, key=lambda e: e.sort_order):
                 item = QStandardItem()
                 item.setEditable(False)
-                item.setData(emoji_char.char, Qt.ItemDataRole.EditRole)
+                item.setData(emoji_char, Qt.ItemDataRole.EditRole)
                 item.setData(category, CATEGORY_ROLE)
-                item.setData(emoji_char.char, Qt.ItemDataRole.DecorationRole)
                 item.setToolTip(f"{emoji_char.char} {emoji_char.name}")
                 self._source_model.appendRow(item)
 
@@ -293,11 +279,13 @@ class EmojiDemoWindow(QMainWindow):
         self._update_status()
 
     def _on_source_changed(self, index: int) -> None:
-        sources = ["Segoe UI Emoji", "Twemoji"]
-        self._emoji_view.setFont(sources[index])
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        font_family = self.emojiFonts[index]
+        self._emoji_view.updateEmojiPixmapCache(font_family)
+        QApplication.restoreOverrideCursor()
+
 
     def _on_size_changed(self, value: int) -> None:
-        from PySide6.QtCore import QSize
         self._size_label.setText(f"{value} px")
         self._emoji_view.setIconSize(QSize(value, value))
 
@@ -308,24 +296,23 @@ class EmojiDemoWindow(QMainWindow):
         It is necessary to map two levels down to the QStandardItemModel to
         read the data directly.
         """
-        emoji = index.data(Qt.ItemDataRole.EditRole)
-        if not emoji:
+        emoji_char = index.data(Qt.ItemDataRole.EditRole)
+        if not emoji_char:
             return
 
-        image = QIconGenerator.charToImage(emoji, self._preview_label.size(), "Twemoji")
+        source_index = self._source_combo.currentIndex()
+        emoji_pixmap_cache = QGlobalEmojiPixmapCache.ensureCache(self.emojiFonts[source_index])
 
-        self._selected_emoji = emoji
-        self._preview_label.setPixmap(QPixmap.fromImage(image))
+        pixmap = emoji_pixmap_cache.getPixmap(emoji_char.char)
+        pixmap = pixmap.scaled(self._preview_label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
-        codepoints = " ".join(f"U+{ord(c):04X}" for c in emoji if c != "\uFE0F")
-        self._codepoint_label.setText(f"Codepoints: {codepoints}")
+        self._selected_emoji = emoji_char.char
+        self._preview_label.setPixmap(pixmap)
 
-        try:
-            name = unicodedata.name(emoji[0])
-        except (ValueError, TypeError):
-            name = "—"
-        self._name_label.setText(f"Name: {name}")
-        self._char_label.setText(emoji)
+        self._codepoint_label.setText(f"Codepoints: {emoji_char.unified}")
+
+        self._name_label.setText(f"Name: {emoji_char.name}")
+        self._char_label.setText(emoji_char.char)
         self._copy_btn.setEnabled(True)
 
     def _on_copy_emoji(self) -> None:
@@ -345,16 +332,11 @@ class EmojiDemoWindow(QMainWindow):
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    # logger = logging.getLogger(f"qextrawidgets.widgets.views.emoji_view.QEmojiView._on_request_image")
-    # logger = logging.getLogger(f"qextrawidgets.widgets.views.grid_icon_view.QEmojiView.paintEvent")
-    # logger.setLevel(logging.DEBUG)
     logging.basicConfig(level=logging.DEBUG)
 
     app = QApplication(sys.argv)
     app.setApplicationName("QEmojiView Demo")
     app.setStyle("Fusion")
-
-    QEmojiFonts.loadTwemojiFont()
 
     window = EmojiDemoWindow()
     window.show()

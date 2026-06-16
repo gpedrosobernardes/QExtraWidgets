@@ -117,3 +117,9 @@ class QEmojiUtils:
     @classmethod
     def getEmojiCharsByCategory(cls, category: str) -> typing.List[EmojiChar]:
         return cls.emojiCharPerCategory[category]
+
+    @staticmethod
+    def getAllEmojiChars() -> typing.Generator[EmojiChar]:
+        for emoji_char in emoji_data:
+            yield emoji_char
+            yield from emoji_char.skin_variations.values()

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import QWidget, QAbstractItemView, QButtonGroup, QLabel, 
     QMenu, QApplication, QToolButton
 from pygments.lexers import func
 
-from qextrawidgets.core.runnables.image_provider import QImageProvider
+from qextrawidgets.core.runnables.image_provider import QImageProviderSignals
 from qextrawidgets.core.utils.system_utils import log_qt_performance
 from qextrawidgets.gui.items import QIconCategoryItem
 from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
@@ -32,7 +32,7 @@ class QIconPicker(QWidget):
     picked = Signal(QStandardItem)
 
     def __init__(self,
-                 image_provider: typing.Type[QImageProvider],
+                 image_provider: typing.Type[QImageProviderSignals],
                  model: QIconPickerModel,
                  parent: typing.Optional[QWidget] = None,
                  icon_label_size: int = 32,

@@ -1,44 +1,41 @@
-import logging
-import time
 import typing
 
-from PySide6.QtCore import QPersistentModelIndex, QSize, Qt, Slot
+from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QWidget
+from emoji_data_python import EmojiChar
 
-from qextrawidgets.core.utils.emojis import QEmojiImageProvider
-from qextrawidgets.gui.proxys import QDecorationRoleProxyModel
+from qextrawidgets.core.utils.emojis.global_emoji_pixmap_cache import QGlobalEmojiPixmapCache
+from qextrawidgets.gui.proxys.decoration_provider_proxy import QDecorationProviderProxy
 from qextrawidgets.widgets.views.grid_icon_view import QGridIconView
 
 
 class QEmojiView(QGridIconView):
-
-
     def __init__(
         self,
+        font_family: str,
         parent: typing.Optional[QWidget] = None,
     ):
         super(QEmojiView, self).__init__(parent)
-        self.setModel(QDecorationRoleProxyModel())
+        model = QDecorationProviderProxy()
+        model.setDecorationProvider(self._decoration_provider)
+        self.setModel(model)
+        self._emoji_pixmap_cache = QGlobalEmojiPixmapCache.ensureCache(font_family)
 
-    # -------------------------------------------------------------------------
-    # Public API
-    # -------------------------------------------------------------------------
+    def updateEmojiPixmapCache(self, font_family: str):
+        self._emoji_pixmap_cache = QGlobalEmojiPixmapCache.ensureCache(font_family)
 
-    def setModel(self, model: QDecorationRoleProxyModel) -> None:
-        """
-        Set the decoration proxy model for the view.
+    def _decoration_provider(self, index: QModelIndex) -> QPixmap:
+        emoji_char: EmojiChar = index.data(Qt.ItemDataRole.EditRole)
+        try:
+            pixmap = self._emoji_pixmap_cache.getPixmap(emoji_char.char)
+        except KeyError:
+            return None
+        else:
+            return pixmap
 
-        Args:
-            model (QDecorationRoleProxyModel): The model to be set.
-        """
+    def setModel(self, model: QDecorationProviderProxy):
         super(QEmojiView, self).setModel(model)
 
-    def model(self) -> QDecorationRoleProxyModel:
-        """
-        Returns the current decoration proxy model.
-
-        Returns:
-            QDecorationRoleProxyModel: The proxy model cast to its correct type.
-        """
-        return typing.cast(QDecorationRoleProxyModel, super(QEmojiView, self).model())
+    def model(self) -> QDecorationProviderProxy:
+        return typing.cast(QDecorationProviderProxy, super(QEmojiView, self).model())
