@@ -46,10 +46,7 @@ class QGridIconView(QAbstractItemView):
 
         self.setIconSize(icon_size)
         self.setMouseTracking(True)
-        self.viewport().setMouseTracking(True)
-        self.viewport().setAttribute(Qt.WidgetAttribute.WA_Hover)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.setAutoScroll(False)
         self.setItemDelegate(QGridIconDelegate(self))
 
     def setPadding(self, padding: int):
@@ -123,8 +120,7 @@ class QGridIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def scrollContentsBy(self, dx, dy):
-        super().scrollContentsBy(dx, dy)
-
+        self.viewport().scroll(dx, dy)
         pos = self.viewport().mapFromGlobal(QCursor.pos())
 
         index = self.indexAt(pos)
