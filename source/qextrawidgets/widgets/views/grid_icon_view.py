@@ -34,7 +34,7 @@ class QGridIconView(QAbstractItemView):
         super().__init__(parent)
 
         self._model_column = 0
-        self._hover_index = QModelIndex()
+        self._hovered_index = QModelIndex()
         self._margin = margin
         self._padding = padding
         self._hidden_rows: typing.Set[int] = set()
@@ -52,13 +52,10 @@ class QGridIconView(QAbstractItemView):
         self.setAutoScroll(False)
         self.setItemDelegate(QGridIconDelegate(self))
 
-        self.entered.connect(self._on_entered)
-
     def setPadding(self, padding: int):
         if self._padding != padding:
             self._padding = padding
             self._schedule_layout()
-
 
     def padding(self) -> int:
         return self._padding
@@ -129,10 +126,9 @@ class QGridIconView(QAbstractItemView):
         super().scrollContentsBy(dx, dy)
 
         pos = self.viewport().mapFromGlobal(QCursor.pos())
-        pos.setY(pos.y() + dy)
 
-        if self._hover_index:
-            self._hover_index = QPersistentModelIndex(self.indexAt(pos))
+        index = self.indexAt(pos)
+        self._set_hovered_index(index)
 
     def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex, visual_rect: QRect) -> None:
         """
@@ -154,7 +150,7 @@ class QGridIconView(QAbstractItemView):
         if self.selectionModel().isSelected(index):
             state |= QStyle.StateFlag.State_Selected
 
-        if index == self._hover_index:
+        if index == self._hovered_index:
             state |= QStyle.StateFlag.State_MouseOver
 
         option.state = state
@@ -242,8 +238,8 @@ class QGridIconView(QAbstractItemView):
 
     def _on_data_changed(self, top_left: QModelIndex, bottom_right: QModelIndex, roles: list[int]):
         if Qt.ItemDataRole.EditRole in roles or Qt.ItemDataRole.DecorationRole in roles:
-            top_rect = self.visualRect(top_left)
-            bottom_rect = self.visualRect(bottom_right)
+            top_rect = self.tileRect(top_left)
+            bottom_rect = self.tileRect(bottom_right)
 
             self.viewport().update(
                 top_rect.united(bottom_rect)
@@ -257,31 +253,23 @@ class QGridIconView(QAbstractItemView):
         for rect in region:
             self.viewport().update(rect)
 
+    def _set_hovered_index(self, index: QModelIndex) -> None:
+        if index != self._hovered_index:
+            old = self._hovered_index
+            self._hovered_index = index
+
+            self.exited.emit(index)
+            self.viewport().update(self.tileRect(old))
+            self.viewport().update(self.tileRect(index))
+
     # -------------------------------------------------------------------------
     # Event Handlers
     # -------------------------------------------------------------------------
 
-    @Slot(QModelIndex)
-    def _on_entered(self, index: QModelIndex):
-        if index != self._hover_index:
-            if self._hover_index.isValid():
-                self.viewport().update(self.visualRect(self._hover_index))
-            self._hover_index = index
-            self.viewport().update(self.visualRect(index))
-
-    def leaveEvent(self, event: QEvent) -> None:
-        """
-        Handle mouse leave events to reset hover state.
-
-        Args:
-            event (QEvent): The leave event.
-        """
-        if self._hover_index.isValid():
-            self.exited.emit(self._hover_index)
-            rect = self.visualRect(self._hover_index)
-            self._hover_index = QModelIndex()
-            self.viewport().update(rect)
-        super().leaveEvent(event)
+    def mouseMoveEvent(self, event):#
+        super().mouseMoveEvent(event)
+        index = self.indexAt(event.position().toPoint())
+        self._set_hovered_index(index)
 
     @log_qt_performance
     def paintEvent(self, event: QPaintEvent) -> None:
@@ -374,6 +362,15 @@ class QGridIconView(QAbstractItemView):
         scroll_y = vertical_scroll_bar.value()
         return QRect(QPoint(x, y - scroll_y), self.itemSizeHint())
 
+    def tileRect(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> QRect:
+        virtual_point = self.virtualPoint(index.row())
+        tile_size = self.tileSizeHint()
+        x = virtual_point.x() * tile_size.width()
+        y = virtual_point.y() * tile_size.height()
+        vertical_scroll_bar = self.verticalScrollBar()
+        scroll_y = vertical_scroll_bar.value()
+        return QRect(QPoint(x, y - scroll_y), tile_size)
+
     def indexAt(self, point: QPoint) -> QModelIndex:
         """
         Return the model index of the item at the viewport coordinates point.
@@ -384,10 +381,17 @@ class QGridIconView(QAbstractItemView):
         Returns:
             QModelIndex: The index at the given point, or valid if not found.
         """
-        point.setY(point.y() + self.verticalScrollBar().value())
+        vertical_scroll_bar = self.verticalScrollBar()
+        point.setY(point.y() + vertical_scroll_bar.value())
         virtual_point = self.virtualPointAt(point)
         row = self.modelRow(virtual_point)
-        return self.model().index(row, self.modelColumn())
+        index = self.model().index(row, self.modelColumn())
+        visual_rect = self.visualRect(index)
+        visual_rect.translate(0, vertical_scroll_bar.value())
+        if visual_rect.contains(point):
+            return index
+        else:
+            return QModelIndex()
 
     def scrollTo(
             self,
@@ -543,11 +547,11 @@ class QGridIconView(QAbstractItemView):
             top = selection_range.top()
             bottom = selection_range.bottom()
 
-            first_rect = self.visualRect(
+            first_rect = self.tileRect(
                 self.model().index(top, self.modelColumn())
             )
 
-            last_rect = self.visualRect(
+            last_rect = self.tileRect(
                 self.model().index(bottom, self.modelColumn())
             )
 
