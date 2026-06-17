@@ -28,7 +28,7 @@ import sys
 
 import unicodedata
 from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex, QSize
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QPixmapCache
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -46,8 +46,8 @@ from PySide6.QtWidgets import (
     QToolButton,
 )
 
+from qextrawidgets.core.utils.emojis import QEmojiPixmapCache
 from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
-from qextrawidgets.core.utils.emojis.global_emoji_pixmap_cache import QGlobalEmojiPixmapCache
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
 from qextrawidgets.widgets.views import QEmojiView
 
@@ -279,11 +279,8 @@ class EmojiDemoWindow(QMainWindow):
         self._update_status()
 
     def _on_source_changed(self, index: int) -> None:
-        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         font_family = self.emojiFonts[index]
-        self._emoji_view.updateEmojiPixmapCache(font_family)
-        QApplication.restoreOverrideCursor()
-
+        self._emoji_view.setEmojiFontFamily(font_family)
 
     def _on_size_changed(self, value: int) -> None:
         self._size_label.setText(f"{value} px")
@@ -301,9 +298,9 @@ class EmojiDemoWindow(QMainWindow):
             return
 
         source_index = self._source_combo.currentIndex()
-        emoji_pixmap_cache = QGlobalEmojiPixmapCache.ensureCache(self.emojiFonts[source_index])
+        emoji_font_family = self.emojiFonts[source_index]
 
-        pixmap = emoji_pixmap_cache.getPixmap(emoji_char.char)
+        pixmap = QEmojiPixmapCache.getPixmap(emoji_font_family, emoji_char.unified)
         pixmap = pixmap.scaled(self._preview_label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
 
         self._selected_emoji = emoji_char.char
@@ -338,6 +335,9 @@ def main() -> None:
     app.setApplicationName("QEmojiView Demo")
     app.setStyle("Fusion")
 
+    for emoji_font_family in EmojiDemoWindow.emojiFonts:
+        QEmojiPixmapCache.ensureCacheLoaded(emoji_font_family)
+
     window = EmojiDemoWindow()
     window.show()
 
@@ -345,4 +345,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    import faulthandler
+
+    faulthandler.enable()
     main()
