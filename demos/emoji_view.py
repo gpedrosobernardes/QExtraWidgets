@@ -26,9 +26,8 @@ Execution:
 import logging
 import sys
 
-import unicodedata
 from PySide6.QtCore import Qt, QSortFilterProxyModel, QModelIndex, QSize
-from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap, QPixmapCache
+from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -45,6 +44,7 @@ from PySide6.QtWidgets import (
     QFrame,
     QToolButton,
 )
+from emoji_data_python import EmojiChar
 
 from qextrawidgets.core.utils.emojis import QEmojiPixmapCache
 from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
@@ -71,6 +71,7 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self._category_filter: str = ""
 
     def setCategory(self, category: str) -> None:
@@ -81,17 +82,17 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
     def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
         index = self.sourceModel().index(source_row, 0, source_parent)
 
+        emoji_char: EmojiChar = index.data(Qt.ItemDataRole.EditRole)
+
         # Category filter
         if self._category_filter:
-            if index.data(CATEGORY_ROLE) != self._category_filter:
+            if emoji_char.category != self._category_filter:
                 return False
 
         # Text filter (search in emoji character via EditRole)
-        pattern = self.filterRegularExpression().pattern()
-        if pattern:
-            emoji = index.data(Qt.ItemDataRole.EditRole) or ""
-            if pattern.lower() not in emoji.lower():
-                return False
+        pattern = self.filterRegularExpression()
+        if not pattern.match(emoji_char.name).hasMatch():
+            return False
 
         return True
 
@@ -262,7 +263,6 @@ class EmojiDemoWindow(QMainWindow):
                 item = QStandardItem()
                 item.setEditable(False)
                 item.setData(emoji_char, Qt.ItemDataRole.EditRole)
-                item.setData(category, CATEGORY_ROLE)
                 item.setToolTip(f"{emoji_char.char} {emoji_char.name}")
                 self._source_model.appendRow(item)
 
