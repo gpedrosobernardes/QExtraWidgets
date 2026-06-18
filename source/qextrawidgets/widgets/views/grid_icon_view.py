@@ -328,7 +328,7 @@ class QGridIconView(QAbstractItemView):
         tile_height = self.tileSizeHint().height()
         virtual_point = self.virtualPoint(model.rowCount())
 
-        content_height = tile_height * virtual_point.y()
+        content_height = tile_height * (virtual_point.y() + 1)
 
         viewport_height = self.viewport().height()
         scroll_range = max(0, content_height - viewport_height)
@@ -390,9 +390,9 @@ class QGridIconView(QAbstractItemView):
             return QModelIndex()
 
     def scrollTo(
-            self,
-            index: typing.Union[QModelIndex, QPersistentModelIndex],
-            hint: QAbstractItemView.ScrollHint = QAbstractItemView.ScrollHint.EnsureVisible,
+        self,
+        index: typing.Union[QModelIndex, QPersistentModelIndex],
+        hint: QAbstractItemView.ScrollHint = QAbstractItemView.ScrollHint.EnsureVisible,
     ) -> None:
         """
         Scroll the view to ensure the item at index is visible.
@@ -498,9 +498,7 @@ class QGridIconView(QAbstractItemView):
         else:
             return model.index(0, self.modelColumn())
 
-    def setSelection(
-            self, rect: QRect, command: QItemSelectionModel.SelectionFlag
-    ) -> None:
+    def setSelection(self, rect: QRect, command: QItemSelectionModel.SelectionFlag):
         """
         Apply selection to items within the rectangle.
 
@@ -558,9 +556,7 @@ class QGridIconView(QAbstractItemView):
 
         return region
 
-    def isIndexHidden(
-            self, index: typing.Union[QModelIndex, QPersistentModelIndex]
-    ) -> bool:
+    def isIndexHidden(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> bool:
         """
         Return True if the item referred to by index is hidden; otherwise returns False.
         """
@@ -570,7 +566,7 @@ class QGridIconView(QAbstractItemView):
             return True
         return False
 
-    def setModelColumn(self, column: int) -> None:
+    def setModelColumn(self, column: int):
         """
         Set the model column from which item data is read.
 

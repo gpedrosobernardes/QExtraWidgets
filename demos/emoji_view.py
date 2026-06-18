@@ -263,7 +263,7 @@ class EmojiDemoWindow(QMainWindow):
                 item = QStandardItem()
                 item.setEditable(False)
                 item.setData(emoji_char, Qt.ItemDataRole.EditRole)
-                item.setToolTip(f"{emoji_char.char} {emoji_char.name}")
+                item.setToolTip(f"{emoji_char.char} {emoji_char.name.title()}")
                 self._source_model.appendRow(item)
 
     # ------------------------------------------------------------------
@@ -308,7 +308,7 @@ class EmojiDemoWindow(QMainWindow):
 
         self._codepoint_label.setText(f"Codepoints: {emoji_char.unified}")
 
-        self._name_label.setText(f"Name: {emoji_char.name}")
+        self._name_label.setText(f"Name: {emoji_char.name.title()}")
         self._char_label.setText(emoji_char.char)
         self._copy_btn.setEnabled(True)
 
