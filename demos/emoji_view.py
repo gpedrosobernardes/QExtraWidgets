@@ -42,7 +42,7 @@ from PySide6.QtWidgets import (
     QStatusBar,
     QSizePolicy,
     QFrame,
-    QToolButton,
+    QToolButton, QPushButton,
 )
 from emoji_data_python import EmojiChar
 
@@ -101,8 +101,10 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
 
     def lessThan(self, source_left, source_right, /):
         emoji_char_1 = self.sourceModel().data(source_left, Qt.ItemDataRole.EditRole)
+        sort_order_1 = QEmojiUtils.ensureGetEmojiCharVariable(emoji_char_1, "sort_order")
         emoji_char_2 = self.sourceModel().data(source_right, Qt.ItemDataRole.EditRole)
-        return emoji_char_1.sort_order < emoji_char_2.sort_order
+        sort_order_2 = QEmojiUtils.ensureGetEmojiCharVariable(emoji_char_2, "sort_order")
+        return sort_order_1 < sort_order_2
 
 
 # ---------------------------------------------------------------------------
@@ -165,6 +167,8 @@ class EmojiDemoWindow(QMainWindow):
         self._size_label = QLabel("48 px")
         self._size_label.setFixedWidth(42)
 
+        self._sort_button = QPushButton("Invert Sort")
+
         # Separator line
         self._sep_frame = QFrame()
         self._sep_frame.setFrameShape(QFrame.Shape.HLine)
@@ -219,6 +223,7 @@ class EmojiDemoWindow(QMainWindow):
         controls_layout.addWidget(self._size_label_title)
         controls_layout.addWidget(self._size_slider)
         controls_layout.addWidget(self._size_label)
+        controls_layout.addWidget(self._sort_button)
 
         # Main Layout assembly
         root_layout.addWidget(self._controls_widget)
@@ -247,6 +252,7 @@ class EmojiDemoWindow(QMainWindow):
         self._category_combo.currentTextChanged.connect(self._on_category_changed)
         self._font_combo.currentIndexChanged.connect(self._on_source_changed)
         self._size_slider.valueChanged.connect(self._on_size_changed)
+        self._sort_button.clicked.connect(self._on_sort_button_clicked)
 
         # Detail Panel & Copy Button Connections
         self._copy_btn.clicked.connect(self._on_copy_emoji)
@@ -273,6 +279,12 @@ class EmojiDemoWindow(QMainWindow):
     # ------------------------------------------------------------------
     # Slots
     # ------------------------------------------------------------------
+
+    def _on_sort_button_clicked(self):
+        if self._filter_proxy.sortOrder() == Qt.SortOrder.AscendingOrder:
+            self._filter_proxy.sort(0, Qt.SortOrder.DescendingOrder)
+        else:
+            self._filter_proxy.sort(0, Qt.SortOrder.AscendingOrder)
 
     def _on_search_changed(self, text: str) -> None:
         self._filter_proxy.setFilterFixedString(text)

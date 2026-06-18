@@ -326,7 +326,7 @@ class QGridIconView(QAbstractItemView):
         model = self.model()
 
         tile_height = self.tileSizeHint().height()
-        virtual_point = self.virtualPoint(model.rowCount())
+        virtual_point = self.virtualPoint(model.rowCount() - 1)
 
         content_height = tile_height * (virtual_point.y() + 1)
 
