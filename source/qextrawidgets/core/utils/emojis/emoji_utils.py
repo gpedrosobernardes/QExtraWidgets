@@ -74,29 +74,15 @@ class QEmojiUtils:
 
     @classmethod
     def applySkinVariation(cls, emoji_char: EmojiChar, skin_variation: typing.Optional[EmojiSkinVariations]) -> EmojiChar:
-        try:
-            base_emoji_char = cls.getBaseEmoji(emoji_char.char)
-        except KeyError:
+        if emoji_char.skin_variations is None:
+            base_emoji_char = cls.getBaseEmoji(emoji_char)
+        else:
             base_emoji_char = emoji_char
 
         if skin_variation is None:
             return base_emoji_char
         else:
-            try:
-                emoji_with_skin_tone = base_emoji_char.skin_variations[skin_variation]
-            except KeyError:
-                return base_emoji_char
-            else:
-                return emoji_with_skin_tone
-
-    @classmethod
-    def isSkinVaried(cls, skin_varied_char: str) -> bool:
-        try:
-            cls.getBaseEmoji(skin_varied_char)
-        except KeyError:
-            return False
-        else:
-            return True
+            return base_emoji_char.skin_variations[skin_variation]
 
     @classmethod
     def findEmojiChar(cls, char: str) -> EmojiChar:
@@ -111,8 +97,8 @@ class QEmojiUtils:
         return filter(QEmojiUtils.hasSkinVariations, emoji_data)
 
     @classmethod
-    def getBaseEmoji(cls, skin_varied_char: str):
-        return cls.skinVariedCharToBaseEmojiChar[skin_varied_char]
+    def getBaseEmoji(cls, emoji_char: EmojiChar) -> EmojiChar:
+        return cls.skinVariedCharToBaseEmojiChar.get(emoji_char.char, emoji_char)
 
     @classmethod
     def getEmojiCharsByCategory(cls, category: str) -> typing.List[EmojiChar]:
@@ -123,3 +109,12 @@ class QEmojiUtils:
         for emoji_char in emoji_data:
             yield emoji_char
             yield from emoji_char.skin_variations.values()
+
+    @classmethod
+    def ensureGetEmojiCharVariable(cls, emoji_char: EmojiChar, variable: str) -> typing.Any:
+        value = getattr(emoji_char, variable)
+        if value:
+            return value
+        else:
+            base_emoji_char = cls.getBaseEmoji(emoji_char)
+            return getattr(base_emoji_char, variable)

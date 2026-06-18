@@ -49,6 +49,7 @@ from emoji_data_python import EmojiChar
 from qextrawidgets.core.utils.emojis import QEmojiPixmapCache
 from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
 from qextrawidgets.gui.icons import QThemeResponsiveIcon
+from qextrawidgets.gui.items import QEmojiItem
 from qextrawidgets.widgets.views import QEmojiView
 
 # ---------------------------------------------------------------------------
@@ -83,18 +84,25 @@ class EmojiFilterProxyModel(QSortFilterProxyModel):
         index = self.sourceModel().index(source_row, 0, source_parent)
 
         emoji_char: EmojiChar = index.data(Qt.ItemDataRole.EditRole)
+        category = QEmojiUtils.ensureGetEmojiCharVariable(emoji_char, "category")
 
         # Category filter
         if self._category_filter:
-            if emoji_char.category != self._category_filter:
+            if category != self._category_filter:
                 return False
 
         # Text filter (search in emoji character via EditRole)
+        name = QEmojiUtils.ensureGetEmojiCharVariable(emoji_char, "name")
         pattern = self.filterRegularExpression()
-        if not pattern.match(emoji_char.name).hasMatch():
+        if not pattern.match(name).hasMatch():
             return False
 
         return True
+
+    def lessThan(self, source_left, source_right, /):
+        emoji_char_1 = self.sourceModel().data(source_left, Qt.ItemDataRole.EditRole)
+        emoji_char_2 = self.sourceModel().data(source_right, Qt.ItemDataRole.EditRole)
+        return emoji_char_1.sort_order < emoji_char_2.sort_order
 
 
 # ---------------------------------------------------------------------------
@@ -144,9 +152,9 @@ class EmojiDemoWindow(QMainWindow):
         self._category_combo = QComboBox()
         self._category_combo.addItems(ALL_CATEGORIES)
 
-        self._source_label = QLabel("Rendering:")
-        self._source_combo = QComboBox()
-        self._source_combo.addItems(["System font", "Twemoji"])
+        self._font_label = QLabel("Font:")
+        self._font_combo = QComboBox()
+        self._font_combo.addItems(self.emojiFonts)
 
         self._size_label_title = QLabel("Size:")
         self._size_slider = QSlider(Qt.Orientation.Horizontal)
@@ -206,8 +214,8 @@ class EmojiDemoWindow(QMainWindow):
         controls_layout.addWidget(self._search_edit, stretch=3)
         controls_layout.addWidget(self._category_label)
         controls_layout.addWidget(self._category_combo, stretch=1)
-        controls_layout.addWidget(self._source_label)
-        controls_layout.addWidget(self._source_combo, stretch=1)
+        controls_layout.addWidget(self._font_label)
+        controls_layout.addWidget(self._font_combo, stretch=1)
         controls_layout.addWidget(self._size_label_title)
         controls_layout.addWidget(self._size_slider)
         controls_layout.addWidget(self._size_label)
@@ -237,7 +245,7 @@ class EmojiDemoWindow(QMainWindow):
         # Controls Bar Connections
         self._search_edit.textChanged.connect(self._on_search_changed)
         self._category_combo.currentTextChanged.connect(self._on_category_changed)
-        self._source_combo.currentIndexChanged.connect(self._on_source_changed)
+        self._font_combo.currentIndexChanged.connect(self._on_source_changed)
         self._size_slider.valueChanged.connect(self._on_size_changed)
 
         # Detail Panel & Copy Button Connections
@@ -258,13 +266,9 @@ class EmojiDemoWindow(QMainWindow):
     def _build_model(self) -> None:
         """Populates the QStandardItemModel with all emojis and their categories."""
         self._source_model.clear()
-        for category, emoji_chars in QEmojiUtils.emojiCharPerCategory.items():
-            for emoji_char in sorted(emoji_chars, key=lambda e: e.sort_order):
-                item = QStandardItem()
-                item.setEditable(False)
-                item.setData(emoji_char, Qt.ItemDataRole.EditRole)
-                item.setToolTip(f"{emoji_char.char} {emoji_char.name.title()}")
-                self._source_model.appendRow(item)
+        for emoji_char in QEmojiUtils.getAllEmojiChars():
+            item = QEmojiItem(emoji_char)
+            self._source_model.appendRow(item)
 
     # ------------------------------------------------------------------
     # Slots
@@ -297,8 +301,7 @@ class EmojiDemoWindow(QMainWindow):
         if not emoji_char:
             return
 
-        source_index = self._source_combo.currentIndex()
-        emoji_font_family = self.emojiFonts[source_index]
+        emoji_font_family = self._font_combo.currentText()
 
         pixmap = QEmojiPixmapCache.getPixmap(emoji_font_family, emoji_char.unified)
         pixmap = pixmap.scaled(self._preview_label.size(), Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
@@ -308,7 +311,9 @@ class EmojiDemoWindow(QMainWindow):
 
         self._codepoint_label.setText(f"Codepoints: {emoji_char.unified}")
 
-        self._name_label.setText(f"Name: {emoji_char.name.title()}")
+        name = QEmojiUtils.ensureGetEmojiCharVariable(emoji_char, "name")
+
+        self._name_label.setText(f"Name: {name.title()}")
         self._char_label.setText(emoji_char.char)
         self._copy_btn.setEnabled(True)
 
