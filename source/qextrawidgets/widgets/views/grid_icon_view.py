@@ -1,4 +1,6 @@
+import logging
 import typing
+
 from PySide6.QtCore import (
     QModelIndex,
     QPersistentModelIndex,
@@ -6,7 +8,6 @@ from PySide6.QtCore import (
     Qt,
     QRect,
     QPoint,
-    QEvent,
     Signal,
     QAbstractItemModel,
     QTimer,
@@ -14,10 +15,10 @@ from PySide6.QtCore import (
     QItemSelectionModel,
     Slot,
 )
-from PySide6.QtGui import QCursor, QPainter, QMouseEvent, QRegion, QPaintEvent, QFontMetricsF, QFont, QTextLayout
+from PySide6.QtGui import QCursor, QPainter, QRegion, QPaintEvent
 from PySide6.QtWidgets import QAbstractItemView, QStyleOptionViewItem, QStyle, QWidget
-from qextrawidgets.core.utils.system_utils import log_qt_performance
 
+from qextrawidgets.core.utils.system_utils import debug
 from qextrawidgets.widgets.delegates.grid_icon_delegate import QGridIconDelegate
 
 
@@ -46,6 +47,7 @@ class QGridIconView(QAbstractItemView):
 
         self.setIconSize(icon_size)
         self.setMouseTracking(True)
+        # self.setAutoScroll(False)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setItemDelegate(QGridIconDelegate(self))
 
@@ -118,11 +120,17 @@ class QGridIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
     # Internal Logic Helpers
     # -------------------------------------------------------------------------
+    #
+    # def currentChanged(self, current: QModelIndex, previous: QModelIndex) -> None:
+    #     if previous.isValid():
+    #         self.viewport().update(self.tileRect(previous))
+    #     if current.isValid():
+    #         self.viewport().update(self.tileRect(current))
 
-    def scrollContentsBy(self, dx, dy):
-        self.viewport().scroll(dx, dy)
+    @debug
+    def scrollContentsBy(self, dx, dy, **kwargs):
+        self.viewport().update()
         pos = self.viewport().mapFromGlobal(QCursor.pos())
-
         index = self.indexAt(pos)
         self._set_hovered_index(index)
 
@@ -267,14 +275,8 @@ class QGridIconView(QAbstractItemView):
         index = self.indexAt(event.position().toPoint())
         self._set_hovered_index(index)
 
-    @log_qt_performance
-    def paintEvent(self, event: QPaintEvent) -> None:
-        """
-        Paint the items in the view.
-
-        Args:
-            event (QPaintEvent): The paint event.
-        """
+    @debug
+    def paintEvent(self, event: QPaintEvent, **kwargs) -> None:
         painter = QPainter(self.viewport())
         option = QStyleOptionViewItem()
         self.initViewItemOption(option)
@@ -317,8 +319,8 @@ class QGridIconView(QAbstractItemView):
         tile_width = self.tileSizeHint().width()
         return max(1, width // tile_width)
 
-    @log_qt_performance
-    def updateGeometries(self) -> None:
+    @debug
+    def updateGeometries(self, **kwargs):
         """
         Recalculate the layout of item rectangles and update scrollbars.
         Assumes a flat model structure.
@@ -389,10 +391,12 @@ class QGridIconView(QAbstractItemView):
         else:
             return QModelIndex()
 
+    @debug
     def scrollTo(
         self,
         index: typing.Union[QModelIndex, QPersistentModelIndex],
         hint: QAbstractItemView.ScrollHint = QAbstractItemView.ScrollHint.EnsureVisible,
+        **kwargs
     ) -> None:
         """
         Scroll the view to ensure the item at index is visible.
@@ -416,10 +420,11 @@ class QGridIconView(QAbstractItemView):
         item_bottom = rect.bottom()
 
         if hint == QAbstractItemView.ScrollHint.EnsureVisible:
-            if item_top < scroll_val:
-                self.verticalScrollBar().setValue(item_top)
-            elif item_bottom > scroll_val + viewport_height:
-                self.verticalScrollBar().setValue(item_bottom - viewport_height)
+            if item_bottom <= scroll_val or item_top >= scroll_val + viewport_height:
+                if item_top < scroll_val:
+                    self.verticalScrollBar().setValue(item_top)
+                else:
+                    self.verticalScrollBar().setValue(item_bottom - viewport_height)
 
         elif hint == QAbstractItemView.ScrollHint.PositionAtTop:
             self.verticalScrollBar().setValue(item_top)
@@ -458,16 +463,13 @@ class QGridIconView(QAbstractItemView):
             return model.index(0, self.modelColumn())
 
         current_row = current.row()
-        virtual_point = self.virtualPoint(current_row)
-        new_virtual_point = QPoint(virtual_point.x(), virtual_point.y())
-        end_point = self.virtualPoint(model.rowCount())
         virtual_columns = self.virtualColumns()
 
         moves = {
-            QAbstractItemView.CursorAction.MoveLeft: QPoint(0, -1),
-            QAbstractItemView.CursorAction.MoveRight: QPoint(0, 1),
-            QAbstractItemView.CursorAction.MoveUp: QPoint(-1, 0),
-            QAbstractItemView.CursorAction.MoveDown: QPoint(1, 0)
+            QAbstractItemView.CursorAction.MoveLeft: -1,
+            QAbstractItemView.CursorAction.MoveRight: +1,
+            QAbstractItemView.CursorAction.MoveUp: -virtual_columns,
+            QAbstractItemView.CursorAction.MoveDown: +virtual_columns,
         }
 
         try:
@@ -475,19 +477,12 @@ class QGridIconView(QAbstractItemView):
         except KeyError:
             pass
         else:
-            new_virtual_point += move
-            if new_virtual_point.x() == 0 or new_virtual_point.y() == 0:
-                return model.index(self.modelRow(virtual_point), self.modelColumn())
-
-            elif new_virtual_point.x() > end_point.x() or new_virtual_point.y() > end_point.y():
-                return model.index(model.rowCount(), self.modelColumn())
-
-            elif new_virtual_point.x() > virtual_columns:
-                rows = self.modelRow(virtual_point) + 1
-                return model.index(rows, self.modelColumn())
-
+            new_row = current_row + move
+            index = model.index(new_row, self.modelColumn())
+            if index.isValid():
+                return index
             else:
-                return model.index(self.modelRow(new_virtual_point), self.modelColumn())
+                return model.index(current_row, self.modelColumn())
 
         if cursor_action == QAbstractItemView.CursorAction.MoveHome:
             return model.index(0, self.modelColumn())

@@ -1,4 +1,5 @@
 import logging
+import traceback
 from functools import wraps
 
 from PySide6.QtCore import QRectF, QRect, QElapsedTimer
@@ -48,7 +49,7 @@ class QSystemUtils:
         return window_rect.adjusted(-inset, -inset, inset, inset)
 
 
-def log_qt_performance(func):
+def debug(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         timer = QElapsedTimer()

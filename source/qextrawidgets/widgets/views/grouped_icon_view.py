@@ -13,7 +13,7 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QWidget, QStyleOptionViewItem, QStyle
 
-from qextrawidgets.core.utils.system_utils import log_qt_performance
+from qextrawidgets.core.utils.system_utils import debug
 from qextrawidgets.widgets.delegates.grouped_icon_delegate import QGroupedIconDelegate
 from qextrawidgets.widgets.views.grid_icon_view import QGridIconView
 
@@ -161,7 +161,7 @@ class QGroupedIconView(QGridIconView):
         self._expanded_items.clear()
         super()._on_model_reset()
 
-    @log_qt_performance
+    @debug
     def _visible_items(self) -> typing.Generator[typing.Tuple[QPersistentModelIndex, QRect]]:
         """
         Generates visible items in the viewport.
@@ -227,7 +227,7 @@ class QGroupedIconView(QGridIconView):
     # QAbstractItemView Implementation
     # -------------------------------------------------------------------------
 
-    @log_qt_performance
+    @debug
     def updateGeometries(self) -> None:
         """
         Recalculate the layout of item rectangles and update scrollbars.

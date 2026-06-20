@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QWidget, QAbstractItemView, QButtonGroup, QLabel, 
 from pygments.lexers import func
 
 from qextrawidgets.core.runnables.image_provider import QImageProviderSignals
-from qextrawidgets.core.utils.system_utils import log_qt_performance
+from qextrawidgets.core.utils.system_utils import debug
 from qextrawidgets.gui.items import QIconCategoryItem
 from qextrawidgets.gui.models.icon_picker_model import QIconPickerModel
 from qextrawidgets.gui.proxys.icon_picker_proxy import QIconPickerProxyModel
@@ -244,7 +244,7 @@ class QIconPicker(QWidget):
     def _build_url_query(self, index: typing.Union[QPersistentModelIndex, QModelIndex], size: QSize) -> QUrlQuery:
         pass
 
-    @log_qt_performance
+    @debug
     @Slot(QPersistentModelIndex, QSize, float)
     def _on_request_image(self, persistent_index: QPersistentModelIndex, size: QSize) -> None:
         timer = QElapsedTimer()

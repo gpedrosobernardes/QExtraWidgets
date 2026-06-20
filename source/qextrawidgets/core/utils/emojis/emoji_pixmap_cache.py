@@ -4,7 +4,7 @@ from PySide6.QtCore import QStandardPaths, QDir, QSize, QBuffer, QIODevice, QDat
 from PySide6.QtGui import QFont, QPainter, QPixmap, QFontMetrics, Qt, QImage, QPixmapCache
 
 from qextrawidgets.core.utils.emojis.emoji_utils import QEmojiUtils
-from qextrawidgets.core.utils.system_utils import log_qt_performance
+from qextrawidgets.core.utils.system_utils import debug
 
 
 class QEmojiPixmapCache:
@@ -30,9 +30,9 @@ class QEmojiPixmapCache:
         file = cache_folder.absoluteFilePath(file_name)
         cls._create_font_cache_file(font_metrics, font, file)
 
-    @log_qt_performance
+    @debug
     @staticmethod
-    def _create_char_image(font_metrics: QFontMetrics, font: QFont, char: str) -> QImage:
+    def _create_char_image(font_metrics: QFontMetrics, font: QFont, char: str, **kwargs) -> QImage:
         bounding_rect = font_metrics.boundingRect(char)
 
         image = QImage(bounding_rect.width(), bounding_rect.height(), QImage.Format.Format_ARGB32)
@@ -51,9 +51,9 @@ class QEmojiPixmapCache:
 
         return image
 
-    @log_qt_performance
+    @debug
     @staticmethod
-    def _create_font_cache_file(font_metrics: QFontMetrics, font: QFont, file: str):
+    def _create_font_cache_file(font_metrics: QFontMetrics, font: QFont, file: str, **kwargs):
         # 1. Serializa cada QImage para bytes
         blobs: dict[str, bytes] = {}
         for emoji_char in QEmojiUtils.getAllEmojiChars():
@@ -73,8 +73,8 @@ class QEmojiPixmapCache:
                 f.write(blob)  # dado logo após sua entrada
 
     @classmethod
-    @log_qt_performance
-    def loadCache(cls, font_family: str):
+    @debug
+    def loadCache(cls, font_family: str, **kwargs):
         cls._caches[font_family] = {}
         cache_folder = QDir(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.CacheLocation))
         cache_folder.cd("emojis")

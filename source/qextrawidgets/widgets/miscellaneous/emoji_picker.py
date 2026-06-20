@@ -6,7 +6,7 @@ from PySide6.QtGui import QPixmap, QStandardItem, Qt
 
 from qextrawidgets.core.runnables.emoji_image_provider import QEmojiImageProvider
 from qextrawidgets.core.utils.emojis.emoji_utils import EmojiSkinVariations, QEmojiUtils
-from qextrawidgets.core.utils.system_utils import log_qt_performance
+from qextrawidgets.core.utils.system_utils import debug
 from qextrawidgets.gui.models.emoji_picker_model import QEmojiPickerModel
 from qextrawidgets.widgets.delegates import QGroupedIconDelegate
 from qextrawidgets.widgets.miscellaneous.icon_picker import QIconPicker

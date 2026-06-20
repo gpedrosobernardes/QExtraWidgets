@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QStyledItemDelegate,
 )
 
-from qextrawidgets.core.utils.system_utils import log_qt_performance
+from qextrawidgets.core.utils.system_utils import debug
 
 
 class QGridIconDelegate(QStyledItemDelegate):
@@ -37,13 +37,14 @@ class QGridIconDelegate(QStyledItemDelegate):
         self._draw_grid_item(painter, option, index)
         painter.restore()
 
-    @log_qt_performance
+    @debug
     def _draw_grid_item(
-            self,
-            painter: QPainter,
-            option: QStyleOptionViewItem,
-            index: QModelIndex,
-    ) -> None:
+        self,
+        painter: QPainter,
+        option: QStyleOptionViewItem,
+        index: QModelIndex,
+        **kwargs
+    ):
         painter.setRenderHints(QPainter.RenderHint.Antialiasing | QPainter.RenderHint.SmoothPixmapTransform)
         view = option.widget.parent()
         padding = view.padding()
