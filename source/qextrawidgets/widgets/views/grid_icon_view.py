@@ -1,4 +1,3 @@
-import logging
 import typing
 
 from PySide6.QtCore import (
@@ -15,7 +14,7 @@ from PySide6.QtCore import (
     QItemSelectionModel,
     Slot,
 )
-from PySide6.QtGui import QCursor, QPainter, QRegion, QPaintEvent
+from PySide6.QtGui import QCursor, QPainter, QRegion, QPaintEvent, QMouseEvent
 from PySide6.QtWidgets import QAbstractItemView, QStyleOptionViewItem, QStyle, QWidget
 
 from qextrawidgets.core.utils.system_utils import debug
@@ -120,16 +119,10 @@ class QGridIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
     # Internal Logic Helpers
     # -------------------------------------------------------------------------
-    #
-    # def currentChanged(self, current: QModelIndex, previous: QModelIndex) -> None:
-    #     if previous.isValid():
-    #         self.viewport().update(self.tileRect(previous))
-    #     if current.isValid():
-    #         self.viewport().update(self.tileRect(current))
 
     @debug
     def scrollContentsBy(self, dx, dy, **kwargs):
-        self.viewport().update()
+        self.viewport().scroll(dx, dy)
         pos = self.viewport().mapFromGlobal(QCursor.pos())
         index = self.indexAt(pos)
         self._set_hovered_index(index)
@@ -270,10 +263,16 @@ class QGridIconView(QAbstractItemView):
     # Event Handlers
     # -------------------------------------------------------------------------
 
-    def mouseMoveEvent(self, event):#
+    def mouseMoveEvent(self, event: QMouseEvent):
         super().mouseMoveEvent(event)
         index = self.indexAt(event.position().toPoint())
         self._set_hovered_index(index)
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        index = self.indexAt(event.position().toPoint())
+        if index.isValid():
+            self.selectionModel().select(index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
+            self.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.NoUpdate)
 
     @debug
     def paintEvent(self, event: QPaintEvent, **kwargs) -> None:
