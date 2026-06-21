@@ -37,7 +37,7 @@ class QGridIconDelegate(QStyledItemDelegate):
         self._draw_grid_item(painter, option, index)
         painter.restore()
 
-    @debug
+    # @debug
     def _draw_grid_item(
         self,
         painter: QPainter,

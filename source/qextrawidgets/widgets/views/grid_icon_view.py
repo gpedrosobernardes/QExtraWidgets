@@ -127,31 +127,6 @@ class QGridIconView(QAbstractItemView):
         index = self.indexAt(pos)
         self._set_hovered_index(index)
 
-    def _init_option(self, option: QStyleOptionViewItem, index: QModelIndex, visual_rect: QRect) -> None:
-        """
-        Initialize the style option for the given index.
-
-        Args:
-            option (QStyleOptionViewItem): The option to initialize.
-            index (QModelIndex): The index of the item.
-        """
-        # Optimization: We check intersections in paintEvent loop usually,
-        # but here we just set the rect. The caller (paintEvent) already checks visibility.
-        option.rect = visual_rect
-
-        state = QStyle.StateFlag.State_None
-
-        if self.isEnabled():
-            state |= QStyle.StateFlag.State_Enabled
-
-        if self.selectionModel().isSelected(index):
-            state |= QStyle.StateFlag.State_Selected
-
-        if index == self._hovered_index:
-            state |= QStyle.StateFlag.State_MouseOver
-
-        option.state = state
-
     # -------------------------------------------------------------------------
     # Layout Scheduling & Cache Management
     # -------------------------------------------------------------------------
@@ -268,40 +243,54 @@ class QGridIconView(QAbstractItemView):
         index = self.indexAt(event.position().toPoint())
         self._set_hovered_index(index)
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: QMouseEvent):
         index = self.indexAt(event.position().toPoint())
         if index.isValid():
             self.selectionModel().select(index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
             self.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.NoUpdate)
 
     @debug
-    def paintEvent(self, event: QPaintEvent, **kwargs) -> None:
+    def paintEvent(self, event: QPaintEvent):
         painter = QPainter(self.viewport())
         option = QStyleOptionViewItem()
         self.initViewItemOption(option)
         option.widget = self.viewport()
 
-        vertical_scroll_bar = self.verticalScrollBar()
-        scroll_y = vertical_scroll_bar.value()
+        # cacheia fora do loop
+        scroll_y = self.verticalScrollBar().value()
+        virtual_columns = self.virtualColumns()
+        tile_size = self.tileSizeHint()
+        item_size = self.itemSizeHint()
+        is_enabled = self.isEnabled()
+        selection_model = self.selectionModel()
+        hovered = self._hovered_index
+        base_state = QStyle.StateFlag.State_Enabled if is_enabled else QStyle.StateFlag.State_None
 
-        dirty_rect = event.rect()
-        dirty_rect.translate(0, scroll_y)
+        dirty_rect = event.rect().translated(0, scroll_y)
 
         first_virtual_point = self.virtualPointAt(dirty_rect.topLeft())
+        first_row = self._model_row(first_virtual_point, virtual_columns)
         last_virtual_point = self.virtualPointAt(dirty_rect.bottomRight())
+        last_row = self._model_row(last_virtual_point, virtual_columns)
 
         model = self.model()
         item_delegate = self.itemDelegate()
 
-        for virtual_row in range(first_virtual_point.y(), last_virtual_point.y() + 1):
-            for virtual_column in range(first_virtual_point.x(), last_virtual_point.x() + 1):
-                virtual_point = QPoint(virtual_column, virtual_row)
-                row = self.modelRow(virtual_point)
-                index = model.index(row, self.modelColumn())
-                if index.isValid():
-                    rect = self.visualRect(index)
-                    self._init_option(option, index, rect)
-                    item_delegate.paint(painter, option, index)
+        for row in range(first_row, last_row + 1):
+            index = model.index(row, self.modelColumn())
+            if index.isValid():
+                virtual_point = self._virtual_point(row, virtual_columns)
+                rect = self._visual_rect(virtual_point, tile_size, item_size, scroll_y)
+
+                state = base_state
+                if selection_model.isSelected(index):
+                    state |= QStyle.StateFlag.State_Selected
+                if index == hovered:
+                    state |= QStyle.StateFlag.State_MouseOver
+
+                option.rect = rect
+                option.state = state
+                item_delegate.paint(painter, option, index)
 
     # -------------------------------------------------------------------------
     # QAbstractItemView Implementation
@@ -352,12 +341,14 @@ class QGridIconView(QAbstractItemView):
             QRect: The visual rectangle.
         """
         virtual_point = self.virtualPoint(index.row())
-        tile_size = self.tileSizeHint()
-        x = virtual_point.x() * tile_size.width() + self._margin
-        y = virtual_point.y() * tile_size.height() + self._margin
         vertical_scroll_bar = self.verticalScrollBar()
         scroll_y = vertical_scroll_bar.value()
-        return QRect(QPoint(x, y - scroll_y), self.itemSizeHint())
+        return self._visual_rect(virtual_point, self.tileSizeHint(), self.itemSizeHint(), scroll_y)
+
+    def _visual_rect(self, virtual_point: QPoint, tile_size: QSize, item_size: QSize, scroll_y: int) -> QRect:
+        x = virtual_point.x() * tile_size.width() + self._margin
+        y = virtual_point.y() * tile_size.height() + self._margin
+        return QRect(QPoint(x, y - scroll_y), item_size)
 
     def tileRect(self, index: typing.Union[QModelIndex, QPersistentModelIndex]) -> QRect:
         virtual_point = self.virtualPoint(index.row())
@@ -581,11 +572,16 @@ class QGridIconView(QAbstractItemView):
 
     def modelRow(self, virtual_point: QPoint) -> int:
         virtual_columns = self.virtualColumns()
-        row = virtual_point.y() * virtual_columns + virtual_point.x()
-        return row
+        return self._model_row(virtual_point, virtual_columns)
+
+    def _model_row(self, virtual_point: QPoint, virtual_columns: int) -> int:
+        return virtual_point.y() * virtual_columns + virtual_point.x()
 
     def virtualPoint(self, row: int) -> QPoint:
         virtual_columns = self.virtualColumns()
+        return self._virtual_point(row, virtual_columns)
+
+    def _virtual_point(self, row: int, virtual_columns: int) -> QPoint:
         virtual_row = row // virtual_columns
         virtual_column = row % virtual_columns
         return QPoint(virtual_column, virtual_row)
