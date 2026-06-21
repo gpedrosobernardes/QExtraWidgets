@@ -168,7 +168,7 @@ class DemoWindow(QMainWindow):
         self.spin_height.valueChanged.connect(self.update_view_settings)
         self.spin_margin.valueChanged.connect(self.update_view_settings)
         self.spin_internal_margin.valueChanged.connect(self.update_view_settings)
-        self.view.itemClicked.connect(lambda idx: print(f"Clicked: {idx.data()}"))
+        self.view.clicked.connect(lambda idx: print(f"Clicked: {idx.data()}"))
 
         # Test button connections
         self.btn_select_first.clicked.connect(self.select_first_item)
