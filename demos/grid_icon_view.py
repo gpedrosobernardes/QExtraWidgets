@@ -114,7 +114,7 @@ class DemoWindow(QMainWindow):
         # -----------------------
         # Create the view
         self.view = QGridIconView()
-        self.view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        self.view.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         self.view.setIconSize(QSize(100, 100))
         self.view.setMargin(16)
 

@@ -49,6 +49,7 @@ class QGridIconView(QAbstractItemView):
         # self.setAutoScroll(False)
         self.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.setItemDelegate(QGridIconDelegate(self))
+        self.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
 
     def setPadding(self, padding: int):
         if self._padding != padding:
@@ -239,15 +240,37 @@ class QGridIconView(QAbstractItemView):
     # -------------------------------------------------------------------------
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        super().mouseMoveEvent(event)
         index = self.indexAt(event.position().toPoint())
         self._set_hovered_index(index)
 
-    def mousePressEvent(self, event: QMouseEvent):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         index = self.indexAt(event.position().toPoint())
-        if index.isValid():
-            self.selectionModel().select(index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
-            self.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.NoUpdate)
+        if not index.isValid():
+            return
+
+        modifiers = event.modifiers()
+
+        selection_model = self.selectionModel()
+
+        if modifiers & Qt.KeyboardModifier.ShiftModifier:
+            command = QItemSelectionModel.SelectionFlag.Select
+
+            last_index = selection_model.currentIndex()
+            last_index_rect = self.visualRect(last_index)
+            index_rect = self.visualRect(index)
+
+            rect_to_select = index_rect.united(last_index_rect)
+            self.setSelection(rect_to_select, command)
+            selection_model.setCurrentIndex(index, command)
+
+        else:
+            if modifiers & Qt.KeyboardModifier.ControlModifier:
+                command = QItemSelectionModel.SelectionFlag.Toggle
+            else:
+                command = QItemSelectionModel.SelectionFlag.ClearAndSelect
+
+            selection_model.select(index, command)
+            selection_model.setCurrentIndex(index, QItemSelectionModel.SelectionFlag.NoUpdate)
 
     @debug
     def paintEvent(self, event: QPaintEvent):
@@ -506,10 +529,17 @@ class QGridIconView(QAbstractItemView):
         end_virtual_point = self.virtualPointAt(logical_rect.bottomRight())
 
         model = self.model()
-        start_index = model.index(self.modelRow(start_virtual_point), self.modelColumn())
-        end_index = model.index(self.modelRow(end_virtual_point), self.modelColumn())
+        virtual_rows = set(range(start_virtual_point.y(), end_virtual_point.y() + 1))
+        virtual_columns = set(range(start_virtual_point.x(), end_virtual_point.x() + 1))
 
-        selection.select(start_index, end_index)
+        virtual_columns_count = self.virtualColumns()
+
+        for virtual_row in virtual_rows:
+            for virtual_column in virtual_columns:
+                virtual_point = QPoint(virtual_column, virtual_row)
+                row = self._model_row(virtual_point, virtual_columns_count)
+                index = model.index(row, self.modelColumn())
+                selection.select(index, index)
 
         self.selectionModel().select(selection, command)
 
